@@ -141,7 +141,7 @@ namespace sfem::la::utils
         matmult(c, c, r, mt, m, mtm);
 
         // Invert intermediate product
-        real_t mtmi[3 * 3];
+        real_t mtmi[3 * 3] = {}; /// < Suppress unitialized warning
         inv(c, mtm, mtmi);
 
         // Multiply by tranpose
