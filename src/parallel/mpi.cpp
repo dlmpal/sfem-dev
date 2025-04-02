@@ -105,7 +105,7 @@ namespace sfem::mpi
         // Compute the receive buffer size
         std::vector<int> recv_counts(n_procs(), 0);
         int error_code = MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
-        SFEM_MPI_CHECK_ERROR(error_code);
+        SFEM_CHECK_MPI_ERROR(error_code);
 
         // Compute the recv buffer displacements
         std::vector<int> recv_displs(n_procs(), 0);
@@ -116,7 +116,7 @@ namespace sfem::mpi
         error_code = MPI_Alltoallv(send_buffer.data(), send_counts.data(), send_displs.data(), to_mpi_datatype<T>(),
                                    recv_buffer.data(), recv_counts.data(), recv_displs.data(), to_mpi_datatype<T>(),
                                    MPI_COMM_WORLD);
-        SFEM_MPI_CHECK_ERROR(error_code);
+        SFEM_CHECK_MPI_ERROR(error_code);
 
         return {recv_buffer, recv_counts, recv_displs};
     }
@@ -154,7 +154,7 @@ namespace sfem::mpi
         // First send the size
         int n_recv;
         int error_code = MPI_Scatter(send_counts.data(), 1, MPI_INT, &n_recv, 1, MPI_INT, root(), MPI_COMM_WORLD);
-        SFEM_MPI_CHECK_ERROR(error_code);
+        SFEM_CHECK_MPI_ERROR(error_code);
 
         // Receive buffer
         std::vector<T> recv_buffer(n_recv);
@@ -162,7 +162,7 @@ namespace sfem::mpi
                                   send_displs.data(), to_mpi_datatype<T>(),
                                   recv_buffer.data(), n_recv, to_mpi_datatype<T>(),
                                   root(), MPI_COMM_WORLD);
-        SFEM_MPI_CHECK_ERROR(error_code);
+        SFEM_CHECK_MPI_ERROR(error_code);
 
         return recv_buffer;
     }

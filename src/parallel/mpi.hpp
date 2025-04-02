@@ -4,7 +4,7 @@
 #include <span>
 #include <source_location>
 
-#define SFEM_MPI_CHECK_ERROR(error_code)  \
+#define SFEM_CHECK_MPI_ERROR(error_code)  \
     {                                     \
         if (error_code != MPI_SUCCESS)    \
             sfem::mpi::error(error_code); \
