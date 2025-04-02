@@ -1,0 +1,10 @@
+build/
+cmake/
+.vscode/
+pysfem/
+apps/solid_mechanics
+src/la/native/sparse_matrix.*
+src/la/native/vector.*
+src/la/slepc/
+run.sh
+summary.log
