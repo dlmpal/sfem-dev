@@ -125,9 +125,10 @@ def add_petsc(petsc_dir: str, petsc_arch: str,
     if with_petsc4py:
         add_petsc4py_deps()
 
-    # TODO: Add -O3 flags
     petsc_config_cmd = f"./configure --with-fc=0 PETSC_ARCH={petsc_arch} "
     petsc_config_cmd += f"--with-cc={mpi_c_compiler} --with-cxx={mpi_cxx_compiler} "
+    if not with_debugging:
+        petsc_config_cmd += "COPTFLAGS='-O3' CXXFLAGS='-O3' "
     petsc_config_cmd += f"--with-debugging={int(with_debugging)} "
     petsc_config_cmd += f"--with-petsc4py={int(with_petsc4py)} "
     petsc_config_cmd += "--download-f2cblaslapack"
