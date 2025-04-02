@@ -1,4 +1,6 @@
-3
-leftright 1 1
-updown 2 1
-surf 3 2
+5
+Left 5 1
+Right 6 1
+Bottom 7 1
+Top 8 1
+Volume 9 2
