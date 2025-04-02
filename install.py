@@ -210,7 +210,7 @@ home_dir = pathlib.Path.home()
 
 # Installation directory
 parser.add_argument('--install-dir', type=str, metavar="",
-                    default=os.path.join(home_dir, "local", "sfem-dev"),
+                    default=os.path.join(home_dir, "local", "sfem"),
                     help='The installation directory for SFEM')
 
 # Build directory
@@ -241,7 +241,7 @@ parser.add_argument('--build-all', action='store_true',
 
 # Installation directory for dependencies
 parser.add_argument('--third-party-dir', type=str, metavar="",
-                    default=os.path.join(home_dir, "local", "sfem-dev-deps"),
+                    default=os.path.join(home_dir, "local", "sfem-deps"),
                     help="The installation directory for all downloaded dependencies")
 
 # Download and build all dependencies
@@ -439,9 +439,9 @@ if args.with_pysfem:
 # Create installation summary file
 # Lines to append to .bashrc
 bashrc_app = "# SFEM\n"
-bashrc_app += f"export SFEM_DEV_INSTALL_DIR={args.install_dir}\n"
-bashrc_app += f"export SFEM_DEV_THIRD_PARTY_DIR={args.third_party_dir}\n"
-bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SFEM_DEV_INSTALL_DIR}/lib\n"
+bashrc_app += f"export SFEM_INSTALL_DIR={args.install_dir}\n"
+bashrc_app += f"export SFEM_THIRD_PARTY_DIR={args.third_party_dir}\n"
+bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SFEM_INSTALL_DIR}/lib\n"
 
 if args.with_apps:
     apps_dir = os.path.join(args.install_dir, "bin")
@@ -449,19 +449,19 @@ if args.with_apps:
 
 if args.download_openmpi:
     bashrc_app += "# OpenMPI\n"
-    bashrc_app += "export MPICC=${SFEM_DEV_THIRD_PARTY_DIR}/openmpi/bin/mpicc\n"
-    bashrc_app += "export MPICXX=${SFEM_DEV_THIRD_PARTY_DIR}/openmpi/bin/mpic++\n"
-    bashrc_app += "export MPIEXEC=${SFEM_DEV_THIRD_PARTY_DIR}/openmpi/bin/mpiexec\n"
+    bashrc_app += "export MPICC=${SFEM_THIRD_PARTY_DIR}/openmpi/bin/mpicc\n"
+    bashrc_app += "export MPICXX=${SFEM_THIRD_PARTY_DIR}/openmpi/bin/mpic++\n"
+    bashrc_app += "export MPIEXEC=${SFEM_THIRD_PARTY_DIR}/openmpi/bin/mpiexec\n"
 
 if args.download_petsc:
     bashrc_app += "# PETSc\n"
-    bashrc_app += "export PETSC_DIR=${SFEM_DEV_THIRD_PARTY_DIR}/petsc\n"
+    bashrc_app += "export PETSC_DIR=${SFEM_THIRD_PARTY_DIR}/petsc\n"
     bashrc_app += f"export PETSC_ARCH={args.petsc_arch}\n"
     bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${PETSC_DIR}/${PETSC_ARCH}/lib\n"
 
 if args.download_slepc:
     bashrc_app += "# SLEPc\n"
-    bashrc_app += "export SLEPC_DIR=${SFEM_DEV_THIRD_PARTY_DIR}/slepc\n"
+    bashrc_app += "export SLEPC_DIR=${SFEM_THIRD_PARTY_DIR}/slepc\n"
     bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SLEPC_DIR}/${PETSC_ARCH}/lib\n"
 
 sep_line = "#=================================================#\n"

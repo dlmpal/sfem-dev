@@ -1,1 +1,1 @@
-# Development repository for SFEM
+# Experimental repository for SFEM
