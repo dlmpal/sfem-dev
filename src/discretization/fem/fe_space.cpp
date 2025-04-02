@@ -12,6 +12,10 @@ namespace sfem::fem
           components_(components),
           name_(name)
     {
+        if (order_ <= 0)
+        {
+            SFEM_ERROR(std::format("Cannot create FESpace with order {} (<=0)\n", order_));
+        }
         if (components_.size() <= 0)
         {
             SFEM_ERROR(std::format("Cannot create FESpace with {} (<=0) components\n",
@@ -90,7 +94,7 @@ namespace sfem::fem
         auto element = fe_collection_[static_cast<int>(cell_type)];
         if (element == nullptr)
         {
-            SFEM_ERROR(std::format("Cell type {} is not supported for {}\n",
+            SFEM_ERROR(std::format("Cell type {} is not supported for {} space\n",
                                    mesh::cell_type_str(cell_type),
                                    name_));
         }
