@@ -4,36 +4,18 @@
 
 namespace sfem::fem::quadrature
 {
-    class Gauss1D : public IntegrationRule
+    template <std::size_t dim>
+    class Gauss : public IntegrationRule
     {
     public:
-        Gauss1D(int order)
-            : IntegrationRule(order)
-        {
-        }
-        int n_points() const override;
-        IntegrationPoint point(int i) const override;
-    };
+        Gauss(int order);
 
-    class Gauss2D : public IntegrationRule
-    {
-    public:
-        Gauss2D(int order)
-            : IntegrationRule(order)
-        {
-        }
-        int n_points() const override;
-        IntegrationPoint point(int i) const override;
-    };
+        /// @brief Set the number of integration points per direction
+        void set_n_points(int n_points) override;
 
-    class Gauss3D : public IntegrationRule
-    {
-    public:
-        Gauss3D(int order)
-            : IntegrationRule(order)
-        {
-        }
-        int n_points() const override;
         IntegrationPoint point(int i) const override;
+
+    private:
+        int order_;
     };
 }

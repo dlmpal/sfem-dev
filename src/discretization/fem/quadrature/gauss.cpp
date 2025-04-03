@@ -1,7 +1,30 @@
 #include "gauss.hpp"
+#include "../../../base/error.hpp"
 
 namespace sfem::fem::quadrature
 {
+    //=============================================================================
+    template <std::size_t dim>
+    int gauss_num_points(int order)
+    {
+        const int p = order + 1;
+        if constexpr (dim == 1)
+        {
+            return p;
+        }
+        else if constexpr (dim == 2)
+        {
+            return p * p;
+        }
+        else if constexpr (dim == 3)
+        {
+            return p * p * p;
+        }
+        else
+        {
+            return 0;
+        }
+    }
     //=============================================================================
     static real_t gauss_1d_qweights(int n_points, int i)
     {
@@ -38,6 +61,7 @@ namespace sfem::fem::quadrature
         case 5:
             return gauss_qwt_5[i];
         default:
+            SFEM_ERROR(std::format("Gauss integration not defined for {} points\n", n_points));
             return 0;
         }
     }
@@ -77,52 +101,58 @@ namespace sfem::fem::quadrature
         case 5:
             return gauss_qpt_5[i];
         default:
+            SFEM_ERROR(std::format("Gauss integration not defined for {} points\n", n_points));
             return 0;
         }
     }
     //=============================================================================
-    int Gauss1D::n_points() const
+    template <std::size_t dim>
+    Gauss<dim>::Gauss(int order)
+        : IntegrationRule(gauss_num_points<dim>(order)),
+          order_(order)
     {
-        return order_ + 1;
     }
     //=============================================================================
-    IntegrationPoint Gauss1D::point(int i) const
+    template <std::size_t dim>
+    void Gauss<dim>::set_n_points(int n_points)
     {
-        return IntegrationPoint{
-            .weight = gauss_1d_qweights(order_ + 1, i),
-            .point = {gauss_1d_qpoints(order_ + 1, i), 0, 0}};
+        n_points_ = n_points * dim;
+        order_ = n_points - 1;
     }
     //=============================================================================
-    int Gauss2D::n_points() const
+    template <std::size_t dim>
+    IntegrationPoint Gauss<dim>::point(int i) const
     {
         const int p = order_ + 1;
-        return p * p;
-    }
-    //=============================================================================
-    IntegrationPoint Gauss2D::point(int i) const
-    {
-        const int p = order_ + 1;
-        return IntegrationPoint{
-            .weight = gauss_1d_qweights(p, i % p) * gauss_1d_qweights(p, i / p),
-            .point = {gauss_1d_qpoints(p, i % p), gauss_1d_qpoints(p, i / p)}};
-    }
-    //=============================================================================
-    int Gauss3D::n_points() const
-    {
-        const int p = order_ + 1;
-        return p * p * p;
-    }
-    //=============================================================================
-    IntegrationPoint Gauss3D::point(int i) const
-    {
-        const int p = order_ + 1;
-        return IntegrationPoint{
-            .weight = gauss_1d_qweights(p, i % p) *
-                      gauss_1d_qweights(p, (i % (p * p)) / p) *
-                      gauss_1d_qweights(p, i / (p / p)),
-            .point = {
+        IntegrationPoint point;
+        if constexpr (dim == 1)
+        {
+            point.weight = gauss_1d_qweights(p + 1, i),
+            point.point = {gauss_1d_qpoints(p + 1, i), 0.0, 0.0};
+        }
+        else if constexpr (dim == 2)
+        {
+            point.weight = gauss_1d_qweights(p, i % p) *
+                           gauss_1d_qweights(p, i / p);
+            point.point = {gauss_1d_qpoints(p, i % p),
+                           gauss_1d_qpoints(p, i / p),
+                           0.0};
+        }
+        else if constexpr (dim == 3)
+        {
+            point.weight = gauss_1d_qweights(p, i % p) *
+                           gauss_1d_qweights(p, (i % (p * p)) / p) *
+                           gauss_1d_qweights(p, i / (p / p)),
+            point.point = {
                 gauss_1d_qpoints(p, i % p),
                 gauss_1d_qpoints(p, (i % (p * p)) / p),
-                gauss_1d_qpoints(p, i / (p / p))}};
+                gauss_1d_qpoints(p, i / (p / p))};
+        }
+        return point;
     }
+    //=============================================================================
+    // Explicit instantiations
+    template class Gauss<1>;
+    template class Gauss<2>;
+    template class Gauss<3>;
 }
