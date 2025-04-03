@@ -3,4 +3,4 @@ add_subdirectory(native)
 #==============================================================================
 add_subdirectory(petsc)
 #==============================================================================
-#add_subdirectory(slepc)
+add_subdirectory(slepc)

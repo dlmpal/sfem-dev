@@ -10,3 +10,6 @@ namespace sfem::la
 
 // PETSc
 #include "petsc/sfem_petsc.hpp"
+
+// SLEPc
+#include "slepc/sfem_slepc.hpp"
