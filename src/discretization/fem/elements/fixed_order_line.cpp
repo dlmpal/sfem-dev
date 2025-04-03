@@ -3,6 +3,12 @@
 namespace sfem::fem::fixed_order
 {
     //=============================================================================
+    Line2::Line2()
+        : NodalFiniteElement(mesh::CellType::line, 1,
+                             std::make_unique<quadrature::Gauss<1>>(1))
+    {
+    }
+    //=============================================================================
     void Line2::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
         N(0, 0) = 0.5 * (1.0 - pt[0]);
@@ -16,7 +22,12 @@ namespace sfem::fem::fixed_order
         dNdxi(0, 0) = -0.5;
         dNdxi(1, 0) = 0.5;
     }
-
+    //=============================================================================
+    Line3::Line3()
+        : NodalFiniteElement(mesh::CellType::line, 2,
+                             std::make_unique<quadrature::Gauss<1>>(2))
+    {
+    }
     //=============================================================================
     void Line3::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
@@ -30,6 +41,12 @@ namespace sfem::fem::fixed_order
         dNdxi(0, 0) = -0.5 + pt[0];
         dNdxi(1, 0) = 0.5 + pt[0];
         dNdxi(2, 0) = -2.0 * pt[0];
+    }
+    //=============================================================================
+    Line4::Line4()
+        : NodalFiniteElement(mesh::CellType::line, 3,
+                             std::make_unique<quadrature::Gauss<1>>(3))
+    {
     }
     //=============================================================================
     void Line4::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const

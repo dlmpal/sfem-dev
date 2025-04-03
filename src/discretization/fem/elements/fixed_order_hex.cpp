@@ -3,6 +3,12 @@
 namespace sfem::fem::fixed_order
 {
     //=============================================================================
+    Hex8::Hex8()
+        : NodalFiniteElement(mesh::CellType::hex, 1,
+                             std::make_unique<quadrature::Gauss<3>>(1))
+    {
+    }
+    //=============================================================================
     void Hex8::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
         N(0, 0) = (0.125 - 0.125 * pt[0]) * (1 - pt[1]) * (1 - pt[2]);

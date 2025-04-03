@@ -3,6 +3,12 @@
 namespace sfem::fem::fixed_order
 {
     //=============================================================================
+    Tet4::Tet4()
+        : NodalFiniteElement(mesh::CellType::tet, 1,
+                             std::make_unique<quadrature::Tetrahedron>(4))
+    {
+    }
+    //=============================================================================
     void Tet4::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
         N(0, 0) = 1 - pt[0] - pt[1] - pt[2];
@@ -30,6 +36,12 @@ namespace sfem::fem::fixed_order
         dNdxi(3, 0) = 0.0;
         dNdxi(3, 1) = 0.0;
         dNdxi(3, 2) = 1.0;
+    }
+    //=============================================================================
+    Tet10::Tet10()
+        : NodalFiniteElement(mesh::CellType::tet, 2,
+                             std::make_unique<quadrature::Tetrahedron>(5))
+    {
     }
     //=============================================================================
     void Tet10::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const

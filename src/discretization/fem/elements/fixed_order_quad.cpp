@@ -3,6 +3,12 @@
 namespace sfem::fem::fixed_order
 {
     //=============================================================================
+    Quad4::Quad4()
+        : NodalFiniteElement(mesh::CellType::quad, 1,
+                             std::make_unique<quadrature::Gauss<2>>(1))
+    {
+    }
+    //=============================================================================
     void Quad4::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
         N(0, 0) = 0.25 * (1.0 - pt[0]) * (1.0 - pt[1]);
@@ -24,6 +30,12 @@ namespace sfem::fem::fixed_order
 
         dNdxi(3, 0) = -0.25 * (1.0 + pt[1]);
         dNdxi(3, 1) = 0.25 * (1.0 - pt[0]);
+    }
+    //=============================================================================
+    Quad9::Quad9()
+        : NodalFiniteElement(mesh::CellType::quad, 2,
+                             std::make_unique<quadrature::Gauss<2>>(2))
+    {
     }
     //=============================================================================
     void Quad9::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
@@ -75,6 +87,12 @@ namespace sfem::fem::fixed_order
         // Interior node
         dNdxi(8, 0) = 2 * pt[0] * (pt[1] * pt[1] - 1);
         dNdxi(8, 1) = 2 * pt[1] * (pt[0] * pt[0] - 1);
+    }
+    //=============================================================================
+    Quad16::Quad16()
+        : NodalFiniteElement(mesh::CellType::quad, 3,
+                             std::make_unique<quadrature::Gauss<2>>(3))
+    {
     }
     //=============================================================================
     void Quad16::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const

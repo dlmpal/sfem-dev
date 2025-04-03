@@ -3,6 +3,12 @@
 namespace sfem::fem::fixed_order
 {
     //=============================================================================
+    Tri3::Tri3()
+        : NodalFiniteElement(mesh::CellType::triangle, 1,
+                             std::make_unique<quadrature::Triangle>(3))
+    {
+    }
+    //=============================================================================
     void Tri3::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
     {
         N(0, 0) = 1 - pt[0] - pt[1];
@@ -22,6 +28,12 @@ namespace sfem::fem::fixed_order
 
         dNdxi(2, 0) = 0.0;
         dNdxi(2, 1) = 1.0;
+    }
+    //=============================================================================
+    Tri6::Tri6()
+        : NodalFiniteElement(mesh::CellType::triangle, 2,
+                             std::make_unique<quadrature::Triangle>(4))
+    {
     }
     //=============================================================================
     void Tri6::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
@@ -58,6 +70,12 @@ namespace sfem::fem::fixed_order
 
         dNdxi(5, 0) = -4.0 * pt[1];
         dNdxi(5, 1) = 4.0 - 4.0 * pt[0] - 8.0 * pt[1];
+    }
+    //=============================================================================
+    Tri10::Tri10()
+        : NodalFiniteElement(mesh::CellType::triangle, 3,
+                             std::make_unique<quadrature::Triangle>(6))
+    {
     }
     //=============================================================================
     void Tri10::eval_shape(const std::array<real_t, 3> &pt, la::DenseMatrix &N) const
