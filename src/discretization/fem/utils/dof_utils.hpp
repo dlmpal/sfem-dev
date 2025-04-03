@@ -61,11 +61,10 @@ namespace sfem::fem::dof
     /// @param cell_type The cell type
     /// @param order The polynomial order
     /// @param points the cell's corner node coordinates.
-    /// For order >= 1, this vector will be extended by the
+    /// For order > 1, this vector will be extended by the
     /// coordinates of the edge, face and internal DoFs
     ///
     /// @todo Add support for higher order elements in 3D
-    void compute_cell_dof_points(mesh::CellType cell_type,
-                                 int order,
+    void compute_cell_dof_points(mesh::CellType cell_type, int order,
                                  std::vector<std::array<real_t, 3>> &points);
 }

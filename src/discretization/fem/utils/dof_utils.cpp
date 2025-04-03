@@ -219,8 +219,7 @@ namespace sfem::fem::dof
         /// @todo Internal DoF
     }
     //=============================================================================
-    void compute_cell_dof_points(mesh::CellType cell_type,
-                                 int order,
+    void compute_cell_dof_points(mesh::CellType cell_type, int order,
                                  std::vector<std::array<real_t, 3>> &points)
     {
         // Return early for linear elements
