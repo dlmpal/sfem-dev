@@ -6,7 +6,7 @@
 
 namespace sfem::la::petsc
 {
-    /// @brief Thin wrapper around the PETSc linear solvers (KSP)
+    /// @brief Thin wrapper around PETSc's linear solvers (KSP)
     class PetscKSP
     {
     public:

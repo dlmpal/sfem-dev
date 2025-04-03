@@ -6,7 +6,7 @@
 
 namespace sfem::la::petsc
 {
-    /// @brief Thin wrapper around the PETSc Vec
+    /// @brief Thin wrapper around PETSc's Vec
     class PetscVec
     {
     public:

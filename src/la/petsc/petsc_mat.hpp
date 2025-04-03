@@ -6,7 +6,7 @@
 
 namespace sfem::la::petsc
 {
-    /// @brief Thin wrapper around the PETSc Mat
+    /// @brief Thin wrapper around PETSc's Mat
     class PetscMat
     {
     public:
