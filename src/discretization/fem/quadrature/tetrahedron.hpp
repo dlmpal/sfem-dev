@@ -7,11 +7,7 @@ namespace sfem::fem::quadrature
     class Tetrahedron : public IntegrationRule
     {
     public:
-        Tetrahedron(int order)
-            : IntegrationRule(order)
-        {
-        }
-        int n_points() const override;
+        Tetrahedron(int n_points);
         IntegrationPoint point(int i) const override;
     };
 }
