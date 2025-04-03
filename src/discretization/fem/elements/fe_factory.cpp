@@ -87,11 +87,6 @@ namespace sfem::fem
             break;
         }
 
-        if (element == nullptr)
-        {
-            /// @todo error
-        }
-
         return std::shared_ptr<NodalFiniteElement>(element);
     }
 }
