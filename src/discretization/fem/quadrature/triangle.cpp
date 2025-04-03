@@ -1,4 +1,5 @@
 #include "triangle.hpp"
+#include "../../../base/error.hpp"
 
 namespace sfem::fem::quadrature
 {
@@ -33,6 +34,7 @@ namespace sfem::fem::quadrature
         case 6:
             return triangle_qwt_6[i];
         default:
+            SFEM_ERROR(std::format("Triangle integration not defined for {} points\n", n_points));
             return 0;
         }
     }
@@ -69,28 +71,19 @@ namespace sfem::fem::quadrature
         case 6:
             return {triangle_qpt_6[i * 2 + 0], triangle_qpt_6[i * 2 + 1], 0};
         default:
+            SFEM_ERROR(std::format("Triangle integration not defined for {} points\n", n_points));
             return {};
         }
     }
     //=============================================================================
-    int Triangle::n_points() const
+    Triangle::Triangle(int n_points)
+        : IntegrationRule(n_points)
     {
-        switch (order_)
-        {
-        case 1:
-            return 3;
-        case 2:
-            return 4;
-        case 3:
-            return 6;
-        default:
-            return 0;
-        }
     }
     //=============================================================================
     IntegrationPoint Triangle::point(int i) const
     {
-        return IntegrationPoint{.weight = triangle_qweights(n_points(), i),
-                                .point = triangle_qpoints(n_points(), i)};
+        return IntegrationPoint{.weight = triangle_qweights(n_points_, i),
+                                .point = triangle_qpoints(n_points_, i)};
     }
 }
