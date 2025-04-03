@@ -10,24 +10,20 @@ namespace sfem::la::petsc
     class PetscMat
     {
     public:
-        /// @brief Create a PetscMat from an existing PETSc Mat
-        /// @param A Existing PETSc Mat
-        /// @param inc_ref_count Whether to increase the ref count for A
+        /// @brief Initialize from an existing Mat
+        /// @param A Existing Mat
+        /// @param inc_ref_count Whether to increase the ref count for the PETSc object
         PetscMat(Mat mat, bool inc_ref_count);
 
-        // Copy constructor (deleted)
+        // Avoid copies
         PetscMat(const PetscMat &) = delete;
-
-        // Copy assignment operator (deleted)
         PetscMat &operator=(const PetscMat &) = delete;
 
-        /// @brief Move constructor
+        // Move constructor and assignment
         PetscMat(PetscMat &&);
-
-        /// @brief Move assignment
         PetscMat &operator=(PetscMat &&);
 
-        /// @brief Destructor
+        // Destructor
         ~PetscMat();
 
         /// @brief Get the local size (no. rows and cols)
@@ -36,7 +32,7 @@ namespace sfem::la::petsc
         /// @brief Get the global size (no. rows and cols)
         std::array<int, 2> size_global() const;
 
-        /// @brief Get the underlying PETSc Mat
+        /// @brief Get the underlying Mat
         Mat mat() const;
 
         /// @brief Reset the matrix's memory

@@ -6,34 +6,30 @@
 
 namespace sfem::la::petsc
 {
-    /// @brief Thin wrapper around the PETSc linear solvers
+    /// @brief Thin wrapper around the PETSc linear solvers (KSP)
     class PetscKSP
     {
     public:
-        /// @brief Create a PetscKSP object
+        /// @brief Create a KSP
         PetscKSP();
 
-        /// @brief Create a PetscMat from an existing PETSc KSP
-        /// @param ksp Existing PETSc ksp
-        /// @param inc_ref_count Whether to increase the ref count for ksp
+        /// @brief Initialize from an existing KSP
+        /// @param ksp Existing KSP
+        /// @param inc_ref_count Whether to increase the ref count for the PETSc object
         PetscKSP(KSP ksp, bool inc_ref_count);
 
-        // Copy constructor (deleted)
+        // Avoid copies
         PetscKSP(const PetscKSP &) = delete;
-
-        // Copy assignment operator (deleted)
         PetscKSP &operator=(PetscKSP &) = delete;
 
-        /// @brief Move constructor
+        // Move constructor and assignment
         PetscKSP(PetscKSP &&);
-
-        /// @brief Move assignment
         PetscKSP &operator=(PetscKSP &&);
 
-        /// @brief Destructor
+        // Destructor
         ~PetscKSP();
 
-        /// @brief Get the underlying PETSc KSP
+        /// @brief Get the underlying KSP
         KSP ksp() const;
 
         /// @brief Set the KSP options from the options database
@@ -49,6 +45,7 @@ namespace sfem::la::petsc
         int solve(const PetscVec &b, PetscVec &x) const;
 
     private:
+        /// @brief Underlying PETSc KSP
         KSP ksp_;
     };
 }

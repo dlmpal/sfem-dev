@@ -10,24 +10,20 @@ namespace sfem::la::petsc
     class PetscVec
     {
     public:
-        /// @brief Create a PetscVec from an existing PETSc Vec
-        /// @param x Existing PETSc Vec
-        /// @param inc_ref_count Whether to increase the reference count for x
+        /// @brief Initialize from an existing Vec
+        /// @param x Existing Vec
+        /// @param inc_ref_count Whether to increase the reference count for the PETSc object
         PetscVec(Vec x, bool inc_ref_count);
 
-        // Copy constructor (deleted)
+        // Avoid copies
         PetscVec(const PetscVec &) = delete;
-
-        // Copy assignment operator (deleted)
         PetscVec &operator=(const PetscVec &) = delete;
 
-        /// @brief Move constructor
+        // Move constructor and assignment
         PetscVec(PetscVec &&);
-
-        /// @brief Move assignment
         PetscVec &operator=(PetscVec &&);
 
-        /// @brief Destructor
+        // Destructor
         ~PetscVec();
 
         /// @brief Get the local size
