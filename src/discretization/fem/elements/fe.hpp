@@ -14,54 +14,39 @@ namespace sfem::fem
     class FiniteElement
     {
     public:
-        FiniteElement(mesh::CellType cell_type,
-                      int order,
-                      std::unique_ptr<IntegrationRule> &&integration_rule)
-            : cell_type_(cell_type),
-              order_(order),
-              integration_rule_(std::move(integration_rule))
-        {
-            if (order_ <= 0)
-            {
-                /// @todo error
-            }
-        }
+        FiniteElement(mesh::CellType cell_type, int order,
+                      std::unique_ptr<IntegrationRule> &&integration_rule);
 
         virtual ~FiniteElement() = default;
 
-        mesh::CellType cell_type() const
-        {
-            return cell_type_;
-        }
+        /// @brief Get the element's reference cell type
+        mesh::CellType cell_type() const;
 
-        int order() const
-        {
-            return order_;
-        }
+        /// @brief Get the element's order (i.e. polynomial degree)
+        int order() const;
 
-        IntegrationRule *integration_rule() const
-        {
-            return integration_rule_.get();
-        }
+        /// @brief Get the integration rule
+        IntegrationRule *integration_rule() const;
 
-        virtual int n_nodes() const
-        {
-            return mesh::cell_num_nodes(cell_type_);
-        }
+        /// @brief Get the number of nodes (i.e. DoF) for the element
+        virtual int n_nodes() const;
 
-        int dim() const
-        {
-            return mesh::cell_dim(cell_type_);
-        }
+        /// @brief Get the topological dimension of the element's reference cell type
+        int dim() const;
 
-        virtual FEData transform(int pdim,
-                                 const IntegrationPoint &qpoint,
+        /// @brief Compute the coordinate transform for the element, for a given
+        /// physical dimension
+        /// @note The physical dimension must be greater than or equal to the element's reference
+        /// dimension
+        virtual FEData transform(int pdim, const IntegrationPoint &qpoint,
                                  std::span<const std::array<real_t, 3>> points) const = 0;
 
-        virtual void eval_shape(const std::array<real_t, 3> &pt,
+        /// @brief Evaluate the element's shape functions at a given point
+        virtual void eval_shape(const std::array<real_t, 3> &point,
                                 la::DenseMatrix &N) const = 0;
 
-        virtual void eval_shape_grad(const std::array<real_t, 3> &pt,
+        /// @brief Evaluate the gradients of the element's shape functions at a given point
+        virtual void eval_shape_grad(const std::array<real_t, 3> &point,
                                      la::DenseMatrix &dNdx) const = 0;
 
     protected:
@@ -73,28 +58,6 @@ namespace sfem::fem
 
         /// @brief The integration rule (or quadrature)
         std::unique_ptr<IntegrationRule> integration_rule_;
-    };
-
-    /// @brief The (classic) finite element where the DoF are located
-    /// at the nodes of the cell
-    class NodalFiniteElement : public FiniteElement
-    {
-    public:
-        NodalFiniteElement(mesh::CellType cell_type,
-                           int order,
-                           std::unique_ptr<IntegrationRule> &&integration_rule)
-            : FiniteElement(cell_type, order, std::move(integration_rule))
-        {
-        }
-
-        int n_nodes() const override
-        {
-            return dof::cell_num_dof(cell_type_, order_);
-        }
-
-        FEData transform(int pdim,
-                         const IntegrationPoint &qpoint,
-                         std::span<const std::array<real_t, 3>> points) const override;
     };
 
     /// @brief Finite element coordinate transform data
