@@ -55,12 +55,6 @@ namespace sfem::fem::dof
     //=============================================================================
     void compute_line_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
-        // Return early for linear elements
-        if (order == 1)
-        {
-            return;
-        }
-
         // Intneral DoF
         for (int i = 0; i < cell_num_internal_dof(mesh::CellType::line, order); i++)
         {
@@ -73,12 +67,6 @@ namespace sfem::fem::dof
     //=============================================================================
     void compute_triangle_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
-        // Return early for linear elements
-        if (order == 1)
-        {
-            return;
-        }
-
         // No. corner nodes, edges and dof per edge
         int n_nodes = cell_num_nodes(mesh::CellType::triangle);
         int n_edges = cell_num_edges(mesh::CellType::triangle);
@@ -125,12 +113,6 @@ namespace sfem::fem::dof
     //=============================================================================
     void compute_quad_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
-        // Return early for linear elements
-        if (order == 1)
-        {
-            return;
-        }
-
         // No. corner nodes, edges and dof per edge
         int n_nodes = mesh::cell_num_nodes(mesh::CellType::quad);
         int n_edges = mesh::cell_num_edges(mesh::CellType::quad);
@@ -175,10 +157,78 @@ namespace sfem::fem::dof
         }
     }
     //=============================================================================
+    void compute_tet_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
+    {
+        // No. corner nodes, edges and dof per edge
+        int n_nodes = cell_num_nodes(mesh::CellType::tet);
+        int n_edges = cell_num_edges(mesh::CellType::tet);
+        int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order);
+
+        // Edge DoF
+        for (int i = 0; i < n_edges; i++)
+        {
+            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::tet, i);
+            auto edge_point_1 = points[edge_ordering[0]];
+            auto edge_point_2 = points[edge_ordering[1]];
+
+            for (int j = 0; j < n_dof_edge; j++)
+            {
+                points.emplace_back(geo::compute_line_nth_point(j + 1,
+                                                                order,
+                                                                edge_point_1,
+                                                                edge_point_2));
+            }
+        }
+
+        // Quick access to edge points
+        std::span<std::array<real_t, 3>> edge_points(points.begin() + n_nodes,
+                                                     n_edges * n_dof_edge);
+
+        /// @todo Face DoF
+        /// @todo Internal DoF
+    }
+    //=============================================================================
+    void compute_hex_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
+    {
+        // No. corner nodes, edges and dof per edge
+        int n_nodes = cell_num_nodes(mesh::CellType::hex);
+        int n_edges = cell_num_edges(mesh::CellType::hex);
+        int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order);
+
+        // Edge DoF
+        for (int i = 0; i < n_edges; i++)
+        {
+            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::hex, i);
+            auto edge_point_1 = points[edge_ordering[0]];
+            auto edge_point_2 = points[edge_ordering[1]];
+
+            for (int j = 0; j < n_dof_edge; j++)
+            {
+                points.emplace_back(geo::compute_line_nth_point(j + 1,
+                                                                order,
+                                                                edge_point_1,
+                                                                edge_point_2));
+            }
+        }
+
+        // Quick access to edge points
+        std::span<std::array<real_t, 3>> edge_points(points.begin() + n_nodes,
+                                                     n_edges * n_dof_edge);
+
+        /// @todo Face DoF
+        /// @todo Internal DoF
+    }
+    //=============================================================================
     void compute_cell_dof_points(mesh::CellType cell_type,
                                  int order,
                                  std::vector<std::array<real_t, 3>> &points)
     {
+        // Return early for linear elements
+        if (order == 1)
+        {
+            return;
+        }
+
         switch (cell_type)
         {
         case mesh::CellType::line:
@@ -190,8 +240,14 @@ namespace sfem::fem::dof
         case mesh::CellType::quad:
             compute_quad_dof_points(order, points);
             break;
-        default:
+        case mesh::CellType::tet:
+            compute_tet_dof_points(order, points);
             break;
+        case mesh::CellType::hex:
+            compute_tet_dof_points(order, points);
+            break;
+        default:
+            SFEM_BAD_CELL_ERROR(cell_type);
         }
     }
 }

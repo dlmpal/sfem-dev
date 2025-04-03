@@ -126,7 +126,11 @@ namespace sfem::fem
         std::vector<int> facet_dof(dof::cell_num_dof(facet_type, order_));
         if (dim == 3)
         {
-            /// @todo
+            auto face_ordering = mesh::cell_face_ordering(owner_cell_type, facet_rel_idx);
+            for (int i = 0; i < mesh::cell_num_nodes(facet_type); i++)
+            {
+                facet_dof[i] = owner_cell_dof[face_ordering[i]];
+            }
         }
         else if (dim == 2)
         {

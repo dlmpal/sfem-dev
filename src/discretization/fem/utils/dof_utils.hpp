@@ -27,6 +27,16 @@ namespace sfem::fem::dof
     /// @param points The quadrilateral corner node coordinates
     void compute_quad_dof_points(int order, std::vector<std::array<real_t, 3>> &points);
 
+    /// @brief Compute the physical coordinates of the DoFs for a tetrahedron
+    /// @param order The polynomial order
+    /// @param points The tetrahedron corner node coordinates
+    void compute_tet_dof_points(int order, std::vector<std::array<real_t, 3>> &points);
+
+    /// @brief Compute the physical coordinates of the DoFs for a hexahedron
+    /// @param order The polynomial order
+    /// @param points The hexahedron corner node coordinates
+    void compute_hex_dof_points(int order, std::vector<std::array<real_t, 3>> &points);
+
     /// @brief Compute the physical coordinates of the DoFs for a given
     /// cell and polynomial order. For example:
     //
@@ -53,6 +63,8 @@ namespace sfem::fem::dof
     /// @param points the cell's corner node coordinates.
     /// For order >= 1, this vector will be extended by the
     /// coordinates of the edge, face and internal DoFs
+    ///
+    /// @todo Add support for higher order elements in 3D
     void compute_cell_dof_points(mesh::CellType cell_type,
                                  int order,
                                  std::vector<std::array<real_t, 3>> &points);

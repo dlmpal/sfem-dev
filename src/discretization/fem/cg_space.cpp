@@ -82,8 +82,8 @@ namespace sfem::fem
             // Face DoF
             if (topology->dim() > 2)
             {
-                /// @todo
-                // Enforce same orientation by cell global idx
+                /// @todo Correctly enumerate face DoF in 3D
+                /// Enforce same orientation by cell global idx
             }
 
             // Volume DoF
