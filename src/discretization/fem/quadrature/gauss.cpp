@@ -127,8 +127,8 @@ namespace sfem::fem::quadrature
         IntegrationPoint point;
         if constexpr (dim == 1)
         {
-            point.weight = gauss_1d_qweights(p + 1, i),
-            point.point = {gauss_1d_qpoints(p + 1, i), 0.0, 0.0};
+            point.weight = gauss_1d_qweights(p, i),
+            point.point = {gauss_1d_qpoints(p, i), 0.0, 0.0};
         }
         else if constexpr (dim == 2)
         {
