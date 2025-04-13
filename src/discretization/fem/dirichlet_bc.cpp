@@ -5,7 +5,7 @@
 namespace sfem::fem
 {
     //=============================================================================
-    DirichletBC::DirichletBC(const fem::FESpace &fe_space)
+    DirichletBC::DirichletBC(std::shared_ptr<const fem::FESpace> fe_space)
         : fe_space_(fe_space)
     {
     }
@@ -26,15 +26,15 @@ namespace sfem::fem
         // If the region is not included, obtain the DoF first
         if (boundary_dof_.contains(region_name) == false)
         {
-            auto region_dof = fe_space_.boundary_dof(region_name);
+            auto region_dof = fe_space_->boundary_dof(region_name);
             boundary_dof_.insert({region_name,
-                                  fe_space_.index_map()->local_to_global(region_dof)});
+                                  fe_space_->index_map()->local_to_global(region_dof)});
         }
         auto dof = boundary_dof_.at(region_name);
 
         // Store the specified values
-        int n_comp = fe_space_.n_comp();
-        int comp_idx = fe_space_.comp_idx(component);
+        int n_comp = fe_space_->n_comp();
+        int comp_idx = fe_space_->comp_idx(component);
         if (values.size() == 1) ///< Single value provided for all region DoF
         {
             for (std::size_t i = 0; i < dof.size(); i++)

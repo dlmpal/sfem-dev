@@ -11,12 +11,12 @@ int main(int argc, char **argv)
     auto mesh = io::read_mesh(argv[1]);
     int dim = mesh->topology()->dim();
 
-    int order = 3;
+    int order = 1;
     int n_vars = 1;
-    fem::CGSpace phi(mesh, order, {"T"});
+    auto phi = std::make_shared<fem::CGSpace>(mesh, n_vars, std::vector<std::string>{"T"});
 
     // LHS matrix
-    auto A = fem::petsc::create_mat(phi);
+    auto A = fem::petsc::create_mat(*phi);
     for (int i = 0; i < mesh->topology()->n_entities(dim); i++)
     {
         // Only integrate locally owned cells
@@ -27,11 +27,11 @@ int main(int argc, char **argv)
 
         // Cell info
         auto cell = mesh->topology()->entity(i, dim);
-        auto cell_dof = phi.index_map()->local_to_global(phi.cell_dof(i));
-        auto cell_points = phi.cell_dof_points(i);
+        auto cell_dof = phi->index_map()->local_to_global(phi->cell_dof(i));
+        auto cell_points = phi->cell_dof_points(i);
 
         // Integration
-        auto element = phi.element(cell.type);
+        auto element = phi->element(cell.type);
         la::DenseMatrix A_cell(cell_dof.size(), cell_dof.size());
         for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
         {
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     A.assemble();
 
     // RHS vector
-    auto b = fem::petsc::create_vec(phi);
+    auto b = fem::petsc::create_vec(*phi);
     b.assemble();
 
     // Dirichlet B.C.
@@ -63,12 +63,12 @@ int main(int argc, char **argv)
     bc.set_value("Right", "T", 100);
 
     // Solution vector
-    auto x = fem::petsc::create_vec(phi);
+    auto x = fem::petsc::create_vec(*phi);
 
     // Apply Dirichlet BC and solve
     fem::petsc::solve(A, b, x, bc);
 
-    io::vtk::write(std::format("post/solution_{}.vtk", mpi::rank()), phi, x.get_values());
+    io::vtk::write(std::format("post/solution_{}.vtk", mpi::rank()), *phi, x.get_values());
 
     return 0;
 }

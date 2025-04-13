@@ -12,7 +12,7 @@ namespace sfem::fem
     public:
         /// @brief Create a DirichletBC
         /// @param fe_space Finite element space
-        DirichletBC(const fem::FESpace &fe_space);
+        DirichletBC(std::shared_ptr<const fem::FESpace> fe_space);
 
         // Avoid copies
         DirichletBC(const DirichletBC &) = delete;
@@ -41,7 +41,7 @@ namespace sfem::fem
 
     private:
         /// @brief Finite element space
-        const fem::FESpace &fe_space_;
+        std::shared_ptr<const fem::FESpace> fe_space_;
 
         /// @brief The DoF belonging to boundary regions.
         /// They are obtained from the FESpace only when an essential
