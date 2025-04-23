@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../mesh/sfem_mesh.hpp"
+#include "../../mesh/sfem_mesh.hpp"
 #include <filesystem>
 
 namespace sfem::io
@@ -26,7 +26,6 @@ namespace sfem::io
     void write_mesh(const std::filesystem::path &directory, const mesh::Mesh &mesh);
 }
 
-/// @brief I/O for native file formats
 namespace sfem::io::native
 {
     /// @brief Write the cells and the cell-to-node connectivity to file

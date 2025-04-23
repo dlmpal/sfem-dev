@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../mesh/mesh.hpp"
+#include "../../mesh/mesh.hpp"
 #include <memory>
 #include <filesystem>
 
-/// @brief Gmsh file I/O
 namespace sfem::io::gmsh
 {
     /// @brief Read a Gmsh file

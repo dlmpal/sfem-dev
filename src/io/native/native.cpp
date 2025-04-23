@@ -1,7 +1,7 @@
 #include "native.hpp"
-#include "../parallel/mpi.hpp"
-#include "../base/timer.hpp"
-#include "../base/error.hpp"
+#include "../../parallel/mpi.hpp"
+#include "../../base/timer.hpp"
+#include "../../base/error.hpp"
 #include <numeric>
 #include <format>
 #include <fstream>

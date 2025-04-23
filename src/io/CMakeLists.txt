@@ -1,5 +1,6 @@
 #==============================================================================
-target_sources(sfem PRIVATE
-${CMAKE_CURRENT_SOURCE_DIR}/native.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/gmsh.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/vtk.cpp)
+add_subdirectory(native)
+#==============================================================================
+add_subdirectory(gmsh)
+#==============================================================================
+add_subdirectory(vtk)
