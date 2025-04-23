@@ -6,6 +6,7 @@
 
 namespace sfem
 {
+    //=============================================================================
     Application::Application(int argc, char *argv[],
                              const std::string &name,
                              const std::filesystem::path &log_filename)
