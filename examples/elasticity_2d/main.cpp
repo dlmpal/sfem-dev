@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     fem::petsc::solve(A, b, x, bc);
 
     // Save solution to VTK file
-    io::vtk::write(std::format("post/solution_{}.vtk", mpi::rank()), *phi, x.get_values());
+    io::vtk::write("post/solution_000", *phi, x.get_values());
 
     return 0;
 }
