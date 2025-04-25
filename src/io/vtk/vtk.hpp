@@ -16,10 +16,9 @@ namespace sfem::io::vtk
 
     /// @brief Create either a modern (.vtu) or legacy (.vtk) VTK file
     /// @param filename Output filename
-    /// @param cells Cells
-    /// @param cell_orders Order of each cell
+    /// @param cell_types VTK cell types
     /// @param cell_to_node Cell-to-node connectivity
-    /// @param points xyz coordinates of each node
+    /// @param points Point xyz coordinates
     /// @param cell_names Name for each set of cell values
     /// @param cell_values Cell values
     /// @param cell_names Name for each set of node values
@@ -27,8 +26,7 @@ namespace sfem::io::vtk
     /// @param type VTK file type (legacy for .vtk and xml for .vtu)
     /// @todo Document filename behaviour
     void write(std::filesystem::path filename,
-               const std::vector<mesh::Cell> &cells,
-               const std::vector<int> &cell_orders,
+               const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
                const std::vector<std::vector<real_t>> &cell_values = {},

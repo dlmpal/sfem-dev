@@ -1,4 +1,5 @@
 #include "vtk.hpp"
+#include "vtk_cell.hpp"
 #include "legacy.hpp"
 #include "xml.hpp"
 #include "../../parallel/mpi.hpp"
@@ -8,8 +9,7 @@ namespace sfem::io::vtk
 {
     //=============================================================================
     void write(std::filesystem::path filename,
-               const std::vector<mesh::Cell> &cells,
-               const std::vector<int> &cell_orders,
+               const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
                const std::vector<std::vector<real_t>> &cell_values,
@@ -21,8 +21,7 @@ namespace sfem::io::vtk
         if (type == VTKFileType::legacy)
         {
             legacy::write_vtk(filename.replace_extension(".vtk"),
-                              cells, cell_orders,
-                              cell_to_node, points,
+                              cell_types, cell_to_node, points,
                               cell_values, cell_names,
                               node_values, node_names);
         }
@@ -33,8 +32,7 @@ namespace sfem::io::vtk
 
             // Create the individual .vtu files (one for each process)
             xml::write_vtu(filename.parent_path() / filename.stem() / std::format("proc_{}.vtu", mpi::rank()),
-                           cells, cell_orders,
-                           cell_to_node, points,
+                           cell_types, cell_to_node, points,
                            cell_values, cell_names,
                            node_values, node_names);
 
@@ -60,15 +58,18 @@ namespace sfem::io::vtk
         // Quick access
         const auto topology = mesh.topology();
         int dim = topology->dim();
+        const auto &cell_to_node = *topology->connectivity(dim, 0);
 
-        // All cells are of order 1 (no FESpace involved)
-        std::vector<int> cell_orders(mesh.topology()->cells().size(), 1);
+        // All cells are of order 1 (no finite element space involved)
+        std::vector<int> cell_types(topology->n_entities(dim));
+        for (int i = 0; i < topology->n_entities(dim); i++)
+        {
+            cell_types[i] = cell_type_to_vtk(topology->entity(i, dim).type, 1);
+        }
 
         write(filename,
-              topology->cells(), cell_orders,
-              *topology->connectivity(dim, 0), mesh.points(),
-              {}, {}, {}, {},
-              type);
+              cell_types, cell_to_node, mesh.points(),
+              {}, {}, {}, {}, type);
     }
     //=============================================================================
     void write(const std::filesystem::path &filename,
@@ -92,15 +93,22 @@ namespace sfem::io::vtk
             }
         }
 
-        // All cells have the order of the space
-        std::vector<int> cell_orders(fe_space.mesh()->topology()->cells().size(),
-                                     fe_space.order());
+        // Quick access
+        const auto mesh = fe_space.mesh();
+        const auto topology = mesh->topology();
+        int dim = topology->dim();
+
+        // Cells types
+        // Cells have order equal to that of the finite element space
+        std::vector<int> cell_types(topology->n_entities(dim));
+        for (int i = 0; i < topology->n_entities(dim); i++)
+        {
+            cell_types[i] = cell_type_to_vtk(topology->entity(i, dim).type,
+                                             fe_space.order());
+        }
 
         write(filename,
-              fe_space.mesh()->topology()->cells(), cell_orders,
-              *fe_space.connectivity()[0], fe_space.dof_points(),
-              {}, {},
-              comp_values, fe_space.components(),
-              type);
+              cell_types, *fe_space.connectivity()[0], fe_space.dof_points(),
+              {}, {}, comp_values, fe_space.components(), type);
     }
 }

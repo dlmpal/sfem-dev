@@ -1,6 +1,5 @@
 #include "xml.hpp"
 #include "xml_utils.hpp"
-#include "utils.hpp"
 #include <fstream>
 
 namespace sfem::io::vtk::xml
@@ -19,8 +18,7 @@ namespace sfem::io::vtk::xml
     }
     //=============================================================================
     void write_vtu(const std::filesystem::path &filename,
-                   const std::vector<mesh::Cell> &cells,
-                   const std::vector<int> &cell_orders,
+                   const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
                    const std::vector<std::vector<real_t>> &cell_values,
@@ -110,10 +108,9 @@ namespace sfem::io::vtk::xml
                                     {"Name", "types"},
                                     {"Format", "ascii"}},
                                    indent++);
-                for (std::size_t i = 0; i < cells.size(); i++)
+                for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
-                    int cell_type = cell_type_to_vtk(cells[i].type, cell_orders[i]);
-                    file << indent_string(std::to_string(cell_type), indent) << "\n";
+                    file << indent_string(std::to_string(cell_types[i]), indent) << "\n";
                 }
                 indent--;
             }

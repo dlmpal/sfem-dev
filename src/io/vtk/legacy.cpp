@@ -1,8 +1,6 @@
 #include "legacy.hpp"
-#include "utils.hpp"
 #include "../../base/error.hpp"
 #include <map>
-#include <ranges>
 #include <format>
 #include <fstream>
 #include <filesystem>
@@ -11,8 +9,7 @@ namespace sfem::io::vtk::legacy
 {
     //=============================================================================
     void write_vtk(const std::filesystem::path &filename,
-                   const std::vector<mesh::Cell> &cells,
-                   const std::vector<int> &cell_orders,
+                   const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
                    const std::vector<std::vector<real_t>> &cell_values,
@@ -24,8 +21,7 @@ namespace sfem::io::vtk::legacy
         SFEM_CHECK_FILE_OPEN(file, filename);
 
         // Check that sizes match
-        SFEM_CHECK_SIZES(cells.size(), cell_to_node.n_primary());
-        SFEM_CHECK_SIZES(cells.size(), cell_orders.size());
+        SFEM_CHECK_SIZES(cell_types.size(), cell_to_node.n_primary());
         SFEM_CHECK_SIZES(cell_to_node.n_secondary(), points.size());
 
         // File header
@@ -57,10 +53,10 @@ namespace sfem::io::vtk::legacy
         }
 
         // Cell types
-        file << std::format("CELL_TYPES {}\n", cells.size());
-        for (const auto &[cell, order] : std::ranges::zip_view(cells, cell_orders))
+        file << std::format("CELL_TYPES {}\n", cell_to_node.n_primary());
+        for (int i = 0; i < cell_to_node.n_primary(); i++)
         {
-            file << vtk::cell_type_to_vtk(cell.type, order) << "\n";
+            file << cell_types[i] << "\n";
         }
 
         // Node values
@@ -84,10 +80,10 @@ namespace sfem::io::vtk::legacy
         if (cell_values.size() > 0)
         {
             SFEM_CHECK_SIZES(cell_values.size(), cell_names.size());
-            file << std::format("CELL_DATA {}\n", cells.size());
+            file << std::format("CELL_DATA {}\n", cell_to_node.n_primary());
             for (std::size_t i = 0; i < cell_values.size(); i++)
             {
-                SFEM_CHECK_SIZES(cells.size(), cell_values[i].size());
+                SFEM_CHECK_SIZES(cell_to_node.n_primary(), cell_values[i].size());
                 file << std::format("SCALARS {} float\n", cell_names[i]);
                 file << "LOOKUP_TABLE default\n";
                 for (std::size_t j = 0; j < cell_values[i].size(); j++)
