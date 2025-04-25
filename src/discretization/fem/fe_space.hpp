@@ -97,8 +97,6 @@ namespace sfem::fem
         /// @brief The cell-to-DoF and DoF-to-DoF connectivity.
         /// The former is required by this class to perform various operations,
         /// while the latter is used to contruct sparse matrices
-        /// @note The DoF-to-DoF connectivity should include diagonal terms
-        /// (i.e. each DoF should be connected to itself)
         std::array<std::shared_ptr<graph::Connectivity>, 2> connectivity_;
 
         /// @brief The DoF index map
