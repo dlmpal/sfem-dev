@@ -11,9 +11,8 @@ int main(int argc, char **argv)
     auto mesh = io::read_mesh(argv[1]);
     int dim = mesh->topology()->dim();
 
-    int order = 1;
-    int n_vars = 1;
-    auto phi = std::make_shared<fem::CGSpace>(mesh, n_vars, std::vector<std::string>{"T"});
+    int order = 3;
+    auto phi = std::make_shared<fem::CGSpace>(mesh, order, std::vector<std::string>{"T"});
 
     // LHS matrix
     auto A = fem::petsc::create_mat(*phi);
@@ -27,7 +26,7 @@ int main(int argc, char **argv)
 
         // Cell info
         auto cell = mesh->topology()->entity(i, dim);
-        auto cell_dof = phi->index_map()->local_to_global(phi->cell_dof(i));
+        auto cell_dof = phi->cell_dof(i);
         auto cell_points = phi->cell_dof_points(i);
 
         // Integration

@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
         // Cell info
         auto cell = mesh->topology()->entity(i, dim);
-        auto cell_dof = phi->index_map()->local_to_global(phi->cell_dof(i));
+        auto cell_dof = phi->cell_dof(i);
         auto cell_points = phi->cell_dof_points(i);
 
         // Integration
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
             // Facet info
             auto facet_points = phi->facet_dof_points(i);
             auto facet_normal = mesh::facet_normal(facet.type, facet_points).normalize();
-            auto facet_dof = phi->index_map()->local_to_global(phi->facet_dof(i));
+            auto facet_dof = phi->facet_dof(i);
 
             // Integration
             auto element = phi->element(facet.type);
