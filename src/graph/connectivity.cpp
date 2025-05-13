@@ -92,7 +92,7 @@ namespace sfem::graph
                             secondary);
         if (it == links_.end())
         {
-            SFEM_ERROR(std::format("{} is not a link of {}\n", primary, secondary));
+            SFEM_ERROR(std::format("{} is not a link of {}\n", secondary, primary));
             return -1;
         }
         return static_cast<int>(std::distance(links_.begin(), it));
