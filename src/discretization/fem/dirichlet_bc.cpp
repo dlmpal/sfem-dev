@@ -27,8 +27,7 @@ namespace sfem::fem
         if (boundary_dof_.contains(region_name) == false)
         {
             auto region_dof = fe_space_->boundary_dof(region_name);
-            boundary_dof_.insert({region_name,
-                                  fe_space_->index_map()->local_to_global(region_dof)});
+            boundary_dof_.insert({region_name, region_dof});
         }
         auto dof = boundary_dof_.at(region_name);
 
@@ -55,7 +54,7 @@ namespace sfem::fem
     std::pair<std::vector<int>, std::vector<real_t>>
     DirichletBC::get_dofs_values() const
     {
-        std::vector<int> idxs(data_.size());      ///< DoF global indices
+        std::vector<int> idxs(data_.size());      ///< DoF indices
         std::vector<real_t> values(data_.size()); ///< DoF values
         for (auto [i, kv] : std::views::enumerate(data_))
         {

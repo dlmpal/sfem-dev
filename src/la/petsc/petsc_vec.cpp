@@ -102,19 +102,19 @@ namespace sfem::la::petsc
         int error_code;
         if (block_size == 1)
         {
-            error_code = VecSetValues(vec_,
-                                      static_cast<int>(idxs.size()),
-                                      idxs.data(),
-                                      values.data(),
-                                      mode);
+            error_code = VecSetValuesLocal(vec_,
+                                           static_cast<int>(idxs.size()),
+                                           idxs.data(),
+                                           values.data(),
+                                           mode);
         }
         else
         {
-            error_code = VecSetValuesBlocked(vec_,
-                                             static_cast<int>(idxs.size()),
-                                             idxs.data(),
-                                             values.data(),
-                                             mode);
+            error_code = VecSetValuesBlockedLocal(vec_,
+                                                  static_cast<int>(idxs.size()),
+                                                  idxs.data(),
+                                                  values.data(),
+                                                  mode);
         }
         SFEM_CHECK_PETSC_ERROR(error_code);
     }

@@ -29,29 +29,41 @@ namespace sfem::la::petsc
                 LogLevel::error, location);
     }
     //=============================================================================
-    PetscVec create_vec(const IndexMap &im, int block_size)
+    PetscVec create_vec(const IndexMap &index_map, int block_size)
     {
         Vec vec;
         int err_code;
         if (block_size == 1)
         {
             err_code = VecCreateGhost(PETSC_COMM_WORLD,
-                                      im.n_owned(),
-                                      im.n_global(),
-                                      im.n_ghost(),
-                                      im.ghost_idxs().data(),
+                                      index_map.n_owned(),
+                                      index_map.n_global(),
+                                      index_map.n_ghost(),
+                                      index_map.ghost_idxs().data(),
                                       &vec);
         }
         else
         {
             err_code = VecCreateGhostBlock(PETSC_COMM_WORLD,
                                            block_size,
-                                           im.n_owned() * block_size,
-                                           im.n_global() * block_size,
-                                           im.n_ghost(),
-                                           im.ghost_idxs().data(),
+                                           index_map.n_owned() * block_size,
+                                           index_map.n_global() * block_size,
+                                           index_map.n_ghost(),
+                                           index_map.ghost_idxs().data(),
                                            &vec);
         }
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        ISLocalToGlobalMapping mapping;
+        err_code = ISLocalToGlobalMappingCreate(PETSC_COMM_WORLD,
+                                                block_size,
+                                                index_map.n_local(),
+                                                index_map.local_idxs().data(),
+                                                PETSC_COPY_VALUES,
+                                                &mapping);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        err_code = VecSetLocalToGlobalMapping(vec, mapping);
         SFEM_CHECK_PETSC_ERROR(err_code);
 
         return PetscVec(vec, true);
@@ -97,6 +109,27 @@ namespace sfem::la::petsc
         }
         SFEM_CHECK_PETSC_ERROR(err_code);
 
+        ISLocalToGlobalMapping row_mapping;
+        err_code = ISLocalToGlobalMappingCreate(PETSC_COMM_WORLD,
+                                                block_size,
+                                                row_index_map.n_local(),
+                                                row_index_map.local_idxs().data(),
+                                                PETSC_COPY_VALUES,
+                                                &row_mapping);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        ISLocalToGlobalMapping col_mapping;
+        err_code = ISLocalToGlobalMappingCreate(PETSC_COMM_WORLD,
+                                                block_size,
+                                                col_index_map.n_local(),
+                                                col_index_map.local_idxs().data(),
+                                                PETSC_COPY_VALUES,
+                                                &col_mapping);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        err_code = MatSetLocalToGlobalMapping(mat, row_mapping, col_mapping);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
         return PetscMat(mat, true);
     }
     //=============================================================================
@@ -107,10 +140,10 @@ namespace sfem::la::petsc
                              PetscVec &x)
     {
         x.set_values(idxs, values, true);
-        int error_code = MatZeroRowsColumns(A.mat(),
-                                            static_cast<int>(idxs.size()),
-                                            idxs.data(),
-                                            1.0, x.vec(), b.vec());
+        int error_code = MatZeroRowsColumnsLocal(A.mat(),
+                                                 static_cast<int>(idxs.size()),
+                                                 idxs.data(),
+                                                 1.0, x.vec(), b.vec());
         SFEM_CHECK_PETSC_ERROR(error_code);
         x.assemble();
     }

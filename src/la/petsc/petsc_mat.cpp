@@ -85,23 +85,23 @@ namespace sfem::la::petsc
         int error_code;
         if (block_size == 1)
         {
-            error_code = MatSetValues(mat_,
-                                      static_cast<int>(row_idxs.size()),
-                                      row_idxs.data(),
-                                      static_cast<int>(col_idxs.size()),
-                                      col_idxs.data(),
-                                      values.data(),
-                                      ADD_VALUES);
+            error_code = MatSetValuesLocal(mat_,
+                                           static_cast<int>(row_idxs.size()),
+                                           row_idxs.data(),
+                                           static_cast<int>(col_idxs.size()),
+                                           col_idxs.data(),
+                                           values.data(),
+                                           ADD_VALUES);
         }
         else
         {
-            error_code = MatSetValuesBlocked(mat_,
-                                             static_cast<int>(row_idxs.size()),
-                                             row_idxs.data(),
-                                             static_cast<int>(col_idxs.size()),
-                                             col_idxs.data(),
-                                             values.data(),
-                                             ADD_VALUES);
+            error_code = MatSetValuesBlockedLocal(mat_,
+                                                  static_cast<int>(row_idxs.size()),
+                                                  row_idxs.data(),
+                                                  static_cast<int>(col_idxs.size()),
+                                                  col_idxs.data(),
+                                                  values.data(),
+                                                  ADD_VALUES);
         }
         SFEM_CHECK_PETSC_ERROR(error_code);
     }
