@@ -99,7 +99,7 @@ namespace sfem::fem
                                                                                                    std::move(cell_dof_array)));
 
         // Compute the DoF-to-DoF connectivity
-        connectivity_[1] = std::make_shared<graph::Connectivity>(connectivity_[0]->invert().primary_to_primary());
+        connectivity_[1] = std::make_shared<graph::Connectivity>(connectivity_[0]->invert().primary_to_primary(1, true));
 
         // Create the element collection
         for (int cell_type = 0; cell_type < static_cast<int>(mesh::CellType::n_cell_types); cell_type++)

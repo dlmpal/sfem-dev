@@ -21,9 +21,6 @@ namespace sfem::la
             // Row "i" is locally owned
             if (owner_i == proc_rank)
             {
-                // Include diagonal entry (i.e. row i, column i)
-                diag_nnz[i]++;
-
                 // Loop over this row's columns
                 for (int j : row_to_col.links(i))
                 {
