@@ -46,6 +46,9 @@ namespace sfem
         /// @brief Get the ghost indices
         std::vector<int> ghost_idxs() const;
 
+        /// @brief Get the local indices (owned + ghost)
+        std::vector<int> local_idxs() const;
+
         /// @brief Get the owner process for each ghost index
         std::vector<int> ghost_owners() const;
 

@@ -84,6 +84,11 @@ namespace sfem
         return ghosts_idxs;
     }
     //=============================================================================
+    std::vector<int> IndexMap::local_idxs() const
+    {
+        return local_to_global_;
+    }
+    //=============================================================================
     std::vector<int> IndexMap::ghost_owners() const
     {
         return ghost_owners_;
