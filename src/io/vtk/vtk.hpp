@@ -19,28 +19,28 @@ namespace sfem::io::vtk
     /// @param cell_types VTK cell types
     /// @param cell_to_node Cell-to-node connectivity
     /// @param points Point xyz coordinates
-    /// @param cell_names Name for each set of cell values
-    /// @param cell_values Cell values
-    /// @param cell_names Name for each set of node values
-    /// @param node_values Node values
+    /// @param cell_data Cell data
+    /// @param node_data Node data (i.e. point data)
     /// @param type VTK file type (legacy for .vtk and xml for .vtu)
     /// @todo Document filename behaviour
     void write(std::filesystem::path filename,
                const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
-               const std::vector<std::vector<real_t>> &cell_values = {},
-               const std::vector<std::string> &cell_names = {},
-               const std::vector<std::vector<real_t>> &node_values = {},
-               const std::vector<std::string> &node_names = {},
+               const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
+               const std::vector<std::pair<std::string, std::span<real_t>>> &node_data,
                VTKFileType type = VTKFileType::xml);
 
     /// @brief Export a mesh to VTK
     /// @param filename Output filename
     /// @param mesh Mesh
+    /// @param cell_data Cell data
+    /// @param node_data Node data (i.e. point data)
     /// @param type VTK file type
     void write(std::filesystem::path filename,
                const mesh::Mesh &mesh,
+               const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data = {},
+               const std::vector<std::pair<std::string, std::span<real_t>>> &node_data = {},
                VTKFileType type = VTKFileType::xml);
 
     /// @brief Export a finite element space (and its values) to VTK

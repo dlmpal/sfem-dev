@@ -21,10 +21,8 @@ namespace sfem::io::vtk::xml
                    const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
-                   const std::vector<std::vector<real_t>> &cell_values,
-                   const std::vector<std::string> &cell_names,
-                   const std::vector<std::vector<real_t>> &node_values,
-                   const std::vector<std::string> &node_names)
+                   const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
+                   const std::vector<std::pair<std::string, std::span<real_t>>> &node_data)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -33,29 +31,29 @@ namespace sfem::io::vtk::xml
         int indent = 0;
 
         // Root element
-        Element root(file, "VTKFile",
-                     {{"type", "UnstructuredGrid"},
-                      {"version", "0.1"},
-                      {"byte_order", "BigEndian"}},
-                     indent++);
+        Element root_elem(file, "VTKFile",
+                          {{"type", "UnstructuredGrid"},
+                           {"version", "0.1"},
+                           {"byte_order", "BigEndian"}},
+                          indent++);
 
         // File type element
-        Element type(file, "UnstructuredGrid", {}, indent++);
+        Element type_elem(file, "UnstructuredGrid", {}, indent++);
 
         // Piece element
-        Element piece(file, "Piece",
-                      {{"NumberOfPoints", std::to_string(cell_to_node.n_secondary())},
-                       {"NumberOfCells", std::to_string(cell_to_node.n_primary())}},
-                      indent++);
+        Element piece_elem(file, "Piece",
+                           {{"NumberOfPoints", std::to_string(cell_to_node.n_secondary())},
+                            {"NumberOfCells", std::to_string(cell_to_node.n_primary())}},
+                           indent++);
 
         // Points
         {
             Element points_elem(file, "Points", {}, indent++);
-            Element data_array(file, "DataArray",
-                               {{"type", real_t_str()},
-                                {"NumberOfComponents", "3"},
-                                {"Format", "ascii"}},
-                               indent++);
+            Element data_array_elem(file, "DataArray",
+                                    {{"type", real_t_str()},
+                                     {"NumberOfComponents", "3"},
+                                     {"Format", "ascii"}},
+                                    indent++);
             for (const auto &point : points)
             {
                 file << indent_string(std::format("{} {} {}\n", point[0], point[1], point[2]), indent);
@@ -69,11 +67,11 @@ namespace sfem::io::vtk::xml
 
             // Cell-to-node connectivity array
             {
-                Element data_array(file, "DataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "connectivity"},
-                                    {"Format", "ascii"}},
-                                   indent++);
+                Element data_array_elem(file, "DataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "connectivity"},
+                                         {"Format", "ascii"}},
+                                        indent++);
                 for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
                     file << indent_string("", indent);
@@ -88,11 +86,11 @@ namespace sfem::io::vtk::xml
 
             // Cell-to-node connectivity offsets
             {
-                Element data_array(file, "DataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "offsets"},
-                                    {"Format", "ascii"}},
-                                   indent++);
+                Element data_array_elem(file, "DataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "offsets"},
+                                         {"Format", "ascii"}},
+                                        indent++);
                 for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
                     int offset = cell_to_node.offset(i) + cell_to_node.n_links(i);
@@ -103,11 +101,11 @@ namespace sfem::io::vtk::xml
 
             // Cell types
             {
-                Element data_array(file, "DataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "types"},
-                                    {"Format", "ascii"}},
-                                   indent++);
+                Element data_array_elem(file, "DataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "types"},
+                                         {"Format", "ascii"}},
+                                        indent++);
                 for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
                     file << indent_string(std::to_string(cell_types[i]), indent) << "\n";
@@ -119,16 +117,16 @@ namespace sfem::io::vtk::xml
 
         // Cell data
         {
-            Element cell_data(file, "CellData", {}, indent++);
-            for (std::size_t i = 0; i < cell_values.size(); i++)
+            Element cell_data_elem(file, "CellData", {}, indent++);
+            for (const auto &[name, data] : cell_data)
             {
-                Element data_array(file, "DataArray",
-                                   {{"type", real_t_str()},
-                                    {"Name", cell_names[i]}},
-                                   indent++);
-                for (std::size_t j = 0; j < cell_values[i].size(); j++)
+                Element data_array_elem(file, "DataArray",
+                                        {{"type", real_t_str()},
+                                         {"Name", name}},
+                                        indent++);
+                for (std::size_t i = 0; i < data.size(); i++)
                 {
-                    file << indent_string(std::format("{}\n", cell_values[i][j]), indent);
+                    file << indent_string(std::format("{}\n", data[i]), indent);
                 }
                 indent--;
             }
@@ -137,16 +135,16 @@ namespace sfem::io::vtk::xml
 
         // Point data
         {
-            Element point_data(file, "PointData", {}, indent++);
-            for (std::size_t i = 0; i < node_values.size(); i++)
+            Element point_data_elem(file, "PointData", {}, indent++);
+            for (const auto &[name, data] : node_data)
             {
-                Element data_array(file, "DataArray",
-                                   {{"type", real_t_str()},
-                                    {"Name", node_names[i]}},
-                                   indent++);
-                for (std::size_t j = 0; j < node_values[i].size(); j++)
+                Element data_array_elem(file, "DataArray",
+                                        {{"type", real_t_str()},
+                                         {"Name", name}},
+                                        indent++);
+                for (std::size_t i = 0; i < data.size(); i++)
                 {
-                    file << indent_string(std::format("{}\n", node_values[i][j]), indent);
+                    file << indent_string(std::format("{}\n", data[i]), indent);
                 }
                 indent--;
             }
@@ -156,8 +154,8 @@ namespace sfem::io::vtk::xml
     //=============================================================================
     void write_pvtu(const std::filesystem::path &filename,
                     const std::vector<std::filesystem::path> &sources,
-                    const std::vector<std::string> &cell_names,
-                    const std::vector<std::string> &node_names)
+                    const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
+                    const std::vector<std::pair<std::string, std::span<real_t>>> &node_data)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -166,65 +164,65 @@ namespace sfem::io::vtk::xml
         int indent = 0;
 
         // Root element
-        Element root(file, "VTKFile",
-                     {{"type", "PUnstructuredGrid"},
-                      {"version", "0.1"},
-                      {"byte_order", "BigEndian"}},
-                     indent++);
+        Element root_elem(file, "VTKFile",
+                          {{"type", "PUnstructuredGrid"},
+                           {"version", "0.1"},
+                           {"byte_order", "BigEndian"}},
+                          indent++);
 
         // File type element
-        Element type(file, "PUnstructuredGrid",
-                     {{"GhostLevel", "0"}}, indent++);
+        Element type_elem(file, "PUnstructuredGrid",
+                          {{"GhostLevel", "0"}}, indent++);
 
         // Points
         {
-            Element points(file, "PPoints", {}, indent++);
-            Element data_array(file, "PDataArray",
-                               {{"type", real_t_str()},
-                                {"NumberOfComponents", "3"},
-                                {"Format", "ascii"}},
-                               indent--);
+            Element points_elem(file, "PPoints", {}, indent++);
+            Element data_array_elem(file, "PDataArray",
+                                    {{"type", real_t_str()},
+                                     {"NumberOfComponents", "3"},
+                                     {"Format", "ascii"}},
+                                    indent--);
         }
 
         // Cells
         {
-            Element cells(file, "PCells", {}, indent++);
+            Element cells_elem(file, "PCells", {}, indent++);
 
             // Cell-to-node connectivity array
             {
-                Element data_array(file, "PDataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "connectivity"},
-                                    {"Format", "ascii"}},
-                                   indent);
+                Element data_array_elem(file, "PDataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "connectivity"},
+                                         {"Format", "ascii"}},
+                                        indent);
             }
 
             // Cell-to-node connectivity offsets
             {
-                Element data_array(file, "PDataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "offsets"},
-                                    {"Format", "ascii"}},
-                                   indent);
+                Element data_array_elem(file, "PDataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "offsets"},
+                                         {"Format", "ascii"}},
+                                        indent);
             }
 
             // Cell types
             {
-                Element data_array(file, "PDataArray",
-                                   {{"type", "Int32"},
-                                    {"Name", "types"},
-                                    {"Format", "ascii"}},
-                                   indent--);
+                Element data_array_elem(file, "PDataArray",
+                                        {{"type", "Int32"},
+                                         {"Name", "types"},
+                                         {"Format", "ascii"}},
+                                        indent--);
             }
         }
 
         // Cell data
         {
-            Element cell_data(file, "PCellData", {}, indent++);
-            for (std::size_t i = 0; i < cell_names.size(); i++)
+            Element cell_data_elem(file, "PCellData", {}, indent++);
+            for (const auto &[name, _] : cell_data)
             {
                 auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
-                                                            {"Name", cell_names[i]}});
+                                                            {"Name", name}});
                 file << indent_string(elem, indent) << "\n";
             }
             indent--;
@@ -232,11 +230,11 @@ namespace sfem::io::vtk::xml
 
         // Point data
         {
-            Element cell_data(file, "PPointData", {}, indent++);
-            for (std::size_t i = 0; i < node_names.size(); i++)
+            Element point_data_elem(file, "PPointData", {}, indent++);
+            for (const auto &[name, _] : node_data)
             {
                 auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
-                                                            {"Name", node_names[i]}});
+                                                            {"Name", name}});
                 file << indent_string(elem, indent) << "\n";
             }
             indent--;
