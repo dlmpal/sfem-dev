@@ -95,9 +95,9 @@ def add_petsc(petsc_dir: str, petsc_arch: str,
     '''
     Fetch and build PETSc.
     '''
-    # fetch_dependency_git("https://gitlab.com/petsc/petsc.git",
-    #                     os.path.dirname(petsc_dir),
-    #                     "release")
+    fetch_dependency_git("https://gitlab.com/petsc/petsc.git",
+                         os.path.dirname(petsc_dir),
+                         "release")
 
     if with_petsc4py:
         add_petsc4py_deps()
@@ -129,9 +129,9 @@ def add_slepc(slepc_dir: str, petsc_dir: str,
     '''
     Fetch and build SLEPc.
     '''
-    # fetch_dependency_git("https://gitlab.com/slepc/slepc.git",
-    #                     os.path.dirname(slepc_dir),
-    #                     "release")
+    fetch_dependency_git("https://gitlab.com/slepc/slepc.git",
+                         os.path.dirname(slepc_dir),
+                         "release")
 
     export_vars = {"SLEPC_DIR": slepc_dir,
                    "PETSC_DIR": petsc_dir,
@@ -170,7 +170,7 @@ def add_metis(metis_dir: str, c_compiler: str):
 
     # Fetch and build GKlib
     gklib_git_repo = "https://github.com/KarypisLab/GKlib.git"
-    # fetch_dependency_git(gklib_git_repo, metis_dir)
+    fetch_dependency_git(gklib_git_repo, metis_dir)
     build_dependecy(config_cmd=f"make config prefix={metis_dir}",
                     build_cmd=f"make -j {n_jobs_make()} cc={c_compiler}",
                     install_cmd="make install",
@@ -178,7 +178,7 @@ def add_metis(metis_dir: str, c_compiler: str):
 
     # Fetch and build METIS
     metis_git_repo = "https://github.com/KarypisLab/METIS.git"
-    # fetch_dependency_git(metis_git_repo, metis_dir)
+    fetch_dependency_git(metis_git_repo, metis_dir)
     build_dependecy(config_cmd=f"make config shared=1 prefix={metis_dir}",
                     build_cmd=f"make -j {n_jobs_make()} cc={c_compiler}",
                     install_cmd="make install",
@@ -313,7 +313,7 @@ args = parser.parse_args()
 # ==============================================================================
 # Check whether --download-all or --build-all are enabled
 if args.download_all:
-    # args.download_openmpi = True
+    args.download_openmpi = True
     args.download_petsc = True
     args.download_slepc = True
     args.download_metis = True
