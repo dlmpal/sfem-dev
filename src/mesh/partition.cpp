@@ -4,7 +4,6 @@
 #include "utils/edge_utils.hpp"
 #include "../parallel/mpi.hpp"
 #include "../base/error.hpp"
-#include <mpi.h>
 #include <numeric>
 #include <ranges>
 
@@ -147,11 +146,9 @@ namespace sfem::mesh
         // are in the following global range:
         // [offset, n_owned + offset)
         std::vector<int> send_buf(mpi::n_procs(), n_owned);
-        std::vector<int> recv_buf(mpi::n_procs(), 0);
-
-        MPI_Alltoall(send_buf.data(), 1, MPI_INT,
-                     recv_buf.data(), 1, MPI_INT,
-                     MPI_COMM_WORLD);
+        std::vector<int> send_dest(mpi::n_procs(), 0);
+        std::iota(send_dest.begin(), send_dest.end(), 0);
+        auto recv_buf = std::get<0>(mpi::send_to_dest<int>(send_buf, send_dest));
 
         int offset = std::accumulate(recv_buf.cbegin(),
                                      recv_buf.cbegin() + mpi::rank(), 0);

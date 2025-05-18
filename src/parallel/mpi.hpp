@@ -4,12 +4,7 @@
 #include <span>
 #include <source_location>
 
-#define SFEM_CHECK_MPI_ERROR(error_code)  \
-    {                                     \
-        if (error_code != MPI_SUCCESS)    \
-            sfem::mpi::error(error_code); \
-    }
-
+/// @brief MPI-related functionality
 namespace sfem::mpi
 {
     // Convenience functions for initializing and finalizing MPI
@@ -28,8 +23,20 @@ namespace sfem::mpi
     /// @brief Abort the application
     void abort(int error = -1);
 
-    /// @brief Handle a nonzero code returned by an MPI function
-    void error(int code, std::source_location location = std::source_location::current());
+    enum class ReduceOperation
+    {
+        min = 0,
+        max = 1,
+        sum = 2,
+        prod = 3
+    };
+
+    /// @brief Perform a reduce operation across all processes
+    /// @param value This process' value
+    /// @param op Operation to be performed
+    /// @return Reduced value
+    template <typename T>
+    T reduce(T value, ReduceOperation op);
 
     /// @brief Send data from all processes to all processes
     /// @param data Data

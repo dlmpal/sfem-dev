@@ -45,6 +45,12 @@ target_include_directories(sfem
 #==============================================================================
 # Third-party dependencies
 
+## MPI
+option(WITH_MPI ON)
+if(${WITH_MPI})
+        target_compile_definitions(sfem PUBLIC SFEM_HAS_MPI)
+endif()
+
 ## PETSc
 set(SFEM_HAS_PETSC TRUE)
 if(DEFINED PETSC_DIR AND DEFINED PETSC_ARCH)

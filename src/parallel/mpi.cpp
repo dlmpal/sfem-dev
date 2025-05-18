@@ -1,13 +1,22 @@
 #include "mpi.hpp"
 #include "../base/error.hpp"
 #include "../base/config.hpp"
-#include <mpi.h>
 #include <vector>
 #include <numeric>
 #include <format>
 
+#ifdef SFEM_HAS_MPI
+#include <mpi.h>
+#define SFEM_CHECK_MPI_ERROR(error_code)                                   \
+    {                                                                      \
+        if (error_code != MPI_SUCCESS)                                     \
+            sfem::mpi::error(error_code, std::source_location::current()); \
+    }
+#endif // SFEM_HAS_MPI
+
 namespace sfem::mpi
 {
+#ifdef SFEM_HAS_MPI
     //=============================================================================
     void initialize(int argc, char *argv[])
     {
@@ -70,11 +79,36 @@ namespace sfem::mpi
         }
         return mpi_type;
     }
-    // Explicit instantiations
-    // int
-    template MPI_Datatype to_mpi_datatype<int>();
-    // real_t
-    template MPI_Datatype to_mpi_datatype<real_t>();
+    //=============================================================================
+    MPI_Op to_mpi_operation(ReduceOperation op)
+    {
+        switch (op)
+        {
+        case ReduceOperation::min:
+            return MPI_MIN;
+        case ReduceOperation::max:
+            return MPI_MAX;
+        case ReduceOperation::sum:
+            return MPI_SUM;
+        case ReduceOperation::prod:
+            return MPI_PROD;
+        default:
+            SFEM_ERROR(std::format("Invalid MPI reduce operation: {}\n",
+                                   static_cast<int>(op)));
+            return MPI_OP_NULL;
+        }
+    }
+    //=============================================================================
+    template <typename T>
+    T reduce(T value, ReduceOperation op)
+    {
+        T result;
+        MPI_Allreduce(&value, &result, 1,
+                      to_mpi_datatype<T>(),
+                      to_mpi_operation(op),
+                      MPI_COMM_WORLD);
+        return result;
+    }
     //=============================================================================
     template <typename T>
     std::tuple<std::vector<T>, std::vector<int>, std::vector<int>>
@@ -120,20 +154,13 @@ namespace sfem::mpi
 
         return {recv_buffer, recv_counts, recv_displs};
     }
-    // Explicit instantiations
-    // int
-    template std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
-        send_to_dest<int>(std::span<const int>, std::span<const int>);
-    // real_t
-    template std::tuple<std::vector<real_t>, std::vector<int>, std::vector<int>>
-        send_to_dest<real_t>(std::span<const real_t>, std::span<const int>);
     //=============================================================================
     template <typename T>
     std::vector<T> distribute(const std::span<const T> data, const std::span<const int> dest)
     {
         SFEM_CHECK_SIZES(data.size(), dest.size());
 
-        std ::vector<int> send_counts;
+        std::vector<int> send_counts;
         std::vector<int> send_displs;
 
         if (rank() == root())
@@ -166,11 +193,65 @@ namespace sfem::mpi
 
         return recv_buffer;
     }
+#else
+    //=============================================================================
+    void initialize(int argc, char *argv[])
+    {
+    }
+    //=============================================================================
+    void finalize()
+    {
+    }
+    //=============================================================================
+    int root()
+    {
+        return 0;
+    }
+    //=============================================================================
+    int rank()
+    {
+        return 0;
+    }
+    //=============================================================================
+    int n_procs()
+    {
+        return 1;
+    }
+    //=============================================================================
+    void abort(int error)
+    {
+        std::exit(error);
+    }
+    //=============================================================================
+    template <typename T>
+    T reduce(T value, ReduceOperation op)
+    {
+        return value;
+    }
+    //=============================================================================
+    template <typename T>
+    std::tuple<std::vector<T>, std::vector<int>, std::vector<int>>
+    send_to_dest(const std::span<const T> data, const std::span<const int> dest)
+    {
+        return {{data.cbegin(), data.cend()}, {data.size()}, {0}};
+    }
+    //=============================================================================
+    template <typename T>
+    std::vector<T> distribute(const std::span<const T> data, const std::span<const int> dest)
+    {
+        return {data.cbegin(), data.cend()};
+    }
+#endif // SFEM_HAS_MPI
+    //=============================================================================
     // Explicit instantiations
-    // int
-    template std::vector<int> distribute<int>(const std::span<const int> data,
-                                              const std::span<const int> dest);
-    // real_t
-    template std::vector<real_t> distribute<real_t>(const std::span<const real_t> data,
-                                                    const std::span<const int> dest);
+    template int reduce(int, ReduceOperation);
+    template real_t reduce(real_t, ReduceOperation);
+    template std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+        send_to_dest<int>(std::span<const int>, std::span<const int>);
+    template std::tuple<std::vector<real_t>, std::vector<int>, std::vector<int>>
+        send_to_dest<real_t>(std::span<const real_t>, std::span<const int>);
+    template std::vector<int>
+    distribute<int>(const std::span<const int>, const std::span<const int>);
+    template std::vector<real_t>
+    distribute<real_t>(const std::span<const real_t>, const std::span<const int>);
 }

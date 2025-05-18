@@ -36,6 +36,10 @@ def fetch_dependency_url(url: str, dest_dir: str):
     os.remove(tmp_filename)
 
 
+def n_jobs_make():
+    return os.cpu_count()
+
+
 def build_dependecy(config_cmd: str = "", build_cmd: str = "",
                     install_cmd: str = "", test_cmd: str = "",
                     working_dir: str = None):
@@ -44,33 +48,6 @@ def build_dependecy(config_cmd: str = "", build_cmd: str = "",
 
     for cmd in commands:
         run_shell_cmd(cmd, cwd=working_dir)
-
-
-def add_metis(metis_dir: str, c_compiler: str):
-    '''
-    Fetch and build METIS, and its dependency GKlib.
-    '''
-    # Create the sub-directories for GKlib and METIS
-    metis_subdirs = {"gklib": os.path.join(metis_dir, "GKlib"),
-                     "metis": os.path.join(metis_dir, "METIS")}
-    for k, v in metis_subdirs.items():
-        os.makedirs(v, exist_ok=True)
-
-    # Fetch and build GKlib
-    gklib_git_repo = "https://github.com/KarypisLab/GKlib.git"
-    fetch_dependency_git(gklib_git_repo, metis_dir)
-    build_dependecy(config_cmd=f"make config prefix={metis_dir}",
-                    build_cmd=f"make cc={c_compiler}",
-                    install_cmd="make install",
-                    working_dir=metis_subdirs["gklib"])
-
-    # Fetch and build METIS
-    metis_git_repo = "https://github.com/KarypisLab/METIS.git"
-    fetch_dependency_git(metis_git_repo, metis_dir)
-    build_dependecy(config_cmd=f"make config shared=1 prefix={metis_dir}",
-                    build_cmd=f"make cc={c_compiler}",
-                    install_cmd="make install",
-                    working_dir=metis_subdirs["metis"])
 
 
 def get_openmpi_url_and_version():
@@ -87,7 +64,7 @@ def add_openmpi(openmpi_dir: str, c_compiler: str, cxx_compiler: str):
     fetch_dependency_url(url, openmpi_dir)
     openmpi_config_cmd = f"./configure --prefix={openmpi_dir} --enable-mpi-fortran=no "
     openmpi_config_cmd += f"CC={c_compiler} CXX={cxx_compiler} CFLAGS=-O3 CXXCFLAGS=-O3"
-    openmpi_build_cmd = f"make"
+    openmpi_build_cmd = f"make -j {n_jobs_make()}"
     openmpi_install_cmd = f"make install"
     build_dependecy(config_cmd=openmpi_config_cmd,
                     build_cmd=openmpi_build_cmd,
@@ -113,28 +90,29 @@ def add_petsc4py_deps():
 
 
 def add_petsc(petsc_dir: str, petsc_arch: str,
-              mpi_cxx_compiler: str, mpi_c_compiler: str,
-              with_debugging: bool, with_petsc4py: bool):
+              cxx_compiler: str, c_compiler: str,
+              with_debugging: bool, with_petsc4py: bool, with_mpi: bool):
     '''
     Fetch and build PETSc.
     '''
-    fetch_dependency_git("https://gitlab.com/petsc/petsc.git",
-                         os.path.dirname(petsc_dir),
-                         "release")
+    # fetch_dependency_git("https://gitlab.com/petsc/petsc.git",
+    #                     os.path.dirname(petsc_dir),
+    #                     "release")
 
     if with_petsc4py:
         add_petsc4py_deps()
 
     petsc_config_cmd = f"./configure --with-fc=0 PETSC_ARCH={petsc_arch} "
-    petsc_config_cmd += f"--with-cc={mpi_c_compiler} --with-cxx={mpi_cxx_compiler} "
+    petsc_config_cmd += f"--with-cc={c_compiler} --with-cxx={cxx_compiler} "
+    petsc_config_cmd += f"--with-mpi={int(with_mpi)} "
     if not with_debugging:
         petsc_config_cmd += "COPTFLAGS='-O3' CXXFLAGS='-O3' "
     petsc_config_cmd += f"--with-debugging={int(with_debugging)} "
     petsc_config_cmd += f"--with-petsc4py={int(with_petsc4py)} "
     petsc_config_cmd += "--download-f2cblaslapack"
 
-    petsc_build_cmd = f"make PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} all"
-    petsc_test_cmd = f"make PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} check"
+    petsc_build_cmd = f"make -j {n_jobs_make()} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} all"
+    petsc_test_cmd = f"make -j {n_jobs_make()} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} check"
 
     build_dependecy(config_cmd=petsc_config_cmd,
                     build_cmd=petsc_build_cmd,
@@ -151,9 +129,9 @@ def add_slepc(slepc_dir: str, petsc_dir: str,
     '''
     Fetch and build SLEPc.
     '''
-    fetch_dependency_git("https://gitlab.com/slepc/slepc.git",
-                         os.path.dirname(slepc_dir),
-                         "release")
+    # fetch_dependency_git("https://gitlab.com/slepc/slepc.git",
+    #                     os.path.dirname(slepc_dir),
+    #                     "release")
 
     export_vars = {"SLEPC_DIR": slepc_dir,
                    "PETSC_DIR": petsc_dir,
@@ -166,8 +144,8 @@ def add_slepc(slepc_dir: str, petsc_dir: str,
         slepc_config_cmd += f"export {k}={v};"
 
     slepc_config_cmd += f"./configure --with-slepc4py={int(with_slepc4py)}"
-    slepc_build_cmd = f"make SLEPC_DIR={slepc_dir} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} all"
-    slepc_test_cmd = f"make SLEPC_DIR={slepc_dir} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} check"
+    slepc_build_cmd = f"make -j {n_jobs_make()} SLEPC_DIR={slepc_dir} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} all"
+    slepc_test_cmd = f"make -j {n_jobs_make()} SLEPC_DIR={slepc_dir} PETSC_DIR={petsc_dir} PETSC_ARCH={petsc_arch} check"
 
     build_dependecy(config_cmd=slepc_config_cmd,
                     build_cmd=slepc_build_cmd,
@@ -177,6 +155,34 @@ def add_slepc(slepc_dir: str, petsc_dir: str,
 
 def get_slepc4py_dir(slepc_dir: str, petsc_arch: str) -> str:
     return os.path.join(slepc_dir, petsc_arch, "lib")
+
+
+def add_metis(metis_dir: str, c_compiler: str):
+    '''
+    Fetch and build METIS, and its dependency GKlib.
+    TODO CMake compatibility
+    '''
+    # Create the sub-directories for GKlib and METIS
+    metis_subdirs = {"gklib": os.path.join(metis_dir, "GKlib"),
+                     "metis": os.path.join(metis_dir, "METIS")}
+    for k, v in metis_subdirs.items():
+        os.makedirs(v, exist_ok=True)
+
+    # Fetch and build GKlib
+    gklib_git_repo = "https://github.com/KarypisLab/GKlib.git"
+    # fetch_dependency_git(gklib_git_repo, metis_dir)
+    build_dependecy(config_cmd=f"make config prefix={metis_dir}",
+                    build_cmd=f"make -j {n_jobs_make()} cc={c_compiler}",
+                    install_cmd="make install",
+                    working_dir=metis_subdirs["gklib"])
+
+    # Fetch and build METIS
+    metis_git_repo = "https://github.com/KarypisLab/METIS.git"
+    # fetch_dependency_git(metis_git_repo, metis_dir)
+    build_dependecy(config_cmd=f"make config shared=1 prefix={metis_dir}",
+                    build_cmd=f"make -j {n_jobs_make()} cc={c_compiler}",
+                    install_cmd="make install",
+                    working_dir=metis_subdirs["metis"])
 
 
 def add_nanobind():
@@ -219,6 +225,16 @@ parser.add_argument('--build-dir', type=str, metavar="",
                     default=os.path.join(os.getcwd(), "build"),
                     help='The build directory for SFEM')
 
+# C compiler
+parser.add_argument('--c-compiler', type=str,
+                    metavar="", default='cc',
+                    help='C compiler. Ignored if --with-mpi is provided.')
+
+# C++ compiler
+parser.add_argument('--cxx-compiler', type=str,
+                    metavar="", default='c++',
+                    help='C++ compiler. Ignored if --with-mpi is provided.')
+
 # Floating-point arithmetic specification
 parser.add_argument('--floating-point-spec', type=FloatingPointPrecision,
                     metavar="", default=FloatingPointPrecision.double,
@@ -250,13 +266,16 @@ parser.add_argument('--download-all', action='store_true',
                     help="Download all dependencies")
 
 # MPI
+parser.add_argument('--with-mpi', action='store_true',
+                    help="Indicates that the C/C++ compilers are MPI-wrapped.")
+
 parser.add_argument('--mpi-c-compiler', type=str,
                     metavar="", default='mpicc',
-                    help='The path of the MPI C compiler')
+                    help='MPI C compiler')
 
 parser.add_argument('--mpi-cxx-compiler', type=str,
                     metavar="", default='mpic++',
-                    help='The path of the MPI C++ compiler')
+                    help='MPI C++ compiler')
 
 parser.add_argument('--download-openmpi', action='store_true',
                     help="Download and build OpenMPI")
@@ -294,7 +313,7 @@ args = parser.parse_args()
 # ==============================================================================
 # Check whether --download-all or --build-all are enabled
 if args.download_all:
-    args.download_openmpi = True
+    # args.download_openmpi = True
     args.download_petsc = True
     args.download_slepc = True
     args.download_metis = True
@@ -302,9 +321,6 @@ if args.download_all:
 if args.build_all:
     args.with_pysfem = True
     args.with_apps = True
-# ==============================================================================
-# Number of job for make to run
-n_jobs_make = os.cpu_count()
 # ==============================================================================
 # Remove previous cmake/build/install folders
 remove_prev_config = f"rm -rf cmake"
@@ -317,18 +333,25 @@ remove_prev_install = f"rm -rf {args.install_dir}"
 run_shell_cmd(remove_prev_install)
 # ==============================================================================
 # Handle third-party dependencies
-os.makedirs(args.third_party_dir, exist_ok=True)
 # TODO: Check that it does not exist inside cwd
 # Perhaps not needed to be created directly
+os.makedirs(args.third_party_dir, exist_ok=True)
 
 # OpenMPI
 if args.download_openmpi:
     openmpi_dir = os.path.join(args.third_party_dir, "openmpi")
-    add_openmpi(openmpi_dir, "cc", "c++")
+    add_openmpi(openmpi_dir, args.c_compiler, args.cxx_compiler)
+    args.with_mpi = True
     args.mpi_c_compiler = os.path.join(openmpi_dir, "bin", "mpicc")
     args.mpi_cxx_compiler = os.path.join(openmpi_dir, "bin", "mpic++")
     args.download_petsc = True
     args.download_slepc = True
+
+# If MPI is enabled (either manually or downloaded)
+# the C/C++ compilers are set to their MPI-wrapped counterparts
+if args.with_mpi is True:
+    args.c_compiler = args.mpi_c_compiler
+    args.cxx_compiler = args.mpi_cxx_compiler
 
 # PETSc
 if args.download_petsc:
@@ -336,8 +359,9 @@ if args.download_petsc:
     args.petsc_arch = "arch-sfem"
     os.makedirs(args.petsc_dir, exist_ok=True)
     add_petsc(args.petsc_dir, args.petsc_arch,
-              args.mpi_cxx_compiler, args.mpi_c_compiler,
-              args.with_debugging, args.with_pysfem)
+              args.cxx_compiler, args.c_compiler,
+              args.with_debugging, args.with_pysfem,
+              args.with_mpi)
 
 # Check petsc-dir
 if args.petsc_dir is None or os.path.exists(args.petsc_dir) is False:
@@ -369,7 +393,7 @@ if args.slepc_dir is not None or args.download_slepc is True:
 if args.download_metis:
     args.metis_dir = os.path.join(args.third_party_dir, "metis")
     os.makedirs(args.metis_dir, exist_ok=True)
-    add_metis(args.metis_dir, args.mpi_c_compiler)
+    add_metis(args.metis_dir, args.c_compiler)
 
 # Check metis-dir
 if args.metis_dir is None or os.path.exists(args.metis_dir) is False:
@@ -394,8 +418,9 @@ cmake_args = {
     "CMAKE_BUILD_TYPE": "RELEASE" if args.with_debugging is False else "DEBUG",
     "WITH_APPS": "On" if args.with_apps is True else "Off",
     "WITH_PYSFEM": "On" if args.with_pysfem is True else "Off",
-    "CMAKE_CXX_COMPILER": args.mpi_cxx_compiler,
-    "CMAKE_C_COMPILER": args.mpi_c_compiler,
+    "CMAKE_CXX_COMPILER": args.cxx_compiler,
+    "CMAKE_C_COMPILER": args.c_compiler,
+    "WITH_MPI": "On" if args.with_mpi is True else "Off",
     "PETSC_DIR":  args.petsc_dir,
     "PETSC_ARCH": args.petsc_arch,
     "SLEPC_DIR": args.slepc_dir,
@@ -414,7 +439,7 @@ for k, v in cmake_args.items():
 run_shell_cmd(run_cmake)
 # ==============================================================================
 # Build
-run_make = f"make -j {n_jobs_make}"
+run_make = f"make -j {n_jobs_make()}"
 run_shell_cmd(run_make, cwd=args.build_dir)
 # ==============================================================================
 # Installation
@@ -442,7 +467,8 @@ if args.with_pysfem:
 bashrc_app = "# SFEM\n"
 bashrc_app += f"export SFEM_INSTALL_DIR={args.install_dir}\n"
 bashrc_app += f"export SFEM_THIRD_PARTY_DIR={args.third_party_dir}\n"
-bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SFEM_INSTALL_DIR}/lib\n"
+if args.with_pysfem:
+    bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SFEM_INSTALL_DIR}/lib\n"
 
 if args.with_apps:
     apps_dir = os.path.join(args.install_dir, "bin")
@@ -469,6 +495,7 @@ sep_line = "#=================================================#\n"
 with open("summary.log", "w") as file:
     lines = sep_line
     lines += "SFEM INSTALLATION SUMMARY\n"
+
     # SFEM
     lines += sep_line
     lines += f"Installation directory: {args.install_dir}\n"
@@ -479,16 +506,17 @@ with open("summary.log", "w") as file:
     lines += f"Applications enabled: {args.with_apps}\n"
     if args.with_apps:
         lines += f"Applications directory {get_applications_dir(args.install_dir)}\n"
+    lines += f"MPI enabled: {args.with_mpi}\n"
+    lines += f"C compiler: {args.c_compiler}\n"
+    lines += f"C++ compiler: {args.cxx_compiler}\n"
 
-    # MPI
-    lines += sep_line
+    # OpenMPI
     if args.download_openmpi:
+        lines += sep_line
         lines += "Downloaded OpenMPI\n"
         _, version = get_openmpi_url_and_version()
         lines += f"OpenMPI directory: {openmpi_dir}\n"
         lines += f"OpenMPI version: {version}\n"
-    lines += f"MPI C compiler: {args.mpi_c_compiler}\n"
-    lines += f"MPI C++ compiler: {args.mpi_cxx_compiler}\n"
 
     # PETSc
     lines += sep_line
@@ -504,7 +532,7 @@ with open("summary.log", "w") as file:
     if args.download_slepc:
         lines += "Downloaded SLEPc\n"
     lines += f"SLEPc directory: {args.slepc_dir}\n"
-    if args.download_slepc and args.download_slepc:
+    if args.download_slepc and args.with_pysfem:
         lines += f"slepc4py directory: {get_slepc4py_dir(args.slepc_dir, args.petsc_arch)}\n"
 
     # METIS
@@ -522,4 +550,4 @@ with open("summary.log", "w") as file:
     lines += bashrc_app
 
     file.writelines(lines)
-    print(lines)
+    print(lines, end='')

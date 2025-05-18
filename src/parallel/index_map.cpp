@@ -1,7 +1,6 @@
 #include "index_map.hpp"
 #include "mpi.hpp"
 #include "../base/error.hpp"
-#include <mpi.h>
 #include <ranges>
 #include <algorithm>
 #include <numeric>
@@ -57,10 +56,7 @@ namespace sfem
         }
         else
         {
-            int n_global;
-            int n_owned_ = n_owned();
-            MPI_Allreduce(&n_owned_, &n_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-            return n_global;
+            return mpi::reduce(n_owned(), mpi::ReduceOperation::sum);
         }
     }
     //=============================================================================
