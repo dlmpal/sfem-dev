@@ -267,7 +267,7 @@ parser.add_argument('--download-all', action='store_true',
 
 # MPI
 parser.add_argument('--with-mpi', action='store_true',
-                    help="Indicates that the C/C++ compilers are MPI-wrapped.")
+                    help="Indicates that the C/C++ compilers are MPI-wrapped")
 
 parser.add_argument('--mpi-c-compiler', type=str,
                     metavar="", default='mpicc',
