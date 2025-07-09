@@ -4,6 +4,7 @@
 
 namespace sfem::fem::petsc
 {
+    //=============================================================================
     la::petsc::PetscMat create_mat(const FESpace &fe_space)
     {
         return la::petsc::create_mat(*fe_space.connectivity()[1],
@@ -27,6 +28,22 @@ namespace sfem::fem::petsc
         la::petsc::eliminate_rows_cols(vars, values,
                                        A, b, x);
         la::petsc::solve(A, b, x);
+    }
+    //=============================================================================
+    MatSet create_matset(la::petsc::PetscMat &mat)
+    {
+        return [&mat](std::span<const int> row_idxs, std::span<const int> col_idxs, std::span<const real_t> data)
+        {
+            mat.set_values(row_idxs, col_idxs, data);
+        };
+    }
+    //=============================================================================
+    VecSet create_vecset(la::petsc::PetscVec &vec)
+    {
+        return [&vec](std::span<const int> idxs, std::span<const real_t> data)
+        {
+            vec.set_values(idxs, data);
+        };
     }
 }
 

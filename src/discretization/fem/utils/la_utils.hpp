@@ -1,5 +1,6 @@
 #pragma once
 
+#include "assembly.hpp"
 #include "../dirichlet_bc.hpp"
 #include "../../../la/petsc/sfem_petsc.hpp"
 
@@ -12,6 +13,12 @@ namespace sfem::fem::petsc
 
     /// @brief Create a PETSc vector for a finite element space
     la::petsc::PetscVec create_vec(const FESpace &fe_space);
+
+    /// @brief Create a MatSet for a PETSc matrix
+    MatSet create_matset(la::petsc::PetscMat &mat);
+
+    /// @brief Create a VecSet for a PETSc vector
+    VecSet create_vecset(la::petsc::PetscVec &vec);
 
     /// @brief Form and solve the linear system Ax=b.
     /// Before the system is solved, the Dirichlet boundary condition is applied
