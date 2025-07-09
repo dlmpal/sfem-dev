@@ -145,6 +145,18 @@ namespace sfem
         }
     }
     //=============================================================================
+    bool IndexMap::is_ghost(int local_idx) const
+    {
+        if (get_owner(local_idx) != mpi::rank())
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    //=============================================================================
     IndexMap IndexMap::renumber() const
     {
         // Get rank and number of process

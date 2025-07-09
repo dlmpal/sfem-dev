@@ -69,6 +69,9 @@ namespace sfem
         /// @brief Get the owner process for a (local) index
         int get_owner(int local_idx) const;
 
+        /// @brief Check whether an index is a ghost for this process
+        bool is_ghost(int local_idx) const;
+
         /// @brief Renumber the index map so that the owned indices of
         /// process 0 are in the range [0, n_owned_0), or more generally
         /// that the owned indices of process i are in the range
