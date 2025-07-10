@@ -5,6 +5,7 @@
 #include "petsc_mat.hpp"
 #include "petsc_ksp.hpp"
 #include "../native/sparsity.hpp"
+#include "../native/vector.hpp"
 #include "../../base/logging.hpp"
 #include <format>
 
@@ -27,6 +28,19 @@ namespace sfem::la::petsc
         PetscErrorMessage(error_code, &error_msg, nullptr);
         log_msg(std::format("Call to PETSc function returned with error:\n\t{}\n", error_msg),
                 LogLevel::error, location);
+    }
+    //=============================================================================
+    ISLocalToGlobalMapping create_is_from_im(const IndexMap &index_map, int block_size)
+    {
+        ISLocalToGlobalMapping is;
+        int err_code = ISLocalToGlobalMappingCreate(PETSC_COMM_WORLD,
+                                                    block_size,
+                                                    index_map.n_local(),
+                                                    index_map.local_idxs().data(),
+                                                    PETSC_COPY_VALUES,
+                                                    &is);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+        return is;
     }
     //=============================================================================
     PetscVec create_vec(const IndexMap &index_map, int block_size)
@@ -54,19 +68,51 @@ namespace sfem::la::petsc
         }
         SFEM_CHECK_PETSC_ERROR(err_code);
 
-        ISLocalToGlobalMapping mapping;
-        err_code = ISLocalToGlobalMappingCreate(PETSC_COMM_WORLD,
-                                                block_size,
-                                                index_map.n_local(),
-                                                index_map.local_idxs().data(),
-                                                PETSC_COPY_VALUES,
-                                                &mapping);
-        SFEM_CHECK_PETSC_ERROR(err_code);
-
-        err_code = VecSetLocalToGlobalMapping(vec, mapping);
+        // Set local-to-global mapping
+        auto is = create_is_from_im(index_map, block_size);
+        err_code = VecSetLocalToGlobalMapping(vec, is);
         SFEM_CHECK_PETSC_ERROR(err_code);
 
         return PetscVec(vec, true);
+    }
+    //=============================================================================
+    PetscVec create_vec(const Vector &vec)
+    {
+        // Quick access
+        const int block_size = vec.block_size();
+        const auto index_map = vec.index_map();
+
+        Vec vec_;
+        int err_code;
+        if (vec.block_size() == 1)
+        {
+            err_code = VecCreateGhostWithArray(PETSC_COMM_WORLD,
+                                               index_map->n_owned(),
+                                               index_map->n_global(),
+                                               index_map->n_ghost(),
+                                               index_map->ghost_idxs().data(),
+                                               vec.data().data(),
+                                               &vec_);
+        }
+        else
+        {
+            err_code = VecCreateGhostBlockWithArray(PETSC_COMM_WORLD,
+                                                    block_size,
+                                                    index_map->n_owned() * block_size,
+                                                    index_map->n_global() * block_size,
+                                                    index_map->n_ghost(),
+                                                    index_map->ghost_idxs().data(),
+                                                    vec.data().data(),
+                                                    &vec_);
+        }
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        // Set local-to-global mapping
+        auto is = create_is_from_im(*index_map, block_size);
+        err_code = VecSetLocalToGlobalMapping(vec_, is);
+        SFEM_CHECK_PETSC_ERROR(err_code);
+
+        return PetscVec(vec_, true);
     }
     //=============================================================================
     PetscMat create_mat(const graph::Connectivity &row_to_col,

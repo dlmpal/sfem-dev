@@ -27,6 +27,11 @@
             sfem::la::petsc::error(error_code); \
     }
 
+// Forward declarations
+namespace sfem::la
+{
+    class Vector;
+}
 namespace sfem::la::petsc
 {
     // Convenience functions for initializing and finalizing PETSc
@@ -35,6 +40,9 @@ namespace sfem::la::petsc
 
     /// @brief Handle a nonzero code returned by a PETSc function
     void error(int error_code, std::source_location location = std::source_location::current());
+
+    /// @brief Create an ISLocalToGlobalMapping from an IndexMap and for a given block size
+    ISLocalToGlobalMapping create_is_from_im(const IndexMap &index_map, int block_size);
 
     // Forward declarations
     // These classes are thin wrappers around PETSc's Vec, Mat
@@ -46,6 +54,10 @@ namespace sfem::la::petsc
 
     /// @brief Create a PETSc Vec for a specified index map and block size
     PetscVec create_vec(const IndexMap &index_map, int block_size);
+
+    /// @brief Create a PETSc Vec from a native Vector
+    /// @note The underlying memory is owned by the Vector
+    PetscVec create_vec(const Vector &vec);
 
     /// @brief Create a PETSc Mat for specified row-to-column connectivity,
     /// row and column index maps and block size
