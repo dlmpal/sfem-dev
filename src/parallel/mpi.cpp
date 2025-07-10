@@ -112,15 +112,15 @@ namespace sfem::mpi
     //=============================================================================
     template <typename T>
     std::tuple<std::vector<T>, std::vector<int>, std::vector<int>>
-    send_to_dest(const std::span<const T> data, const std::span<const int> dest)
+    send_to_dest(const std::span<const T> data, const std::span<const int> dest, int bs)
     {
-        SFEM_CHECK_SIZES(data.size(), dest.size());
+        SFEM_CHECK_SIZES(data.size(), dest.size() * bs);
 
         // Compute send buffer counts
         std ::vector<int> send_counts(n_procs(), 0);
         for (std::size_t i = 0; i < dest.size(); i++)
         {
-            send_counts[dest[i]]++;
+            send_counts[dest[i]] += bs;
         }
 
         // Compute the send buffer displacements
@@ -133,7 +133,10 @@ namespace sfem::mpi
         for (std::size_t i = 0; i < dest.size(); i++)
         {
             int owner = dest[i];
-            send_buffer[send_displs[owner] + send_counts[owner]++] = data[i];
+            for (int j = 0; j < bs; j++)
+            {
+                send_buffer[send_displs[owner] + send_counts[owner]++] = data[i * bs + j];
+            }
         }
 
         // Compute the receive buffer size
@@ -247,9 +250,9 @@ namespace sfem::mpi
     template int reduce(int, ReduceOperation);
     template real_t reduce(real_t, ReduceOperation);
     template std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
-        send_to_dest<int>(std::span<const int>, std::span<const int>);
+    send_to_dest<int>(std::span<const int>, std::span<const int>, int);
     template std::tuple<std::vector<real_t>, std::vector<int>, std::vector<int>>
-        send_to_dest<real_t>(std::span<const real_t>, std::span<const int>);
+    send_to_dest<real_t>(std::span<const real_t>, std::span<const int>, int);
     template std::vector<int>
     distribute<int>(const std::span<const int>, const std::span<const int>);
     template std::vector<real_t>

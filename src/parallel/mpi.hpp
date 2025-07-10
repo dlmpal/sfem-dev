@@ -45,7 +45,7 @@ namespace sfem::mpi
     /// along with the received size per process and the displacements
     template <typename T>
     std::tuple<std::vector<T>, std::vector<int>, std::vector<int>>
-    send_to_dest(const std::span<const T> data, const std::span<const int> dest);
+    send_to_dest(const std::span<const T> data, const std::span<const int> dest, int block_size = 1);
 
     /// @brief Distribute (broadcast) data from the root process to all processes
     /// @param data Data
