@@ -8,7 +8,7 @@ namespace sfem::la
     DenseMatrix::DenseMatrix(int n_rows, int n_cols, std::vector<real_t> &&values)
         : n_rows_(n_rows),
           n_cols_(n_cols),
-          data_(values)
+          values_(values)
     {
         // Check that sizes match
         if (n_rows_ <= 0 || n_cols_ <= 0)
@@ -36,19 +36,19 @@ namespace sfem::la
         return n_cols_;
     }
     //=============================================================================
-    std::vector<real_t> &DenseMatrix::data()
+    std::vector<real_t> &DenseMatrix::values()
     {
-        return data_;
+        return values_;
     }
     //=============================================================================
-    const std::vector<real_t> &DenseMatrix::data() const
+    const std::vector<real_t> &DenseMatrix::values() const
     {
-        return data_;
+        return values_;
     }
     //=============================================================================
     DenseMatrix DenseMatrix::copy() const
     {
-        std::vector<real_t> data = data_;
+        std::vector<real_t> data = values_;
         return DenseMatrix(n_rows_, n_cols_, std::move(data));
     }
     //=============================================================================
@@ -57,8 +57,8 @@ namespace sfem::la
         DenseMatrix transpose(n_cols_, n_rows_);
         utils::transpose(n_rows_,
                          n_cols_,
-                         data_.data(),
-                         transpose.data_.data());
+                         values_.data(),
+                         transpose.values_.data());
         return transpose;
     }
     //=============================================================================
@@ -74,54 +74,54 @@ namespace sfem::la
         if (n_rows_ == n_cols_)
         {
             det = utils::inv(n_rows_,
-                             data_.data(),
-                             inv.data_.data());
+                             values_.data(),
+                             inv.values_.data());
         }
         else
         {
             det = utils::pinv(n_rows_,
                               n_cols_,
-                              data_.data(),
-                              inv.data_.data());
+                              values_.data(),
+                              inv.values_.data());
         }
         return {std::move(inv), det};
     }
     //=============================================================================
-    DenseMatrix DenseMatrix::row(int row_idx) const
+    std::vector<real_t> DenseMatrix::row(int row_idx) const
     {
-        DenseMatrix row(1, n_cols_);
+        std::vector<real_t> row(n_cols_);
         for (int i = 0; i < n_cols_; i++)
         {
-            row.data_[i] = data_[row_idx * n_cols_ + i];
+            row[i] = values_[row_idx * n_cols_ + i];
         }
         return row;
     }
     //=============================================================================
-    DenseMatrix DenseMatrix::col(int col_idx) const
+    std::vector<real_t> DenseMatrix::col(int col_idx) const
     {
-        DenseMatrix col(n_rows_, 1);
+        std::vector<real_t> col(n_rows_);
         for (int i = 0; i < n_rows_; i++)
         {
-            col.data_[i] = data_[i * n_cols_ + col_idx];
+            col[i] = values_[i * n_cols_ + col_idx];
         }
         return col;
     }
     //=============================================================================
-    real_t DenseMatrix::operator()(int i, int j) const
-    {
-        return data_[i * n_cols_ + j];
-    }
-    //=============================================================================
     real_t &DenseMatrix::operator()(int i, int j)
     {
-        return data_[i * n_cols_ + j];
+        return values_[i * n_cols_ + j];
+    }
+    //=============================================================================
+    real_t DenseMatrix::operator()(int i, int j) const
+    {
+        return values_[i * n_cols_ + j];
     }
     //=============================================================================
     DenseMatrix &DenseMatrix::operator+=(real_t alpha)
     {
-        for (std::size_t i = 0; i < data_.size(); i++)
+        for (std::size_t i = 0; i < values_.size(); i++)
         {
-            data_[i] += alpha;
+            values_[i] += alpha;
         }
         return *this;
     }
@@ -129,9 +129,9 @@ namespace sfem::la
     DenseMatrix &DenseMatrix::operator+=(const DenseMatrix &other)
     {
         utils::matadd(n_rows_, n_cols_,
-                      data_.data(), 1,
-                      other.data_.data(), 1,
-                      data_.data());
+                      values_.data(), 1,
+                      other.values_.data(), 1,
+                      values_.data());
         return *this;
     }
     //=============================================================================
@@ -144,17 +144,17 @@ namespace sfem::la
     DenseMatrix &DenseMatrix::operator-=(const DenseMatrix &other)
     {
         utils::matadd(n_rows_, n_cols_,
-                      data_.data(), 1,
-                      other.data_.data(), -1,
-                      data_.data());
+                      values_.data(), 1,
+                      other.values_.data(), -1,
+                      values_.data());
         return *this;
     }
     //=============================================================================
     DenseMatrix &DenseMatrix::operator*=(real_t alpha)
     {
-        for (std::size_t i = 0; i < data_.size(); i++)
+        for (std::size_t i = 0; i < values_.size(); i++)
         {
-            data_[i] *= alpha;
+            values_[i] *= alpha;
         }
         return *this;
     }
@@ -197,9 +197,9 @@ namespace sfem::la
         DenseMatrix result(lhs.n_rows(), rhs.n_cols());
         utils::matadd(result.n_rows(),
                       result.n_cols(),
-                      lhs.data().data(), 1,
-                      rhs.data().data(), 1,
-                      result.data().data());
+                      lhs.values().data(), 1,
+                      rhs.values().data(), 1,
+                      result.values().data());
         return result;
     }
     //=============================================================================
@@ -215,9 +215,9 @@ namespace sfem::la
         DenseMatrix result(lhs.n_rows(), rhs.n_cols());
         utils::matadd(result.n_rows(),
                       result.n_cols(),
-                      lhs.data().data(), 1,
-                      rhs.data().data(), -1,
-                      result.data().data());
+                      lhs.values().data(), 1,
+                      rhs.values().data(), -1,
+                      result.values().data());
         return result;
     }
     //=============================================================================
@@ -227,9 +227,9 @@ namespace sfem::la
         utils::matmult(result.n_rows(),
                        result.n_cols(),
                        lhs.n_cols(),
-                       lhs.data().data(),
-                       rhs.data().data(),
-                       result.data().data());
+                       lhs.values().data(),
+                       rhs.values().data(),
+                       result.values().data());
         return result;
     }
     //=============================================================================
