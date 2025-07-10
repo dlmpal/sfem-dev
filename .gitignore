@@ -4,6 +4,5 @@ cmake/
 pysfem/
 apps/solid_mechanics
 src/la/native/sparse_matrix.*
-src/la/native/vector.*
 run.sh
 summary.log
