@@ -62,22 +62,14 @@ namespace sfem
     //=============================================================================
     std::vector<int> IndexMap::owned_idxs() const
     {
-        std::vector<int> owned_idxs(n_owned());
-        for (int i = 0; i < n_owned(); i++)
-        {
-            owned_idxs[i] = local_to_global_[i];
-        }
-        return owned_idxs;
+        return {local_to_global_.cbegin(),
+                local_to_global_.cbegin() + n_owned()};
     }
     //=============================================================================
     std::vector<int> IndexMap::ghost_idxs() const
     {
-        std::vector<int> ghosts_idxs(n_ghost());
-        for (int i = 0; i < n_ghost(); i++)
-        {
-            ghosts_idxs[i] = local_to_global_[i + n_owned()];
-        }
-        return ghosts_idxs;
+        return {local_to_global_.cbegin() + n_owned(),
+                local_to_global_.cend()};
     }
     //=============================================================================
     std::vector<int> IndexMap::local_idxs() const
