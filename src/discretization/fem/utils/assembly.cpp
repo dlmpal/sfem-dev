@@ -4,6 +4,14 @@
 namespace sfem::fem
 {
     //=============================================================================
+    VecSet create_vecset(la::Vector &vec)
+    {
+        return [&vec](std::span<const int> idxs, std::span<const real_t> values)
+        {
+            vec.set_values(idxs, values);
+        };
+    }
+    //=============================================================================
     void assemble_matrix_cells(const FESpace &phi, const std::string &region,
                                FECellKernel kernel, MatSet mat)
     {
@@ -34,7 +42,7 @@ namespace sfem::fem
                                                cell_points);
                 cell_mat += kernel(cell_idx, data) * data.detJ;
             }
-            mat(cell_dof, cell_dof, cell_mat.data());
+            mat(cell_dof, cell_dof, cell_mat.values());
         }
     }
     //=============================================================================
@@ -71,7 +79,7 @@ namespace sfem::fem
 
                 facet_mat += kernel(facet_idx, data, facet_normal) * data.detJ;
             }
-            mat(facet_dof, facet_dof, facet_mat.data());
+            mat(facet_dof, facet_dof, facet_mat.values());
         }
     }
     //=============================================================================
@@ -107,7 +115,7 @@ namespace sfem::fem
 
                 cell_vec += kernel(cell_idx, data) * data.detJ;
             }
-            vec(cell_dof, cell_vec.data());
+            vec(cell_dof, cell_vec.values());
         }
     }
     //=============================================================================
@@ -144,7 +152,7 @@ namespace sfem::fem
 
                 facet_vec += kernel(facet_idx, data, facet_normal) * data.detJ;
             }
-            vec(facet_dof, facet_vec.data());
+            vec(facet_dof, facet_vec.values());
         }
     }
 }

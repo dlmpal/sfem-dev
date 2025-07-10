@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../fe_space.hpp"
+#include "../../../la/native/vector.hpp"
 
 namespace sfem::fem
 {
@@ -8,6 +9,8 @@ namespace sfem::fem
     using FEFacetKernel = std::function<la::DenseMatrix(int, const FEData &, const geo::Vec3 &)>;
     using VecSet = std::function<void(std::span<const int>, std::span<const real_t>)>;
     using MatSet = std::function<void(std::span<const int>, std::span<const int>, std::span<const real_t>)>;
+
+    VecSet create_vecset(la::Vector &vec);
 
     void assemble_matrix_cells(const FESpace &phi,
                                const std::string &region,
