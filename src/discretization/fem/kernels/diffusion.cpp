@@ -3,40 +3,44 @@
 namespace sfem::fem::kernels
 {
     //=============================================================================
-    Diffusion2D::Diffusion2D(real_t coeff)
+    Diffusion2D::Diffusion2D(std::shared_ptr<Function> coeff)
         : coeff_(coeff)
     {
     }
     //=============================================================================
     la::DenseMatrix Diffusion2D::operator()(int cell_idx, const fem::FEData &data)
     {
+        const auto &coeff = *coeff_;
+
         la::DenseMatrix K(data.N.n_rows(), data.N.n_rows());
         for (int i = 0; i < data.N.n_rows(); i++)
         {
             for (int j = 0; j < data.N.n_rows(); j++)
             {
-                K(i, j) = coeff_ * (data.dNdX(i, 0) * data.dNdX(j, 0) +
-                                    data.dNdX(i, 1) * data.dNdX(j, 1));
+                K(i, j) = coeff(cell_idx, 0) * (data.dNdX(i, 0) * data.dNdX(j, 0) +
+                                                data.dNdX(i, 1) * data.dNdX(j, 1));
             }
         }
         return K;
     }
     //=============================================================================
-    Diffusion3D::Diffusion3D(real_t coeff)
+    Diffusion3D::Diffusion3D(std::shared_ptr<Function> coeff)
         : coeff_(coeff)
     {
     }
     //=============================================================================
     la::DenseMatrix Diffusion3D::operator()(int cell_idx, const fem::FEData &data)
     {
+        const auto &coeff = *coeff_;
+
         la::DenseMatrix K(data.N.n_rows(), data.N.n_rows());
         for (int i = 0; i < data.N.n_rows(); i++)
         {
             for (int j = 0; j < data.N.n_rows(); j++)
             {
-                K(i, j) = coeff_ * (data.dNdX(i, 0) * data.dNdX(j, 0) +
-                                    data.dNdX(i, 1) * data.dNdX(j, 1) +
-                                    data.dNdX(i, 2) * data.dNdX(j, 2));
+                K(i, j) = coeff(cell_idx, 0) * (data.dNdX(i, 0) * data.dNdX(j, 0) +
+                                                data.dNdX(i, 1) * data.dNdX(j, 1) +
+                                                data.dNdX(i, 2) * data.dNdX(j, 2));
             }
         }
         return K;

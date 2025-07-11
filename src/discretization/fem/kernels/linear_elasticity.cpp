@@ -3,21 +3,28 @@
 namespace sfem::fem::kernels
 {
     //=============================================================================
-    LinearElasticity2D::LinearElasticity2D(real_t E, real_t nu, real_t thick)
+    LinearElasticity2D::LinearElasticity2D(std::shared_ptr<Function> E,
+                                           std::shared_ptr<Function> nu,
+                                           std::shared_ptr<Function> thick)
         : E_(E), nu_(nu), thick_(thick)
     {
     }
     //=============================================================================
     la::DenseMatrix LinearElasticity2D::operator()(int cell_idx, const fem::FEData &data) const
     {
+        // Cell coefficients
+        const real_t E = (*E_)(cell_idx, 0);
+        const real_t nu = (*nu_)(cell_idx, 0);
+        const real_t thick = (*thick_)(cell_idx, 0);
+
         // Stress-strain matrix
         la::DenseMatrix D(3, 3);
-        real_t coeff = thick_ * E_ / (1 - nu_ * nu_);
+        real_t coeff = thick * E / (1 - nu * nu);
         D(0, 0) = coeff * 1.0;
-        D(0, 1) = coeff * nu_;
-        D(1, 0) = coeff * nu_;
+        D(0, 1) = coeff * nu;
+        D(1, 0) = coeff * nu;
         D(1, 1) = coeff * 1.0;
-        D(2, 2) = coeff * (1 - nu_) * 0.5;
+        D(2, 2) = coeff * (1 - nu) * 0.5;
 
         // Strain-displacement matrix
         const auto &dNdX = data.dNdX;

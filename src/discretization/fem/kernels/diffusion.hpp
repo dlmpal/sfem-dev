@@ -1,26 +1,27 @@
 #pragma once
 
 #include "../elements/fe.hpp"
+#include "../../function.hpp"
 
 namespace sfem::fem::kernels
 {
     class Diffusion2D
     {
     public:
-        Diffusion2D(real_t coeff);
+        Diffusion2D(std::shared_ptr<Function> coeff);
         la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
 
     private:
-        real_t coeff_;
+        std::shared_ptr<Function> coeff_;
     };
 
     class Diffusion3D
     {
     public:
-        Diffusion3D(real_t coeff);
+        Diffusion3D(std::shared_ptr<Function> coeff);
         la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
 
     private:
-        real_t coeff_;
+        std::shared_ptr<Function> coeff_;
     };
 }

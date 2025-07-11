@@ -14,9 +14,12 @@ int main(int argc, char **argv)
     int order = 1;
     auto phi = std::make_shared<fem::CGSpace>(mesh, order, std::vector<std::string>{"T"});
 
+    // Diffusion coefficient
+    auto coeff = std::make_shared<ConstantFunction>(1.0);
+
     // LHS matrix
     auto A = fem::petsc::create_mat(*phi);
-    fem::assemble_matrix_cells(*phi, "Solid", fem::kernels::Diffusion3D(1.0), fem::petsc::create_matset(A));
+    fem::assemble_matrix_cells(*phi, "Solid", fem::kernels::Diffusion3D(coeff), fem::petsc::create_matset(A));
     A.assemble();
 
     // RHS vector

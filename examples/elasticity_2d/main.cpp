@@ -13,10 +13,11 @@ int main(int argc, char **argv)
     const int order = 1;
     auto phi = std::make_shared<fem::CGSpace>(mesh, order, std::vector<std::string>{"Ux", "Uy"});
 
-    const real_t thick = 0.5 * 1e-3;
-    const real_t E = 5e9;
-    const real_t nu = 0.35;
-    const real_t pressure_value = 1000;
+    // Elasticity coefficients and pressure
+    auto thick = std::make_shared<ConstantFunction>(0.5 * 1e-3);
+    auto E = std::make_shared<ConstantFunction>(5e9);
+    auto nu = std::make_shared<ConstantFunction>(0.35);
+    auto pressure = std::make_shared<ConstantFunction>(1000);
 
     // LHS matrix
     auto A = fem::petsc::create_mat(*phi);
@@ -27,7 +28,7 @@ int main(int argc, char **argv)
     // RHS vector
     auto b = fem::petsc::create_vec(*phi);
     fem::assemble_vec_facets(*phi, "Left",
-                             fem::kernels::PressureLoad2D(thick, pressure_value), fem::petsc::create_vecset(b));
+                             fem::kernels::PressureLoad2D(thick, pressure), fem::petsc::create_vecset(b));
     b.assemble();
 
     // Dirichlet B.C.
