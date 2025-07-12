@@ -41,4 +41,13 @@ namespace sfem::io::vtk
 
         return to_vtk.at({cell_type, order});
     }
+    //=============================================================================
+    void cell_node_ordering_to_vtk(int vtk_type, std::span<int> nodes)
+    {
+        // Second-order tetrahedron
+        if (vtk_type == 24)
+        {
+            std::swap(nodes[8], nodes[9]);
+        }
+    }
 }

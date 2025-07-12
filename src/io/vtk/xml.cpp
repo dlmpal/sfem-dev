@@ -1,5 +1,6 @@
 #include "xml.hpp"
 #include "xml_utils.hpp"
+#include "utils.hpp"
 #include <fstream>
 
 namespace sfem::io::vtk::xml
@@ -75,9 +76,13 @@ namespace sfem::io::vtk::xml
                 for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
                     file << indent_string("", indent);
-                    for (int j : cell_to_node.links(i))
+                    std::vector<int> cell_nodes;
+                    cell_nodes.assign(cell_to_node.links(i).cbegin(),
+                                      cell_to_node.links(i).cend());
+                    cell_node_ordering_to_vtk(cell_types[i], cell_nodes);
+                    for (int j = 0; j < cell_to_node.n_links(j); j++)
                     {
-                        file << j << " ";
+                        file << cell_nodes[j] << " ";
                     }
                     file << "\n";
                 }
