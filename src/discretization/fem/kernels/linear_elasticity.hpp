@@ -19,14 +19,15 @@ namespace sfem::fem::kernels
         std::shared_ptr<Function> thick_;
     };
 
-    // class LinearElasticity3D
-    // {
-    // public:
-    //     LinearElasticity3D(real_t E, real_t nu);
-    //     la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
+    class LinearElasticity3D
+    {
+    public:
+        LinearElasticity3D(std::shared_ptr<Function> E,
+                           std::shared_ptr<Function> nu);
+        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
 
-    // private:
-    //     real_t E_;
-    //     real_t nu_;
-    // };
+    private:
+        std::shared_ptr<Function> E_;
+        std::shared_ptr<Function> nu_;
+    };
 }
