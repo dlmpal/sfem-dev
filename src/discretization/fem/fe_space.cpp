@@ -126,11 +126,32 @@ namespace sfem::fem
         std::vector<int> facet_dof(dof::cell_num_dof(facet_type, order_));
         if (dim == 3)
         {
+            // Corner-node DoF
             auto face_ordering = mesh::cell_face_ordering(owner_cell_type, facet_rel_idx);
             for (int i = 0; i < mesh::cell_num_nodes(facet_type); i++)
             {
                 facet_dof[i] = owner_cell_dof[face_ordering[i]];
             }
+
+            // Edge DoF
+            auto face_edges = topology->adjacent_entities(facet_idx, 2, 1);
+            for (int i = 0; i < mesh::cell_num_edges(facet_type); i++)
+            {
+                int edge_idx = face_edges[i];
+                int edge_rel_idx = topology->entity_rel_idx(owner_cell_idx, 3,
+                                                            edge_idx, 1);
+                int edge_offset = mesh::cell_num_nodes(owner_cell_type) +
+                                  edge_rel_idx * dof::cell_num_internal_dof(mesh::CellType::line, order_);
+                for (int j = 0; j < dof::cell_num_internal_dof(mesh::CellType::line, order_); j++)
+                {
+                    int idx = mesh::cell_num_nodes(facet_type) +
+                              i * dof::cell_num_internal_dof(mesh::CellType::line, order_);
+                    facet_dof[idx + j] = owner_cell_dof[edge_offset + j];
+                }
+            }
+
+            /// @todo
+            // Face DoF
         }
         else if (dim == 2)
         {
@@ -139,8 +160,8 @@ namespace sfem::fem
             {
                 facet_dof[i] = owner_cell_dof[edge_ordering[i]];
             }
-            int offset = facet_rel_idx * dof::cell_num_internal_dof(facet_type, order_) +
-                         mesh::cell_num_nodes(owner_cell_type);
+            int offset = mesh::cell_num_nodes(owner_cell_type) +
+                         facet_rel_idx * dof::cell_num_internal_dof(facet_type, order_);
             for (int i = 0; i < dof::cell_num_internal_dof(facet_type, order_); i++)
             {
                 facet_dof[i + 2] = owner_cell_dof[offset + i];
