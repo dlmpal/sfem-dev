@@ -33,30 +33,60 @@ namespace sfem::mesh
             // Cell-to-cell
             connectivity_[dim_][dim_] = std::make_shared<graph::Connectivity>(cell_to_node->primary_to_primary());
 
-            // Cell-to-node
-            connectivity_[dim_][0] = cell_to_node;
-
             // Cell-to-face
             if (dim_ > 2)
             {
-                std::tie(std::ignore, connectivity_[dim_][2]) = utils::extract_faces(cells_, *connectivity_[dim_][0]);
+                std::tie(std::ignore, connectivity_[dim_][2]) = utils::extract_faces(cells_, *cell_to_node);
             }
 
             // Cell-to-edge
             if (dim_ > 1)
             {
-                connectivity_[dim_][1] = utils::extract_edges(cells_, *connectivity_[dim_][0]);
+                connectivity_[dim_][1] = utils::extract_edges(cells_, *cell_to_node);
             }
 
-            // Partition all cell-to-entity connectivites
-            // using the existing cell partition, also
-            // obtaining the corresponding enity index maps
-            index_map_[dim_] = cell_index_map;
-            for (int i = 0; i < dim_; i++)
+            // Cell-to-node
+            connectivity_[dim_][0] = cell_to_node;
+        }
+
+        // Partition all cell-to-entity connectivites
+        // using the existing cell partition, while also
+        // obtaining the corresponding enity index maps
+        index_map_[dim_] = cell_index_map;
+        for (int i = 0; i < dim_; i++)
+        {
+            std::tie(index_map_[i],
+                     connectivity_[dim_][i]) = mesh::create_entity_partition(*index_map_[dim_],
+                                                                             *connectivity_[dim_][i]);
+        }
+
+        // Create the facets
+        const auto cell_to_facet = connectivity_[dim_][dim_ - 1];
+        facets_.resize(cell_to_facet->n_secondary());
+        for (int i = 0; i < cell_to_facet->n_primary(); i++)
+        {
+            auto cell_facets = cell_to_facet->links(i);
+            for (int j = 0; j < cell_to_facet->n_links(i); j++)
             {
-                std::tie(index_map_[i],
-                         connectivity_[dim_][i]) = mesh::create_entity_partition(*index_map_[dim_],
-                                                                                 *connectivity_[dim_][i]);
+                int facet_idx = cell_facets[j];
+
+                // Depending on the topological dimension,
+                // the facets are either faces (dim=3),
+                // edges (dim=2), or nodes (dim=1). For dim=3,
+                // the face type (triangle or quadrilateral), must be
+                // specified
+                if (dim_ - 1 == 2)
+                {
+                    facets_[facet_idx].type = cell_face_type(cells_[i].type, j);
+                }
+                else if (dim_ - 1 == 1)
+                {
+                    facets_[facet_idx].type = CellType::line;
+                }
+                else
+                {
+                    facets_[facet_idx].type = CellType::point;
+                }
             }
         }
 
@@ -70,9 +100,12 @@ namespace sfem::mesh
                                                       *index_map_[dim_]);
 
             // Face-to-edge
-            /// @todo
+            connectivity_[2][1] = utils::face_to_edge(cells_, facets_,
+                                                      *connectivity_[dim_][1],
+                                                      *connectivity_[dim_][0],
+                                                      *connectivity_[2][0]);
 
-            // Face-to-node
+            // Face-to-face
             connectivity_[2][2] = std::make_shared<graph::Connectivity>(connectivity_[2][0]->primary_to_primary());
 
             // Face-to-cell
@@ -92,10 +125,7 @@ namespace sfem::mesh
             connectivity_[1][1] = std::make_shared<graph::Connectivity>(connectivity_[1][0]->primary_to_primary());
 
             // Edge-to-face
-            if (dim_ > 2)
-            {
-                /// @todo
-            }
+            connectivity_[1][2] = std::make_shared<graph::Connectivity>(connectivity_[2][1]->invert());
 
             // Edge-to-cell
             connectivity_[1][dim_] = std::make_shared<graph::Connectivity>(connectivity_[dim_][1]->invert());
@@ -133,34 +163,6 @@ namespace sfem::mesh
             if (dim_ > 2)
             {
                 connectivity_[0][2] = std::make_shared<graph::Connectivity>(connectivity_[2][0]->invert());
-            }
-        }
-
-        // Finally, create the facets
-        const auto cell_to_facet = connectivity_[dim_][dim_ - 1];
-        const auto facet_to_cell = connectivity_[dim_ - 1][dim_];
-        facets_.resize(facet_to_cell->n_primary());
-        for (int i = 0; i < facet_to_cell->n_primary(); i++)
-        {
-            // Depending on the topological dimension,
-            // the facets are either faces (dim=3),
-            // edges (dim=2), or nodes (dim=1). For dim=3,
-            // the face type (triangle or quadrilateral), must be
-            // specified
-            if (dim_ - 1 == 2)
-            {
-                // Get the first of the cells adjacent to the facet
-                auto cell_idx = facet_to_cell->links(i)[0];
-                facets_[i].type = cell_face_type(cells_[cell_idx].type,
-                                                 cell_to_facet->relative_index(cell_idx, i));
-            }
-            else if (dim_ - 1 == 1)
-            {
-                facets_[i].type = CellType::line;
-            }
-            else
-            {
-                facets_[i].type = CellType::point;
             }
         }
     }

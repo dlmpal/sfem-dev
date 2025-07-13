@@ -12,9 +12,19 @@ namespace sfem::mesh::utils
     {
     public:
         /// @brief Insert an edge into the map, if it's not already included
-        /// @param edge_nodes The nodes of the edge. They need not be in order
+        /// @param edge_nodes Edge nodes. They need not be in order
         /// @return The edge's index
         int insert(std::array<int, 2> edge_nodes);
+
+        /// @brief Insert an edge into the map, with a specified index
+        /// @param edge_nodes Edge nodes. They need not be in order
+        /// @param edge_idx The edge's index
+        void insert(std::array<int, 2> edge_nodes, int edge_idx);
+
+        /// @brief Get the the index of an edge, given its nodes
+        /// @param edge_nodes Edge nodes. They need not be in order
+        /// @return The edge index
+        int at(std::array<int, 2> edge_nodes);
 
     private:
         std::map<std::array<int, 2>, int> map_;
@@ -41,4 +51,19 @@ namespace sfem::mesh::utils
                  const graph::Connectivity &cell_to_edge,
                  const graph::Connectivity &cell_to_node,
                  const IndexMap &cell_index_map);
+
+    /// @brief Generate the face-to-edge connectivity
+    /// from existing connectivities
+    /// @param cells The cells
+    /// @param faces The faces
+    /// @param cell_to_edge The cell-to-edge connectivity
+    /// @param cell_to_node The cell-to-node connectivity
+    /// @param face_to_node The face-to-node connectivity
+    /// @return The face-to-edge connectivity
+    std::shared_ptr<graph::Connectivity>
+    face_to_edge(const std::vector<Cell> &cells,
+                 const std::vector<Cell> &faces,
+                 const graph::Connectivity &cell_to_edge,
+                 const graph::Connectivity &cell_to_node,
+                 const graph::Connectivity &face_to_node);
 }
