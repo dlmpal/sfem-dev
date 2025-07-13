@@ -83,6 +83,15 @@ namespace sfem::la::petsc
                              PetscVec &b,
                              PetscVec &x);
 
+    /// @brief For a linear system of the form Ax=b,
+    /// remove rows and columns of the LHS (A) corresponding,
+    /// for example, to essential boundary conditions.
+    /// @note Does not affect the sparsity of A
+    /// @note Also calls assemble() on x
+    /// @param idxs Indices of the fixed DoF
+    /// @param A Left-hand-side (LHS) matrix
+    void eliminate_rows_cols(std::span<const int> idxs, PetscMat &A);
+
     /// @brief Solve the linear system Ax=b using PETSc's KSP solvers
     /// @param A Left-hand-side (LHS) matrix
     /// @param b Right-hand-side (RHS) vector

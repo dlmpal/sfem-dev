@@ -22,10 +22,10 @@ namespace sfem::la::petsc
         PetscFinalize();
     }
     //=============================================================================
-    void error(int error_code, std::source_location location)
+    void error(int err_code, std::source_location location)
     {
         const char *error_msg;
-        PetscErrorMessage(error_code, &error_msg, nullptr);
+        PetscErrorMessage(err_code, &error_msg, nullptr);
         log_msg(std::format("Call to PETSc function returned with error:\n\t{}\n", error_msg),
                 LogLevel::error, location);
     }
@@ -186,12 +186,21 @@ namespace sfem::la::petsc
                              PetscVec &x)
     {
         x.set_values(idxs, values, true);
-        int error_code = MatZeroRowsColumnsLocal(A.mat(),
-                                                 static_cast<int>(idxs.size()),
-                                                 idxs.data(),
-                                                 1.0, x.vec(), b.vec());
-        SFEM_CHECK_PETSC_ERROR(error_code);
+        int err_code = MatZeroRowsColumnsLocal(A.mat(),
+                                               static_cast<int>(idxs.size()),
+                                               idxs.data(), 1.0,
+                                               x.vec(), b.vec());
+        SFEM_CHECK_PETSC_ERROR(err_code);
         x.assemble();
+    }
+    //=============================================================================
+    void eliminate_rows_cols(std::span<const int> idxs, PetscMat &A)
+    {
+        int err_code = MatZeroRowsColumnsLocal(A.mat(),
+                                               static_cast<int>(idxs.size()),
+                                               idxs.data(), 1.0,
+                                               nullptr, nullptr);
+        SFEM_CHECK_PETSC_ERROR(err_code);
     }
     //=============================================================================
     int solve(const PetscMat &A,
