@@ -1,19 +1,14 @@
 #include "assembly.hpp"
 #include "../../../mesh/utils/geo_utils.hpp"
+#include "../../../parallel/mpi.hpp"
 
 namespace sfem::fem
 {
     //=============================================================================
-    VecSet create_vecset(la::Vector &vec)
-    {
-        return [&vec](std::span<const int> idxs, std::span<const real_t> values)
-        {
-            vec.set_values(idxs, values);
-        };
-    }
-    //=============================================================================
-    void assemble_matrix_cells(const FESpace &phi, const std::string &region,
-                               FECellKernel kernel, MatSet mat)
+    void assemble_matrix_cells(const FESpace &phi,
+                               const std::string &region,
+                               FECellKernel kernel,
+                               MatSet mat)
     {
         // Quick access
         const auto mesh = phi.mesh();
@@ -46,8 +41,10 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_matrix_facets(const FESpace &phi, const std::string &region,
-                                FEFacetKernel kernel, MatSet mat)
+    void assemble_matrix_facets(const FESpace &phi,
+                                const std::string &region,
+                                FEFacetKernel kernel,
+                                MatSet mat)
     {
         // Quick access
         const auto mesh = phi.mesh();
@@ -83,8 +80,10 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_vec_cells(const FESpace &phi, const std::string &region,
-                            FECellKernel kernel, VecSet vec)
+    void assemble_vec_cells(const FESpace &phi,
+                            const std::string &region,
+                            FECellKernel kernel,
+                            VecSet vec)
     {
         // Quick access
         const auto mesh = phi.mesh();
@@ -119,8 +118,10 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_vec_facets(const FESpace &phi, const std::string &region,
-                             FEFacetKernel kernel, VecSet vec)
+    void assemble_vec_facets(const FESpace &phi,
+                             const std::string &region,
+                             FEFacetKernel kernel,
+                             VecSet vec)
     {
         // Quick access
         const auto mesh = phi.mesh();
@@ -154,5 +155,124 @@ namespace sfem::fem
             }
             vec(facet_dof, facet_vec.values());
         }
+    }
+    //=============================================================================
+    la::DenseMatrix integrate_cells(const FESpace &phi,
+                                    const std::string &region,
+                                    FECellKernel kernel)
+    {
+        // Quick access
+        const auto mesh = phi.mesh();
+        const int dim = mesh->physical_dim();
+
+        // Loop over locally owned cells and accumulate result
+        la::DenseMatrix result(1, 1); ///< Resize if needed
+        bool first_cell = true;
+        for (const auto &[cell, cell_idx] : mesh->region_cells(region))
+        {
+            // Skip ghost cells
+            if (mesh->topology()->entity_index_map(dim)->is_ghost(cell_idx))
+            {
+                continue;
+            }
+
+            // Cell info
+            auto cell_dof = phi.cell_dof(cell_idx);
+            auto cell_points = phi.cell_dof_points(cell_idx);
+
+            // Integration
+            auto element = phi.element(cell.type);
+            for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
+            {
+                auto data = element->transform(dim, element->integration_rule()->point(nqpt),
+                                               cell_points);
+                auto cell_result = kernel(cell_idx, data) * data.detJ;
+
+                // It expected that the kernel does not change
+                // its output shape between cells. Thus, the reshape,
+                // if needed, is only done in the first cell
+                if (first_cell and (cell_result.n_rows() != result.n_rows() or
+                                    cell_result.n_cols() != result.n_cols()))
+                {
+                    result = la::DenseMatrix(cell_result.n_rows(),
+                                             cell_result.n_cols());
+                }
+                first_cell = false;
+
+                result += cell_result;
+            }
+        }
+
+        // Sum values across processes
+        for (int i = 0; i < result.n_rows(); i++)
+        {
+            for (int j = 0; j < result.n_cols(); j++)
+            {
+                result(i, j) = mpi::reduce(result(i, j), mpi::ReduceOperation::sum);
+            }
+        }
+
+        return result;
+    }
+    //=============================================================================
+    la::DenseMatrix integrate_facets(const FESpace &phi,
+                                     const std::string &region,
+                                     FEFacetKernel kernel)
+    {
+        // Quick access
+        const auto mesh = phi.mesh();
+        const int dim = mesh->physical_dim();
+
+        // Loop over locally owned facets and accumulate result
+        la::DenseMatrix result(1, 1); ///< Resize if needed
+        bool first_facet = true;
+        for (const auto &[facet, facet_idx] : mesh->region_facets(region))
+        {
+            // Skip ghost facets
+            if (mesh->topology()->entity_index_map(dim - 1)->is_ghost(facet_idx))
+            {
+                continue;
+            }
+
+            // Facet info
+            auto facet_points = phi.facet_dof_points(facet_idx);
+            auto facet_normal = mesh::facet_normal(facet.type, facet_points).normalize();
+            auto facet_dof = phi.facet_dof(facet_idx);
+
+            // Integration
+            auto element = phi.element(facet.type);
+            for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
+            {
+                auto data = element->transform(dim,
+                                               element->integration_rule()->point(nqpt),
+                                               facet_points);
+
+                auto facet_result = kernel(facet_idx, data, facet_normal) * data.detJ;
+
+                // It expected that the kernel does not change
+                // its output shape between facets. Thus, the reshape,
+                // if needed, is only done in the first facet
+                if (first_facet and (facet_result.n_rows() != result.n_rows() or
+                                     facet_result.n_cols() != result.n_cols()))
+                {
+                    result = la::DenseMatrix(facet_result.n_rows(),
+                                             facet_result.n_cols());
+                }
+                first_facet = false;
+
+                result += facet_result;
+            }
+        }
+
+        // Sum values across processes
+        for (int i = 0; i < result.n_rows(); i++)
+        {
+            for (int j = 0; j < result.n_cols(); j++)
+            {
+                result(i, j) = mpi::reduce(result(i, j), mpi::ReduceOperation::sum);
+            }
+        }
+
+        return result;
     }
 }

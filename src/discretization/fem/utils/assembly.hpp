@@ -10,8 +10,6 @@ namespace sfem::fem
     using VecSet = std::function<void(std::span<const int>, std::span<const real_t>)>;
     using MatSet = std::function<void(std::span<const int>, std::span<const int>, std::span<const real_t>)>;
 
-    VecSet create_vecset(la::Vector &vec);
-
     void assemble_matrix_cells(const FESpace &phi,
                                const std::string &region,
                                FECellKernel kernel,
@@ -31,4 +29,12 @@ namespace sfem::fem
                              const std::string &region,
                              FEFacetKernel kernel,
                              VecSet vec);
+
+    la::DenseMatrix integrate_cells(const FESpace &phi,
+                                    const std::string &region,
+                                    FECellKernel kernel);
+
+    la::DenseMatrix integrate_facets(const FESpace &phi,
+                                     const std::string &region,
+                                     FEFacetKernel kernel);
 }
