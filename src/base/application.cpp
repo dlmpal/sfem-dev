@@ -1,6 +1,7 @@
 #include "application.hpp"
 #include "../parallel/mpi.hpp"
 #include "../la/petsc/petsc.hpp"
+#include "../la/slepc/slepc.hpp"
 #include <iostream>
 #include <format>
 
@@ -25,13 +26,25 @@ namespace sfem
 
         // PETSc
         #ifdef SFEM_HAS_PETSC
-            if(true)
-                la::petsc::initialize(argc, argv);
+            la::petsc::initialize(argc, argv);
+        #endif
+
+        // SLEPc
+        #ifdef SFEM_HAS_SLEPC
+            la::slepc::initialize(argc, argv);
         #endif
     }
     //=============================================================================
     Application::~Application()
     {
+        // SLEPc
+        #ifdef SFEM_HAS_PETSC
+            PetscBool is_slepc_init;
+            SlepcInitialized(&is_slepc_init);
+            if(is_slepc_init)
+                la::slepc::finalize();
+        #endif
+
         // PETSc
         #ifdef SFEM_HAS_PETSC
             PetscBool is_petsc_init;
