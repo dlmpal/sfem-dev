@@ -91,7 +91,7 @@ namespace sfem::la::petsc
                                                index_map->n_global(),
                                                index_map->n_ghost(),
                                                index_map->ghost_idxs().data(),
-                                               vec.data().data(),
+                                               vec.values().data(),
                                                &vec_);
         }
         else
@@ -102,7 +102,7 @@ namespace sfem::la::petsc
                                                     index_map->n_global() * block_size,
                                                     index_map->n_ghost(),
                                                     index_map->ghost_idxs().data(),
-                                                    vec.data().data(),
+                                                    vec.values().data(),
                                                     &vec_);
         }
         SFEM_CHECK_PETSC_ERROR(err_code);
