@@ -9,10 +9,10 @@
 namespace sfem::fem::petsc
 {
     /// @brief Create a PETSc matrix for a finite element space
-    la::petsc::PetscMat create_mat(const FESpace &fe_space);
+    la::petsc::PetscMat create_mat(const FESpace &fe_space, int n_comp);
 
     /// @brief Create a PETSc vector for a finite element space
-    la::petsc::PetscVec create_vec(const FESpace &fe_space);
+    la::petsc::PetscVec create_vec(const FESpace &fe_space, int n_comp);
 
     /// @brief Create a MatSet for a PETSc matrix
     MatSet create_matset(la::petsc::PetscMat &mat);
