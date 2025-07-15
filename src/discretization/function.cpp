@@ -2,72 +2,55 @@
 
 namespace sfem
 {
-    //=============================================================================
-    Function::Function(int n_comp)
-        : n_comp_(n_comp)
+  //=============================================================================
+  Function::Function(std::shared_ptr<const IndexMap> index_map,
+                     const std::vector<std::string> &components)
+      : la::Vector(index_map, static_cast<int>(components.size())),
+        components_(components)
+  {
+  }
+  //=============================================================================
+  std::vector<std::string> Function::components() const
+  {
+    return components_;
+  }
+  //=============================================================================
+  int Function::n_comp() const
+  {
+    return block_size_;
+  }
+  //=============================================================================
+  int Function::comp_idx(const std::string &component) const
+  {
+    auto it = std::find(components_.cbegin(),
+                        components_.end(),
+                        component);
+    if (it == components_.end())
     {
+      auto msg = std::format("Component {} not found in: [ ", component);
+      for (const auto &comp : components_)
+      {
+        msg += std::format("{} ", comp);
+      }
+      msg += "]\n";
+      log_msg(msg, LogLevel::warning);
+      return -1;
     }
-    //=============================================================================
-    int Function::n_comp() const
+    else
     {
-        return n_comp_;
+      return static_cast<int>(std::distance(components_.cbegin(), it));
     }
-    //=============================================================================
-    ConstantFunction::ConstantFunction(real_t value)
-        : Function(1), value_(value)
-    {
-    }
-    //=============================================================================
-    real_t &ConstantFunction::value()
-    {
-        return value_;
-    }
-    //=============================================================================
-    real_t ConstantFunction::value() const
-    {
-        return value_;
-    }
-    //=============================================================================
-    real_t &ConstantFunction::operator()([[maybe_unused]] int idx, [[maybe_unused]] int comp)
-    {
-        return value_;
-    }
-    //=============================================================================
-
-    real_t ConstantFunction::operator()([[maybe_unused]] int idx, [[maybe_unused]] int comp) const
-    {
-        return value_;
-    }
-    //=============================================================================
-    MeshFunction::MeshFunction(std::shared_ptr<mesh::Mesh> mesh, int dim, int n_comp)
-        : Function(n_comp),
-          mesh_(mesh),
-          values_(mesh_->topology()->entity_index_map(dim), n_comp)
-    {
-    }
-    //=============================================================================
-    std::shared_ptr<const mesh::Mesh> MeshFunction::mesh() const
-    {
-        return mesh_;
-    }
-    //=============================================================================
-    la::Vector &MeshFunction::values()
-    {
-        return values_;
-    }
-    //=============================================================================
-    const la::Vector &MeshFunction::values() const
-    {
-        return values_;
-    }
-    //=============================================================================
-    real_t &MeshFunction::operator()(int idx, int comp)
-    {
-        return values_(idx, comp);
-    }
-    //=============================================================================
-    real_t MeshFunction::operator()(int idx, int comp) const
-    {
-        return values_(idx, comp);
-    }
+  }
+  //=============================================================================
+  MeshFunction::MeshFunction(std::shared_ptr<const mesh::Mesh> mesh, int dim,
+                             const std::vector<std::string> &components)
+      : Function(mesh->topology()->entity_index_map(dim), components),
+        mesh_(mesh)
+  {
+  }
+  //=============================================================================
+  std::shared_ptr<const mesh::Mesh> MeshFunction::mesh() const
+  {
+    return mesh_;
+  }
 }

@@ -5,65 +5,41 @@
 
 namespace sfem
 {
-    class Function
+    class Function : public la::Vector
     {
     public:
-        Function(int n_comp);
+        /// @param components The name of each component
+        Function(std::shared_ptr<const IndexMap> index_map,
+                 const std::vector<std::string> &components);
 
-        // Disable copying
-        Function(const Function &) = delete;
-        Function &operator=(const Function &) = delete;
-
-        // Move constructor and assignment
-        Function(Function &&) = default;
-        Function &operator=(Function &&) = default;
+        /// @brief Get the name of each component
+        std::vector<std::string> components() const;
 
         /// @brief Get the number of components
         int n_comp() const;
 
-        virtual real_t &operator()(int idx, int comp) = 0;
-        virtual real_t operator()(int idx, int comp) const = 0;
+        /// @brief Get the index of a specific component
+        /// @note Components are numbered according to their
+        /// names were provided. For example, components {"u", "v"}
+        /// have an index of 0 and 1 respectively
+        /// @note If the component is not found, returns -1
+        int comp_idx(const std::string &component) const;
 
     protected:
-        /// @brief Number of components
-        int n_comp_;
-    };
-
-    class ConstantFunction : public Function
-    {
-    public:
-        ConstantFunction(real_t value);
-
-        real_t &value();
-        real_t value() const;
-
-        real_t &operator()(int idx, int comp);
-
-        real_t operator()(int idx, int comp) const;
-
-    private:
-        /// @brief Constant value
-        real_t value_;
+        /// @brief Names of function components
+        std::vector<std::string> components_;
     };
 
     class MeshFunction : public Function
     {
     public:
-        MeshFunction(std::shared_ptr<mesh::Mesh> mesh, int dim, int n_comp);
+        MeshFunction(std::shared_ptr<const mesh::Mesh> mesh, int dim,
+                     const std::vector<std::string> &components);
 
         std::shared_ptr<const mesh::Mesh> mesh() const;
 
-        la::Vector &values();
-        const la::Vector &values() const;
-
-        real_t &operator()(int idx, int comp);
-        real_t operator()(int idx, int comp) const;
-
     private:
         /// @brief Mesh
-        std::shared_ptr<mesh::Mesh> mesh_;
-
-        /// @brief Values
-        la::Vector values_;
+        std::shared_ptr<const mesh::Mesh> mesh_;
     };
 }
