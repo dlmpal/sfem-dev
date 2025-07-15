@@ -31,9 +31,19 @@ namespace sfem::mesh
         }
     }
     //=============================================================================
+    std::shared_ptr<Topology> Mesh::topology()
+    {
+        return topology_;
+    }
+    //=============================================================================
     std::shared_ptr<const Topology> Mesh::topology() const
     {
         return topology_;
+    }
+    //=============================================================================
+    std::vector<std::array<real_t, 3>> &Mesh::points()
+    {
+        return points_;
     }
     //=============================================================================
     const std::vector<std::array<real_t, 3>> &Mesh::points() const
@@ -46,9 +56,14 @@ namespace sfem::mesh
         return regions_;
     }
     //=============================================================================
-    int Mesh::physical_dim() const
+    int Mesh::pdim() const
     {
         return dim_;
+    }
+    //=============================================================================
+    int Mesh::tdim() const
+    {
+        return topology_->dim();
     }
     //=============================================================================
     std::vector<std::array<real_t, 3>>

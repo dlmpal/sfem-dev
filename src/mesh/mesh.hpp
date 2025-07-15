@@ -30,9 +30,15 @@ namespace sfem::mesh
         Mesh &operator=(Mesh &&mesh) = default;
 
         /// @brief Get a reference to the mesh topology
+        std::shared_ptr<Topology> topology();
+
+        /// @brief Get a reference to the mesh topology (const version)
         std::shared_ptr<const Topology> topology() const;
 
         /// @brief Get a reference to the mesh node coordinates
+        std::vector<std::array<real_t, 3>> &points();
+
+        /// @brief Get a reference to the mesh node coordinates (const version)
         const std::vector<std::array<real_t, 3>> &points() const;
 
         /// @brief Get a reference to the mesh regions
@@ -40,7 +46,10 @@ namespace sfem::mesh
 
         /// @brief Get the physical dimension of the mesh
         /// @note Might differ from the topological dimension
-        int physical_dim() const;
+        int pdim() const;
+
+        /// @brief Topological dimension of the mesh
+        int tdim() const;
 
         /// @brief Get the coordinates of an entity's nodes
         /// @param entity_idx The entity's index
