@@ -10,7 +10,7 @@ namespace sfem::la
     class Vector
     {
     public:
-        /// @brief Create a Vector
+        /// @brief Create a vector
         /// @param index_map Index map
         /// @param block_size Block size (i.e. no. components per index)
         /// @param values Local values (owned + ghost)
@@ -22,17 +22,31 @@ namespace sfem::la
         /// @param value Uniform value
         Vector(std::shared_ptr<const IndexMap> im, int block_size, real_t value = 0.0);
 
-        /// @brief Get the Vector's index map
+        // Avoid uninentional copying
+        Vector(const Vector &) = delete;
+        Vector &operator=(const Vector &) = delete;
+
+        // Move constructor and assignment operator
+        Vector(Vector &&) = default;
+        Vector &operator=(Vector &&) = default;
+
+        /// @brief Get the vector's index map
         std::shared_ptr<const IndexMap> index_map() const;
 
-        /// @brief Get the Vector's block size
+        /// @brief Get the vector's block size
         int block_size() const;
 
-        /// @brief Get the Vector's values
+        /// @brief Get the vector's values
         std::vector<real_t> &values();
 
-        /// @brief Get the Vector's values (const version)
-        const std::vector<real_t> &data() const;
+        /// @brief Get the vector's values (const version)
+        const std::vector<real_t> &values() const;
+
+        /// @brief Get the vector's local size
+        int n_local() const;
+
+        /// @brief Get the vector's global size
+        int n_global() const;
 
         /// @brief Get the value for a given (local) index and component
         real_t &operator()(int idx, int comp = 0);
@@ -48,10 +62,10 @@ namespace sfem::la
                         std::span<const real_t> values,
                         bool insert = false);
 
-        /// @brief Assemble the Vector, i.e. synchronize the values of ghost indices
+        /// @brief Assemble the vector, i.e. synchronize the values of ghost indices
         void assemble();
 
-    private:
+    protected:
         /// @brief Index map
         std::shared_ptr<const IndexMap> index_map_;
 

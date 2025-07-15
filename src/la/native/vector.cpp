@@ -38,9 +38,19 @@ namespace sfem::la
         return values_;
     }
     //=============================================================================
-    const std::vector<real_t> &Vector::data() const
+    const std::vector<real_t> &Vector::values() const
     {
         return values_;
+    }
+    //=============================================================================
+    int Vector::n_local() const
+    {
+        return index_map_->n_local();
+    }
+    //=============================================================================
+    int Vector::n_global() const
+    {
+        return index_map_->n_global();
     }
     //=============================================================================
     real_t &Vector::operator()(int idx, int comp)
