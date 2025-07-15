@@ -11,4 +11,6 @@ namespace sfem::fem
 #include "kernels/sfem_fe_kernels.hpp"
 #include "fe_space.hpp"
 #include "cg_space.hpp"
+#include "fe_function.hpp"
+#include "coefficient.hpp"
 #include "dirichlet_bc.hpp"

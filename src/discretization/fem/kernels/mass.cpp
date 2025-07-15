@@ -3,7 +3,7 @@
 namespace sfem::fem::kernels
 {
     //=============================================================================
-    MassND::MassND(int n_comp, std::shared_ptr<Function> coeff)
+    MassND::MassND(int n_comp, std::shared_ptr<const Coefficient> coeff)
         : n_comp_(n_comp), coeff_(coeff)
     {
     }
