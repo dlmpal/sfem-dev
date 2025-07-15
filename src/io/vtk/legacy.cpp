@@ -5,6 +5,7 @@
 #include <format>
 #include <fstream>
 #include <filesystem>
+#include <ranges>
 
 namespace sfem::io::vtk::legacy
 {
@@ -13,8 +14,8 @@ namespace sfem::io::vtk::legacy
                    const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
-                   const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
-                   const std::vector<std::pair<std::string, std::span<real_t>>> &node_data)
+                   const std::vector<std::shared_ptr<const Function>> &cell_funcs,
+                   const std::vector<std::shared_ptr<const Function>> &node_funcs)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -59,25 +60,33 @@ namespace sfem::io::vtk::legacy
 
         // Cell data
         file << std::format("CELL_DATA {}\n", cell_to_node.n_primary());
-        for (const auto &[name, data] : cell_data)
+        for (const auto &func : cell_funcs)
         {
-            file << std::format("SCALARS {} float\n", name);
-            file << "LOOKUP_TABLE default\n";
-            for (std::size_t i = 0; i < data.size(); i++)
+            for (const auto &comp : func->components())
             {
-                file << data[i] << "\n";
+                file << std::format("SCALARS {} float\n", comp);
+                file << "LOOKUP_TABLE default\n";
+                const int comp_idx = func->comp_idx(comp);
+                for (int i = 0; i < func->n_local(); i++)
+                {
+                    file << (*func)(i, comp_idx) << "\n";
+                }
             }
         }
 
         // Point data
         file << std::format("POINT_DATA {}\n", cell_to_node.n_secondary());
-        for (const auto &[name, data] : node_data)
+        for (const auto &func : node_funcs)
         {
-            file << std::format("SCALARS {} float\n", name);
-            file << "LOOKUP_TABLE default\n";
-            for (std::size_t i = 0; i < data.size(); i++)
+            for (const auto &comp : func->components())
             {
-                file << data[i] << "\n";
+                file << std::format("SCALARS {} float\n", comp);
+                file << "LOOKUP_TABLE default\n";
+                const int comp_idx = func->comp_idx(comp);
+                for (int i = 0; i < func->n_local(); i++)
+                {
+                    file << (*func)(i, comp_idx) << "\n";
+                }
             }
         }
     }

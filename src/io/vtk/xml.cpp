@@ -22,8 +22,8 @@ namespace sfem::io::vtk::xml
                    const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
-                   const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
-                   const std::vector<std::pair<std::string, std::span<real_t>>> &node_data)
+                   const std::vector<std::shared_ptr<const Function>> &cell_funcs,
+                   const std::vector<std::shared_ptr<const Function>> &node_funcs)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -123,17 +123,21 @@ namespace sfem::io::vtk::xml
         // Cell data
         {
             Element cell_data_elem(file, "CellData", {}, indent++);
-            for (const auto &[name, data] : cell_data)
+            for (const auto &func : cell_funcs)
             {
-                Element data_array_elem(file, "DataArray",
-                                        {{"type", real_t_str()},
-                                         {"Name", name}},
-                                        indent++);
-                for (std::size_t i = 0; i < data.size(); i++)
+                for (const auto &comp : func->components())
                 {
-                    file << indent_string(std::format("{}\n", data[i]), indent);
+                    Element data_array_elem(file, "DataArray",
+                                            {{"type", real_t_str()},
+                                             {"Name", comp}},
+                                            indent++);
+                    const int comp_idx = func->comp_idx(comp);
+                    for (int i = 0; i < func->n_local(); i++)
+                    {
+                        file << indent_string(std::format("{}\n", (*func)(i, comp_idx)), indent);
+                    }
+                    indent--;
                 }
-                indent--;
             }
             indent--;
         }
@@ -141,17 +145,21 @@ namespace sfem::io::vtk::xml
         // Point data
         {
             Element point_data_elem(file, "PointData", {}, indent++);
-            for (const auto &[name, data] : node_data)
+            for (const auto &func : node_funcs)
             {
-                Element data_array_elem(file, "DataArray",
-                                        {{"type", real_t_str()},
-                                         {"Name", name}},
-                                        indent++);
-                for (std::size_t i = 0; i < data.size(); i++)
+                for (const auto &comp : func->components())
                 {
-                    file << indent_string(std::format("{}\n", data[i]), indent);
+                    Element data_array_elem(file, "DataArray",
+                                            {{"type", real_t_str()},
+                                             {"Name", comp}},
+                                            indent++);
+                    const int comp_idx = func->comp_idx(comp);
+                    for (int i = 0; i < func->n_local(); i++)
+                    {
+                        file << indent_string(std::format("{}\n", (*func)(i, comp_idx)), indent);
+                    }
+                    indent--;
                 }
-                indent--;
             }
             indent--;
         }
@@ -159,8 +167,8 @@ namespace sfem::io::vtk::xml
     //=============================================================================
     void write_pvtu(const std::filesystem::path &filename,
                     const std::vector<std::filesystem::path> &sources,
-                    const std::vector<std::pair<std::string, std::span<real_t>>> &cell_data,
-                    const std::vector<std::pair<std::string, std::span<real_t>>> &node_data)
+                    const std::vector<std::shared_ptr<const Function>> &cell_funcs,
+                    const std::vector<std::shared_ptr<const Function>> &node_funcs)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -224,11 +232,14 @@ namespace sfem::io::vtk::xml
         // Cell data
         {
             Element cell_data_elem(file, "PCellData", {}, indent++);
-            for (const auto &[name, _] : cell_data)
+            for (const auto &func : cell_funcs)
             {
-                auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
-                                                            {"Name", name}});
-                file << indent_string(elem, indent) << "\n";
+                for (const auto &comp : func->components())
+                {
+                    auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
+                                                                {"Name", comp}});
+                    file << indent_string(elem, indent) << "\n";
+                }
             }
             indent--;
         }
@@ -236,11 +247,14 @@ namespace sfem::io::vtk::xml
         // Point data
         {
             Element point_data_elem(file, "PPointData", {}, indent++);
-            for (const auto &[name, _] : node_data)
+            for (const auto &func : node_funcs)
             {
-                auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
-                                                            {"Name", name}});
-                file << indent_string(elem, indent) << "\n";
+                for (const auto &comp : func->components())
+                {
+                    auto elem = create_empty_tag("PDataArray", {{"type", real_t_str()},
+                                                                {"Name", comp}});
+                    file << indent_string(elem, indent) << "\n";
+                }
             }
             indent--;
         }
