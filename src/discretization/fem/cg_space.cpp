@@ -7,9 +7,8 @@
 namespace sfem::fem
 {
     //=============================================================================
-    CGSpace::CGSpace(std::shared_ptr<const mesh::Mesh> mesh, int order,
-                     const std::vector<std::string> &components)
-        : FESpace(mesh, order, components, std::format("CG({})", order))
+    CGSpace::CGSpace(std::shared_ptr<const mesh::Mesh> mesh, int order)
+        : FESpace(mesh, order, std::format("CG({})", order))
     {
         // Quick access to mesh topology
         auto topology = mesh->topology();

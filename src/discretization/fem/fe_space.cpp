@@ -4,22 +4,16 @@
 namespace sfem::fem
 {
     //=============================================================================
-    FESpace::FESpace(std::shared_ptr<const mesh::Mesh> mesh, int order,
-                     const std::vector<std::string> &components,
+    FESpace::FESpace(std::shared_ptr<const mesh::Mesh> mesh,
+                     int order,
                      const std::string &name)
         : mesh_(mesh),
           order_(order),
-          components_(components),
           name_(name)
     {
         if (order_ <= 0)
         {
             SFEM_ERROR(std::format("Cannot create FESpace with order {} (<=0)\n", order_));
-        }
-        if (components_.size() <= 0)
-        {
-            SFEM_ERROR(std::format("Cannot create FESpace with {} (<=0) components\n",
-                                   components_.size()));
         }
     }
     //=============================================================================
@@ -35,11 +29,6 @@ namespace sfem::fem
     int FESpace::order() const
     {
         return order_;
-    }
-    //=============================================================================
-    std::vector<std::string> FESpace::components() const
-    {
-        return components_;
     }
     //=============================================================================
     std::string FESpace::name() const
@@ -60,33 +49,6 @@ namespace sfem::fem
     const FECollection &FESpace::fe_collection() const
     {
         return fe_collection_;
-    }
-    //=============================================================================
-    int FESpace::n_comp() const
-    {
-        return static_cast<int>(components_.size());
-    }
-    //=============================================================================
-    int FESpace::comp_idx(const std::string &component) const
-    {
-        auto it = std::find(components_.cbegin(),
-                            components_.end(),
-                            component);
-        if (it == components_.end())
-        {
-            auto msg = std::format("Component {} not found in: [ ", component);
-            for (const auto &comp : components_)
-            {
-                msg += std::format("{} ", comp);
-            }
-            msg += "]\n";
-            log_msg(msg, LogLevel::warning);
-            return -1;
-        }
-        else
-        {
-            return static_cast<int>(std::distance(components_.cbegin(), it));
-        }
     }
     //=============================================================================
     std::shared_ptr<FiniteElement> FESpace::element(mesh::CellType cell_type) const

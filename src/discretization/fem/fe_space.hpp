@@ -19,10 +19,9 @@ namespace sfem::fem
         /// @brief Create a finite element space
         /// @param mesh Mesh
         /// @param order Polynomial order (or degree)
-        /// @param components The name of each component
         /// @param name The name of the space
-        FESpace(std::shared_ptr<const mesh::Mesh> mesh, int order,
-                const std::vector<std::string> &components,
+        FESpace(std::shared_ptr<const mesh::Mesh> mesh,
+                int order,
                 const std::string &name);
 
         // Destructor
@@ -33,9 +32,6 @@ namespace sfem::fem
 
         /// @brief Get the order of the finite element space
         int order() const;
-
-        /// @brief Get the name of each component
-        std::vector<std::string> components() const;
 
         /// @brief Get the name of the finite element space
         std::string name() const;
@@ -48,16 +44,6 @@ namespace sfem::fem
 
         /// @brief Get the finite element collection
         const FECollection &fe_collection() const;
-
-        /// @brief Get the number of components (i.e. unknowns or variables) per DoF
-        int n_comp() const;
-
-        /// @brief Get the index of a specific component
-        /// @note Components are numbered according to their
-        /// names were provided. For example, components {"u", "v"}
-        /// have an index of 0 and 1 respectively
-        /// @note If the component is not found, returns -1
-        int comp_idx(const std::string &component) const;
 
         /// @brief Get the finite element for the corresponding cell type
         /// @note Raises an error if no element exists for the given cell type
@@ -87,9 +73,6 @@ namespace sfem::fem
 
         /// @brief The order of the space (i.e. the polynomial degree)
         int order_;
-
-        /// @brief The name of each component
-        std::vector<std::string> components_;
 
         /// @brief The name of the space
         std::string name_;

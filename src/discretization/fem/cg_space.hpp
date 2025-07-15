@@ -8,7 +8,6 @@ namespace sfem::fem
     class CGSpace : public FESpace
     {
     public:
-        CGSpace(std::shared_ptr<const mesh::Mesh> mesh, int order,
-                const std::vector<std::string> &components);
+        CGSpace(std::shared_ptr<const mesh::Mesh> mesh, int order);
     };
 }
