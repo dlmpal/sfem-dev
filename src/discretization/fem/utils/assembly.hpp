@@ -12,21 +12,25 @@ namespace sfem::fem
 
     void assemble_matrix_cells(const FESpace &phi,
                                const std::string &region,
+                               int n_comp,
                                FECellKernel kernel,
                                MatSet mat);
 
     void assemble_matrix_facets(const FESpace &phi,
                                 const std::string &region,
+                                int n_comp,
                                 FEFacetKernel kernel,
                                 MatSet mat);
 
     void assemble_vec_cells(const FESpace &phi,
                             const std::string &region,
+                            int n_comp,
                             FECellKernel kernel,
                             VecSet vec);
 
     void assemble_vec_facets(const FESpace &phi,
                              const std::string &region,
+                             int n_comp,
                              FEFacetKernel kernel,
                              VecSet vec);
 

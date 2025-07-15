@@ -7,12 +7,13 @@ namespace sfem::fem
     //=============================================================================
     void assemble_matrix_cells(const FESpace &phi,
                                const std::string &region,
+                               int n_comp,
                                FECellKernel kernel,
                                MatSet mat)
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned cells
         for (const auto &[cell, cell_idx] : mesh->region_cells(region))
@@ -29,7 +30,7 @@ namespace sfem::fem
 
             // Integration
             auto element = phi.element(cell.type);
-            int n_element_dof = static_cast<int>(cell_dof.size()) * phi.n_comp();
+            int n_element_dof = static_cast<int>(cell_dof.size()) * n_comp;
             la::DenseMatrix cell_mat(n_element_dof, n_element_dof);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
@@ -43,12 +44,13 @@ namespace sfem::fem
     //=============================================================================
     void assemble_matrix_facets(const FESpace &phi,
                                 const std::string &region,
+                                int n_comp,
                                 FEFacetKernel kernel,
                                 MatSet mat)
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned facets
         for (const auto &[facet, facet_idx] : mesh->region_facets(region))
@@ -66,7 +68,7 @@ namespace sfem::fem
 
             // Integration
             auto element = phi.element(facet.type);
-            int n_element_dof = static_cast<int>(facet_dof.size()) * phi.n_comp();
+            int n_element_dof = static_cast<int>(facet_dof.size()) * n_comp;
             la::DenseMatrix facet_mat(n_element_dof, n_element_dof);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
@@ -82,12 +84,13 @@ namespace sfem::fem
     //=============================================================================
     void assemble_vec_cells(const FESpace &phi,
                             const std::string &region,
+                            int n_comp,
                             FECellKernel kernel,
                             VecSet vec)
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned cells
         for (const auto &[cell, cell_idx] : mesh->region_cells(region))
@@ -104,7 +107,7 @@ namespace sfem::fem
 
             // Integration
             auto element = phi.element(cell.type);
-            int n_element_dof = static_cast<int>(cell_dof.size()) * phi.n_comp();
+            int n_element_dof = static_cast<int>(cell_dof.size()) * n_comp;
             la::DenseMatrix cell_vec(n_element_dof, 1);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
@@ -120,12 +123,13 @@ namespace sfem::fem
     //=============================================================================
     void assemble_vec_facets(const FESpace &phi,
                              const std::string &region,
+                             int n_comp,
                              FEFacetKernel kernel,
                              VecSet vec)
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned facets
         for (const auto &[facet, facet_idx] : mesh->region_facets(region))
@@ -143,7 +147,7 @@ namespace sfem::fem
 
             // Integration
             auto element = phi.element(facet.type);
-            int n_element_dof = static_cast<int>(facet_dof.size()) * phi.n_comp();
+            int n_element_dof = static_cast<int>(facet_dof.size()) * n_comp;
             la::DenseMatrix facet_vec(n_element_dof, 1);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
@@ -163,7 +167,7 @@ namespace sfem::fem
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned cells and accumulate result
         la::DenseMatrix result(1, 1); ///< Resize if needed
@@ -221,7 +225,7 @@ namespace sfem::fem
     {
         // Quick access
         const auto mesh = phi.mesh();
-        const int dim = mesh->physical_dim();
+        const int dim = mesh->pdim();
 
         // Loop over locally owned facets and accumulate result
         la::DenseMatrix result(1, 1); ///< Resize if needed
