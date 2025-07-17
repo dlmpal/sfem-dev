@@ -5,4 +5,6 @@ namespace sfem::fvm
 {
 }
 
-#include "fv_geometry.hpp"
+#include "utils/sfem_fvm_utils.hpp"
+#include "fv_space.hpp"
+#include "fv_function.hpp"
