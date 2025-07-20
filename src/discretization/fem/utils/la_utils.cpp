@@ -5,6 +5,12 @@
 namespace sfem::fem::petsc
 {
     //=============================================================================
+    la::petsc::PetscVec create_vec(const FEFunction &phi)
+    {
+        const auto fe_space = phi.space();
+        return la::petsc::create_vec(*fe_space->index_map(), phi.n_comp());
+    }
+    //=============================================================================
     la::petsc::PetscMat create_mat(const FEFunction &phi)
     {
         const auto fe_space = phi.space();
@@ -12,12 +18,6 @@ namespace sfem::fem::petsc
                                      *fe_space->index_map(),
                                      *fe_space->index_map(),
                                      phi.n_comp());
-    }
-    //=============================================================================
-    la::petsc::PetscVec create_vec(const FEFunction &phi)
-    {
-        const auto fe_space = phi.space();
-        return la::petsc::create_vec(*fe_space->index_map(), phi.n_comp());
     }
     //=============================================================================
     void solve(la::petsc::PetscMat &A,

@@ -8,11 +8,11 @@
 
 namespace sfem::fem::petsc
 {
-    /// @brief Create a PETSc matrix for a finite element function
-    la::petsc::PetscMat create_mat(const FEFunction &phi);
-
     /// @brief Create a PETSc vector for a finite element function
     la::petsc::PetscVec create_vec(const FEFunction &phi);
+
+    /// @brief Create a PETSc matrix for a finite element function
+    la::petsc::PetscMat create_mat(const FEFunction &phi);
 
     /// @brief Form and solve the linear system Ax=b.
     /// Before the system is solved, the Dirichlet boundary condition is applied
