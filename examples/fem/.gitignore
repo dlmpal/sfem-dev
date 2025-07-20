@@ -1,0 +1,11 @@
+laplace/build/
+laplace/compare/
+laplace/post/
+laplace/run.sh/
+
+elasticity_2d/build/
+elasticity_2d/post/
+elasticity_2d/test.py
+elasticity_2d/run.sh
+
+elasticity_3d/

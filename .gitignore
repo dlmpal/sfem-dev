@@ -2,7 +2,6 @@ build/
 cmake/
 .vscode/
 pysfem/
-examples/
 src/la/native/sparse_matrix.*
 run.sh
 summary.log
