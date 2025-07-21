@@ -142,11 +142,10 @@ namespace sfem::fem::quadrature
         {
             point.weight = gauss_1d_qweights(p, i % p) *
                            gauss_1d_qweights(p, (i % (p * p)) / p) *
-                           gauss_1d_qweights(p, i / (p / p)),
-            point.point = {
-                gauss_1d_qpoints(p, i % p),
-                gauss_1d_qpoints(p, (i % (p * p)) / p),
-                gauss_1d_qpoints(p, i / (p / p))};
+                           gauss_1d_qweights(p, i / (p * p)),
+            point.point = {gauss_1d_qpoints(p, i % p),
+                           gauss_1d_qpoints(p, (i % (p * p)) / p),
+                           gauss_1d_qpoints(p, i / (p * p))};
         }
         return point;
     }
