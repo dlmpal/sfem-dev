@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 
     // Mesh, order and FE space
     auto mesh = io::read_mesh(argv[1]);
-    int order = 2;
+    int order = 1;
     auto V = std::make_shared<fem::CGSpace>(mesh, order);
 
     // Temperature function
