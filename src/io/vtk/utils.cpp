@@ -17,17 +17,17 @@ namespace sfem::io::vtk
             {{mesh::CellType::triangle, 2}, 22},
             {{mesh::CellType::triangle, 3}, 69},
 
-            {{mesh::CellType::quad, 1}, 9},
-            {{mesh::CellType::quad, 2}, 23},
-            {{mesh::CellType::quad, 3}, 70},
+            {{mesh::CellType::quadrilateral, 1}, 9},
+            {{mesh::CellType::quadrilateral, 2}, 23},
+            {{mesh::CellType::quadrilateral, 3}, 70},
 
-            {{mesh::CellType::tet, 1}, 10},
-            {{mesh::CellType::tet, 2}, 24},
-            {{mesh::CellType::tet, 3}, 71},
+            {{mesh::CellType::tetrahedron, 1}, 10},
+            {{mesh::CellType::tetrahedron, 2}, 24},
+            {{mesh::CellType::tetrahedron, 3}, 71},
 
-            {{mesh::CellType::hex, 1}, 12},
-            {{mesh::CellType::hex, 2}, 25},
-            {{mesh::CellType::hex, 3}, 72},
+            {{mesh::CellType::hexahedron, 1}, 12},
+            {{mesh::CellType::hexahedron, 2}, 25},
+            {{mesh::CellType::hexahedron, 3}, 72},
 
             {{mesh::CellType::prism, 1}, 13}
 

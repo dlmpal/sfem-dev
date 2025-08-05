@@ -4,7 +4,7 @@ namespace sfem::fem::fixed_order
 {
     //=============================================================================
     Tet4::Tet4()
-        : NodalFiniteElement(mesh::CellType::tet, 1,
+        : NodalFiniteElement(mesh::CellType::tetrahedron, 1,
                              std::make_unique<quadrature::Tetrahedron>(4))
     {
     }
@@ -39,7 +39,7 @@ namespace sfem::fem::fixed_order
     }
     //=============================================================================
     Tet10::Tet10()
-        : NodalFiniteElement(mesh::CellType::tet, 2,
+        : NodalFiniteElement(mesh::CellType::tetrahedron, 2,
                              std::make_unique<quadrature::Tetrahedron>(5))
     {
     }

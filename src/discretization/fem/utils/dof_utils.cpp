@@ -15,11 +15,11 @@ namespace sfem::fem::dof
             return order + 1;
         case mesh::CellType::triangle:
             return (order + 1) * (order + 2) / 2;
-        case mesh::CellType::quad:
+        case mesh::CellType::quadrilateral:
             return (order + 1) * (order + 1);
-        case mesh::CellType::tet:
+        case mesh::CellType::tetrahedron:
             return (order + 1) * (order + 2) * (order + 3) / 6;
-        case mesh::CellType::hex:
+        case mesh::CellType::hexahedron:
             return (order + 1) * (order + 1) * (order + 1);
         case mesh::CellType::prism:
             return (order + 1) * (order + 1) * (order + 2) / 2;
@@ -39,11 +39,11 @@ namespace sfem::fem::dof
             return order - 1;
         case mesh::CellType::triangle:
             return (order - 1) * (order - 2) / 2;
-        case mesh::CellType::quad:
+        case mesh::CellType::quadrilateral:
             return (order - 1) * (order - 1);
-        case mesh::CellType::tet:
+        case mesh::CellType::tetrahedron:
             return (order - 1) * (order - 2) * (order - 3) / 6;
-        case mesh::CellType::hex:
+        case mesh::CellType::hexahedron:
             return (order - 1) * (order - 1) * (order - 1);
         case mesh::CellType::prism:
             return (order - 1) * (order - 1) * (order - 2) / 2;
@@ -114,14 +114,14 @@ namespace sfem::fem::dof
     void compute_quad_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
         // No. corner nodes, edges and dof per edge
-        int n_nodes = mesh::cell_num_nodes(mesh::CellType::quad);
-        int n_edges = mesh::cell_num_edges(mesh::CellType::quad);
+        int n_nodes = mesh::cell_num_nodes(mesh::CellType::quadrilateral);
+        int n_edges = mesh::cell_num_edges(mesh::CellType::quadrilateral);
         int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order);
 
         // Edge DoF
         for (int i = 0; i < n_edges; i++)
         {
-            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::quad, i);
+            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::quadrilateral, i);
             auto edge_point_1 = points[edge_ordering[0]];
             auto edge_point_2 = points[edge_ordering[1]];
 
@@ -160,14 +160,14 @@ namespace sfem::fem::dof
     void compute_tet_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
         // No. corner nodes, edges and dof per edge
-        int n_nodes = cell_num_nodes(mesh::CellType::tet);
-        int n_edges = cell_num_edges(mesh::CellType::tet);
+        int n_nodes = cell_num_nodes(mesh::CellType::tetrahedron);
+        int n_edges = cell_num_edges(mesh::CellType::tetrahedron);
         int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order);
 
         // Edge DoF
         for (int i = 0; i < n_edges; i++)
         {
-            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::tet, i);
+            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::tetrahedron, i);
             auto edge_point_1 = points[edge_ordering[0]];
             auto edge_point_2 = points[edge_ordering[1]];
 
@@ -191,14 +191,14 @@ namespace sfem::fem::dof
     void compute_hex_dof_points(int order, std::vector<std::array<real_t, 3>> &points)
     {
         // No. corner nodes, edges and dof per edge
-        int n_nodes = cell_num_nodes(mesh::CellType::hex);
-        int n_edges = cell_num_edges(mesh::CellType::hex);
+        int n_nodes = cell_num_nodes(mesh::CellType::hexahedron);
+        int n_edges = cell_num_edges(mesh::CellType::hexahedron);
         int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order);
 
         // Edge DoF
         for (int i = 0; i < n_edges; i++)
         {
-            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::hex, i);
+            auto edge_ordering = mesh::cell_edge_ordering(mesh::CellType::hexahedron, i);
             auto edge_point_1 = points[edge_ordering[0]];
             auto edge_point_2 = points[edge_ordering[1]];
 
@@ -236,13 +236,13 @@ namespace sfem::fem::dof
         case mesh::CellType::triangle:
             compute_triangle_dof_points(order, points);
             break;
-        case mesh::CellType::quad:
+        case mesh::CellType::quadrilateral:
             compute_quad_dof_points(order, points);
             break;
-        case mesh::CellType::tet:
+        case mesh::CellType::tetrahedron:
             compute_tet_dof_points(order, points);
             break;
-        case mesh::CellType::hex:
+        case mesh::CellType::hexahedron:
             compute_tet_dof_points(order, points);
             break;
         default:

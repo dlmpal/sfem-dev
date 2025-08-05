@@ -4,7 +4,7 @@ namespace sfem::fem::fixed_order
 {
     //=============================================================================
     Quad4::Quad4()
-        : NodalFiniteElement(mesh::CellType::quad, 1,
+        : NodalFiniteElement(mesh::CellType::quadrilateral, 1,
                              std::make_unique<quadrature::Gauss<2>>(1))
     {
     }
@@ -33,7 +33,7 @@ namespace sfem::fem::fixed_order
     }
     //=============================================================================
     Quad9::Quad9()
-        : NodalFiniteElement(mesh::CellType::quad, 2,
+        : NodalFiniteElement(mesh::CellType::quadrilateral, 2,
                              std::make_unique<quadrature::Gauss<2>>(2))
     {
     }
@@ -90,7 +90,7 @@ namespace sfem::fem::fixed_order
     }
     //=============================================================================
     Quad16::Quad16()
-        : NodalFiniteElement(mesh::CellType::quad, 3,
+        : NodalFiniteElement(mesh::CellType::quadrilateral, 3,
                              std::make_unique<quadrature::Gauss<2>>(3))
     {
     }

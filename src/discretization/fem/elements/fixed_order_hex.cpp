@@ -4,7 +4,7 @@ namespace sfem::fem::fixed_order
 {
     //=============================================================================
     Hex8::Hex8()
-        : NodalFiniteElement(mesh::CellType::hex, 1,
+        : NodalFiniteElement(mesh::CellType::hexahedron, 1,
                              std::make_unique<quadrature::Gauss<3>>(1))
     {
     }

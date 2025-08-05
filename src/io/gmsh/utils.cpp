@@ -11,9 +11,9 @@ namespace sfem::io::gmsh
                 {15, mesh::CellType::point},
                 {1, mesh::CellType::line},
                 {2, mesh::CellType::triangle},
-                {3, mesh::CellType::quad},
-                {4, mesh::CellType::tet},
-                {5, mesh::CellType::hex},
+                {3, mesh::CellType::quadrilateral},
+                {4, mesh::CellType::tetrahedron},
+                {5, mesh::CellType::hexahedron},
                 {6, mesh::CellType::prism},
             };
 

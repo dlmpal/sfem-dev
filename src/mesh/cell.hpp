@@ -18,9 +18,9 @@ namespace sfem::mesh
         point = 0,
         line = 1,
         triangle = 2,
-        quad = 3,
-        tet = 4,
-        hex = 5,
+        quadrilateral = 3,
+        tetrahedron = 4,
+        hexahedron = 5,
         prism = 6,
         n_cell_types = 7
     };

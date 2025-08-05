@@ -44,7 +44,7 @@ namespace sfem::fem
                 break;
             }
             break;
-        case mesh::CellType::quad:
+        case mesh::CellType::quadrilateral:
             switch (order)
             {
             case 1:
@@ -60,7 +60,7 @@ namespace sfem::fem
                 break;
             }
             break;
-        case mesh::CellType::tet:
+        case mesh::CellType::tetrahedron:
             switch (order)
             {
             case 1:
@@ -73,7 +73,7 @@ namespace sfem::fem
                 break;
             }
             break;
-        case mesh::CellType::hex:
+        case mesh::CellType::hexahedron:
             switch (order)
             {
             case 1:

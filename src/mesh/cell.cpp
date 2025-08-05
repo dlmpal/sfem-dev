@@ -14,11 +14,11 @@ namespace sfem::mesh
             return "line";
         case CellType::triangle:
             return "triangle";
-        case CellType::quad:
+        case CellType::quadrilateral:
             return "quadrilateral";
-        case CellType::tet:
+        case CellType::tetrahedron:
             return "tetrahedron";
-        case CellType::hex:
+        case CellType::hexahedron:
             return "hexahedron";
         case CellType::prism:
             return "prism";
@@ -37,11 +37,11 @@ namespace sfem::mesh
             return 1;
         case CellType::triangle:
             return 2;
-        case CellType::quad:
+        case CellType::quadrilateral:
             return 2;
-        case CellType::tet:
+        case CellType::tetrahedron:
             return 3;
-        case CellType::hex:
+        case CellType::hexahedron:
             return 3;
         case CellType::prism:
             return 3;
@@ -61,11 +61,11 @@ namespace sfem::mesh
             return 2;
         case CellType::triangle:
             return 3;
-        case CellType::quad:
+        case CellType::quadrilateral:
             return 4;
-        case CellType::tet:
+        case CellType::tetrahedron:
             return 4;
-        case CellType::hex:
+        case CellType::hexahedron:
             return 8;
         case CellType::prism:
             return 6;
@@ -85,11 +85,11 @@ namespace sfem::mesh
             return 1;
         case CellType::triangle:
             return 3;
-        case CellType::quad:
+        case CellType::quadrilateral:
             return 4;
-        case CellType::tet:
+        case CellType::tetrahedron:
             return 6;
-        case CellType::hex:
+        case CellType::hexahedron:
             return 12;
         case CellType::prism:
             return 9;
@@ -109,11 +109,11 @@ namespace sfem::mesh
             return 0;
         case CellType::triangle:
             return 1;
-        case CellType::quad:
+        case CellType::quadrilateral:
             return 1;
-        case CellType::tet:
+        case CellType::tetrahedron:
             return 4;
-        case CellType::hex:
+        case CellType::hexahedron:
             return 6;
         case CellType::prism:
             return 5;
@@ -135,30 +135,30 @@ namespace sfem::mesh
                 {{CellType::triangle, 1}, {1, 2}},
                 {{CellType::triangle, 2}, {2, 0}},
 
-                {{CellType::quad, 0}, {0, 1}},
-                {{CellType::quad, 1}, {1, 2}},
-                {{CellType::quad, 2}, {2, 3}},
-                {{CellType::quad, 3}, {3, 0}},
+                {{CellType::quadrilateral, 0}, {0, 1}},
+                {{CellType::quadrilateral, 1}, {1, 2}},
+                {{CellType::quadrilateral, 2}, {2, 3}},
+                {{CellType::quadrilateral, 3}, {3, 0}},
 
-                {{CellType::tet, 0}, {0, 1}},
-                {{CellType::tet, 1}, {1, 2}},
-                {{CellType::tet, 2}, {2, 0}},
-                {{CellType::tet, 3}, {0, 3}},
-                {{CellType::tet, 4}, {3, 2}},
-                {{CellType::tet, 5}, {3, 1}},
+                {{CellType::tetrahedron, 0}, {0, 1}},
+                {{CellType::tetrahedron, 1}, {1, 2}},
+                {{CellType::tetrahedron, 2}, {2, 0}},
+                {{CellType::tetrahedron, 3}, {0, 3}},
+                {{CellType::tetrahedron, 4}, {3, 2}},
+                {{CellType::tetrahedron, 5}, {3, 1}},
 
-                {{CellType::hex, 0}, {0, 1}},
-                {{CellType::hex, 1}, {0, 3}},
-                {{CellType::hex, 2}, {0, 4}},
-                {{CellType::hex, 3}, {1, 2}},
-                {{CellType::hex, 4}, {1, 5}},
-                {{CellType::hex, 5}, {2, 3}},
-                {{CellType::hex, 6}, {2, 6}},
-                {{CellType::hex, 7}, {3, 7}},
-                {{CellType::hex, 8}, {4, 5}},
-                {{CellType::hex, 9}, {4, 7}},
-                {{CellType::hex, 10}, {5, 6}},
-                {{CellType::hex, 11}, {6, 7}},
+                {{CellType::hexahedron, 0}, {0, 1}},
+                {{CellType::hexahedron, 1}, {0, 3}},
+                {{CellType::hexahedron, 2}, {0, 4}},
+                {{CellType::hexahedron, 3}, {1, 2}},
+                {{CellType::hexahedron, 4}, {1, 5}},
+                {{CellType::hexahedron, 5}, {2, 3}},
+                {{CellType::hexahedron, 6}, {2, 6}},
+                {{CellType::hexahedron, 7}, {3, 7}},
+                {{CellType::hexahedron, 8}, {4, 5}},
+                {{CellType::hexahedron, 9}, {4, 7}},
+                {{CellType::hexahedron, 10}, {5, 6}},
+                {{CellType::hexahedron, 11}, {6, 7}},
             };
 
         return orderings.at({cell_type, edge_idx});
@@ -172,19 +172,19 @@ namespace sfem::mesh
             {
                 {{CellType::triangle, 0}, CellType::triangle},
 
-                {{CellType::quad, 0}, CellType::quad},
+                {{CellType::quadrilateral, 0}, CellType::quadrilateral},
 
-                {{CellType::tet, 0}, CellType::triangle},
-                {{CellType::tet, 1}, CellType::triangle},
-                {{CellType::tet, 2}, CellType::triangle},
-                {{CellType::tet, 3}, CellType::triangle},
+                {{CellType::tetrahedron, 0}, CellType::triangle},
+                {{CellType::tetrahedron, 1}, CellType::triangle},
+                {{CellType::tetrahedron, 2}, CellType::triangle},
+                {{CellType::tetrahedron, 3}, CellType::triangle},
 
-                {{CellType::hex, 0}, CellType::quad},
-                {{CellType::hex, 1}, CellType::quad},
-                {{CellType::hex, 2}, CellType::quad},
-                {{CellType::hex, 3}, CellType::quad},
-                {{CellType::hex, 4}, CellType::quad},
-                {{CellType::hex, 5}, CellType::quad},
+                {{CellType::hexahedron, 0}, CellType::quadrilateral},
+                {{CellType::hexahedron, 1}, CellType::quadrilateral},
+                {{CellType::hexahedron, 2}, CellType::quadrilateral},
+                {{CellType::hexahedron, 3}, CellType::quadrilateral},
+                {{CellType::hexahedron, 4}, CellType::quadrilateral},
+                {{CellType::hexahedron, 5}, CellType::quadrilateral},
             };
 
         return face_type.at({cell_type, face_idx});
@@ -197,19 +197,19 @@ namespace sfem::mesh
         static const std::map<std::pair<CellType, int>, std::array<int, 4>> orderings =
             {
                 {{CellType::triangle, 0}, {0, 1, 2}},
-                {{CellType::quad, 0}, {0, 1, 2, 3}},
+                {{CellType::quadrilateral, 0}, {0, 1, 2, 3}},
 
-                {{CellType::tet, 0}, {1, 2, 3}},
-                {{CellType::tet, 1}, {0, 2, 3}},
-                {{CellType::tet, 2}, {0, 1, 3}},
-                {{CellType::tet, 3}, {0, 1, 2}},
+                {{CellType::tetrahedron, 0}, {1, 2, 3}},
+                {{CellType::tetrahedron, 1}, {0, 2, 3}},
+                {{CellType::tetrahedron, 2}, {0, 1, 3}},
+                {{CellType::tetrahedron, 3}, {0, 1, 2}},
 
-                {{CellType::hex, 0}, {0, 3, 2, 1}},
-                {{CellType::hex, 1}, {0, 1, 5, 4}},
-                {{CellType::hex, 2}, {0, 4, 7, 3}},
-                {{CellType::hex, 3}, {1, 2, 6, 5}},
-                {{CellType::hex, 4}, {3, 7, 6, 2}},
-                {{CellType::hex, 5}, {4, 5, 6, 7}},
+                {{CellType::hexahedron, 0}, {0, 3, 2, 1}},
+                {{CellType::hexahedron, 1}, {0, 1, 5, 4}},
+                {{CellType::hexahedron, 2}, {0, 4, 7, 3}},
+                {{CellType::hexahedron, 3}, {1, 2, 6, 5}},
+                {{CellType::hexahedron, 4}, {3, 7, 6, 2}},
+                {{CellType::hexahedron, 5}, {4, 5, 6, 7}},
             };
 
         return orderings.at({cell_type, face_idx});
