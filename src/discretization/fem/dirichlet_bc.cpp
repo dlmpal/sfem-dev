@@ -32,11 +32,11 @@ namespace sfem::fem
             auto region_dof = fe_space->boundary_dof(region_name);
             boundary_dof_.insert({region_name, region_dof});
         }
-        auto dof = boundary_dof_.at(region_name);
+        const auto &dof = boundary_dof_.at(region_name);
 
         // Store the specified values
         const int n_comp = func_->n_comp();
-        int comp_idx = func_->comp_idx(component);
+        const int comp_idx = func_->comp_idx(component);
         if (values.size() == 1) ///< Single value provided for all region DoF
         {
             for (std::size_t i = 0; i < dof.size(); i++)
