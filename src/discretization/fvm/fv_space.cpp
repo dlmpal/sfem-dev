@@ -76,17 +76,16 @@ namespace sfem::fvm
         intercell_distances_.resize(n_facets);
         for (int i = 0; i < n_facets; i++)
         {
-            std::array<geo::Vec3, 2> facet_cell_distance;
             for (int j = 0; j < 2; j++)
             {
-                facet_cell_distance[j] = geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][j]],
-                                                               facet_midpoints_[i]);
-                facet_cell_distances_[i][j] = facet_cell_distance[j].mag();
+                facet_cell_distances_[i][j] = geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][j]],
+                                                                    facet_midpoints_[i]);
             }
 
             if (facet_adjacent_cells_[i][0] == facet_adjacent_cells_[i][1])
             {
-                intercell_distances_[i] = 2 * facet_cell_distance[0];
+                intercell_distances_[i] = 2 * geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][0]],
+                                                                    facet_midpoints_[i]);
             }
             else
             {
@@ -161,6 +160,21 @@ namespace sfem::fvm
         else
         {
             return false;
+        }
+    }
+    //=============================================================================
+    real_t FVSpace::compute_facet_value(int facet_idx, real_t value1, real_t value2, bool harmonic) const
+    {
+        const real_t d = intercell_distances_[facet_idx].mag();
+        const auto &[d1, d2] = facet_cell_distances_[facet_idx];
+        const real_t w = d2 / d;
+        if (harmonic)
+        {
+            return 1 / (w / value1 + (1 - w) / value2);
+        }
+        else
+        {
+            return w * value1 + (1 - w) * value2;
         }
     }
 }

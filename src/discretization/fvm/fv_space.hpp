@@ -55,6 +55,13 @@ namespace sfem::fvm
         /// @brief Check whether a given facet is located on the boundary
         bool is_boundary(int facet_idx) const;
 
+        /// @brief Compute a distance weighted average at the facet of two
+        /// adjacent cells, given the value of each cell
+        real_t compute_facet_value(int facet_idx,
+                                   real_t value1,
+                                   real_t value2,
+                                   bool harmonic = false) const;
+
     private:
         /// @brief The mesh
         std::shared_ptr<const mesh::Mesh> mesh_;
