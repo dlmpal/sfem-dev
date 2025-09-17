@@ -2,7 +2,7 @@
 
 #ifdef SFEM_HAS_PETSC
 
-#include "../utils.hpp"
+#include "../native/setval_utils.hpp"
 #include "../../graph/connectivity.hpp"
 #include "../../parallel/index_map.hpp"
 #include <petsc.h>

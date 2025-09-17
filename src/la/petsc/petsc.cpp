@@ -4,7 +4,6 @@
 #include "petsc_vec.hpp"
 #include "petsc_mat.hpp"
 #include "petsc_ksp.hpp"
-#include "../utils.hpp"
 #include "../native/sparsity.hpp"
 #include "../native/vector.hpp"
 #include "../../base/logging.hpp"
@@ -184,7 +183,7 @@ namespace sfem::la::petsc
                              PetscVec &b,
                              PetscVec &x)
     {
-        x.set_values(idxs, values, true);
+        x.set_values(idxs, values, INSERT_VALUES);
         MatZeroRowsColumnsLocal(A.mat(),
                                 static_cast<int>(idxs.size()),
                                 idxs.data(), 1.0,
