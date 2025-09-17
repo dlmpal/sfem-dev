@@ -4,6 +4,15 @@
 #include "../dirichlet_bc.hpp"
 #include "../../../la/petsc/sfem_petsc.hpp"
 
+namespace sfem::fem
+{
+    /// @brief Create a vector for a finite element function
+    la::Vector create_vec(const FEFunction &phi);
+
+    /// @brief Create a matrix for a finite element function
+    la::SparseMatrix create_mat(const FEFunction &phi);
+}
+
 #ifdef SFEM_HAS_PETSC
 
 namespace sfem::fem::petsc
