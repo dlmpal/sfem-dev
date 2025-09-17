@@ -83,17 +83,15 @@ namespace sfem::la::petsc
     //=============================================================================
     void PetscVec::set_values(std::span<const int> idxs,
                               std::span<const real_t> values,
-                              bool insert)
+                              InsertMode mode)
     {
         // Get the block size
         int block_size;
         VecGetBlockSize(vec_, &block_size);
 
-        // Whether to insert (thereby overriding) or add the values
-        InsertMode mode = ADD_VALUES;
-        if (insert)
+        /// @todo Why is this required?
+        if (mode == INSERT_VALUES)
         {
-            mode = INSERT_VALUES;
             block_size = 1;
         }
 

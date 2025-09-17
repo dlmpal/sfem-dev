@@ -47,10 +47,10 @@ namespace sfem::la::petsc
         /// @brief Set values into the vector
         /// @param idxs Indices
         /// @param values Values
-        /// @param insert Whether to insert the values, overriding previous
+        /// @param mode Whether to insert or add the values
         void set_values(std::span<const int> idxs,
                         std::span<const real_t> values,
-                        bool insert = false);
+                        InsertMode mode = ADD_VALUES);
 
         /// @brief Assemble the vector
         void assemble();
