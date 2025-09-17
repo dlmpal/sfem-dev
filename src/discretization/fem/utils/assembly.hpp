@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../fe_function.hpp"
-#include "../../../la/utils.hpp"
+#include "../../../la/native/setval_utils.hpp"
 
 namespace sfem::fem
 {
