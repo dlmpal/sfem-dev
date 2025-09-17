@@ -1,12 +1,25 @@
 #pragma once
 
+#include "setval_utils.hpp"
 #include "../../parallel/index_map.hpp"
-#include "../../base/config.hpp"
 #include <memory>
 
 namespace sfem::la
 {
-    /// @brief MPI-parallel vector
+    /// @brief Distributed vector the values of which are partitioned
+    /// according to a given index map. The vector stores values for both
+    /// locally owned and ghost indices.
+    ///
+    /// If vector values are inserted incrementally (e.g. in finite-element assembly)
+    /// the user should first call assemble(), before trying to access vector values.
+    /// Calling assemble() will zero-out ghost index values after sending them to their
+    /// respective owner processes. If ghost index values are also to be accessed,
+    /// the user should also call update_ghosts() immediately after assemble().
+    ///
+    /// Vector operations (e.g adding, scaling and copying vector values) are performed locally,
+    /// i.e. ONLY for owned indices. As was the case for vectors the values of which where incrementally
+    /// inserted, update_ghosts() should be called if ghost index values are to be accessed for vectors
+    /// which are the result of vector operations.
     class Vector
     {
     public:
@@ -37,15 +50,24 @@ namespace sfem::la
         int block_size() const;
 
         /// @brief Get the vector's values
+        /// @note Includes ghost index values
         std::vector<real_t> &values();
 
         /// @brief Get the vector's values (const version)
+        /// @note Includes ghost index values
         const std::vector<real_t> &values() const;
 
-        /// @brief Get the vector's local size
+        /// @brief Get the number of owned indices
+        int n_owned() const;
+
+        /// @brief Get the number of ghost indices
+        int n_ghost() const;
+
+        /// @brief Get the number of local indices
+        /// @note Sum of owned and ghost indices
         int n_local() const;
 
-        /// @brief Get the vector's global size
+        /// @brief Get the global number of indices
         int n_global() const;
 
         /// @brief Get the value for a given (local) index and component
@@ -55,30 +77,60 @@ namespace sfem::la
         real_t operator()(int idx, int comp = 0) const;
 
         /// @brief Set all vector values to a uniform value
+        /// @note Ghost index values are NOT affected
         void set_all(real_t value);
 
         /// @brief Set vector values for a given set of (local) indices
         /// @param idxs Local indices
         /// @param values Values
-        /// @param insert Whether to insert, or add the values
+        /// @param mode Whether to insert or add the values
         void set_values(std::span<const int> idxs,
                         std::span<const real_t> values,
-                        bool insert = false);
+                        SetMode mode = SetMode::add);
 
-        /// @brief Assemble the vector, i.e. synchronize the values of ghost indices
+        /// @brief Assemble the vector
         void assemble();
+
+        /// @brief Update the values of ghost indices
+        void update_ghosts();
 
     protected:
         /// @brief Index map
-        std::shared_ptr<const IndexMap> index_map_;
+        std::shared_ptr<const IndexMap> im_;
 
         /// @brief Block size
-        int block_size_;
+        int bs_;
 
-        /// @brief Values
+        /// @brief Vector values
         std::vector<real_t> values_;
     };
 
-    void vec_copy(const Vector &src, Vector &dest);
-    void vec_axpy(real_t a, const Vector &x, Vector &y);
+    // The following vector operations are performed locally,
+    // i.e. for locally owned indices ONLY
+
+    /// @brief Copy the values of one vector to another
+    /// @note Values of ghost indices are NOT copied
+    void copy(const Vector &src, Vector &dest);
+
+    // void scale();
+
+    /// @brief Perform the operation: y = y + ax
+    void axpy(real_t a, const Vector &x, Vector &y);
+
+    /// @brief Perform the operation: z = a * x + b * y + c
+    void axpbypc(real_t a, real_t b, real_t c,
+                 const Vector &x, const Vector &y, Vector &z);
+
+    /// @brief Compute the dot product for a pair of vectors
+    real_t dot(const Vector &x, const Vector &y);
+
+    enum class NormType
+    {
+        l1 = 0,
+        l2 = 1,
+        linf = 2
+    };
+
+    /// @brief Compute a norm of a given type for a vector
+    real_t norm(const Vector &x, NormType norm_type);
 }
