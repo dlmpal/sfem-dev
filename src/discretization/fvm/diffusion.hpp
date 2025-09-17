@@ -2,7 +2,7 @@
 
 #include "fv_bc.hpp"
 #include "../coefficient.hpp"
-#include "../../la/utils.hpp"
+#include "../../la/native/setval_utils.hpp"
 
 namespace sfem::fvm
 {

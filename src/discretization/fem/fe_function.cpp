@@ -24,12 +24,12 @@ namespace sfem::fem
     {
         const auto cell_dof = fe_space_->cell_dof(cell_idx);
         const int n_dof = static_cast<int>(cell_dof.size());
-        la::DenseMatrix cell_values(n_dof * block_size_, 1);
+        la::DenseMatrix cell_values(n_dof * bs_, 1);
         for (int i = 0; i < n_dof; i++)
         {
-            for (int j = 0; j < block_size_; j++)
+            for (int j = 0; j < bs_; j++)
             {
-                cell_values(i * block_size_ + j, 0) = values_[cell_dof[i] * block_size_ + j];
+                cell_values(i * bs_ + j, 0) = values_[cell_dof[i] * bs_ + j];
             }
         }
         return cell_values;

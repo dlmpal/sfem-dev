@@ -17,7 +17,7 @@ namespace sfem
   //=============================================================================
   int Function::n_comp() const
   {
-    return block_size_;
+    return bs_;
   }
   //=============================================================================
   int Function::comp_idx(const std::string &component) const
