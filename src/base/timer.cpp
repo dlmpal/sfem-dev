@@ -15,6 +15,6 @@ namespace sfem
         stop_ = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop_ - start_);
         std::string msg = std::format("{} completed in {} milliseconds\n", location_.function_name(), duration.count());
-        log_msg(msg, LogLevel::debug);
+        log_msg(msg, true, LogLevel::debug);
     }
 }

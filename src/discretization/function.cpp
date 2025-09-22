@@ -33,7 +33,7 @@ namespace sfem
         msg += std::format("{} ", comp);
       }
       msg += "]\n";
-      log_msg(msg, LogLevel::warning);
+      log_msg(msg, false, LogLevel::warning);
       return -1;
     }
     else

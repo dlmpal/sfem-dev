@@ -22,6 +22,7 @@ namespace sfem
     }
     //=============================================================================
     void log_msg(const std::string &msg,
+                 bool root_only,
                  LogLevel level,
                  std::source_location location)
     {
@@ -38,7 +39,10 @@ namespace sfem
             formatted += std::format("\t at file {}, line {}\n", location.file_name(), location.line());
         }
 
-        Application::instance().log_message(formatted, level);
+        if ((root_only and mpi::rank() == mpi::root()) or !root_only)
+        {
+            Application::instance().log_message(formatted, level);
+        }
 
         // For errors, abort the application
         if (level == LogLevel::error)

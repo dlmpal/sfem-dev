@@ -14,7 +14,12 @@ namespace sfem
     };
 
     /// @brief Log a message
+    /// @param msg Message
+    /// @param root_only Whether to output the message on the root process only
+    /// @param level Log level
+    /// @param location Callsite
     void log_msg(const std::string &msg,
-                 LogLevel level,
+                 bool root_only = false,
+                 LogLevel level = LogLevel::info,
                  std::source_location location = std::source_location::current());
 }

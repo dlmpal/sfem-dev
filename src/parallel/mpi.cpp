@@ -58,7 +58,7 @@ namespace sfem::mpi
         int len;
         MPI_Error_string(error_code, error_msg, &len);
         log_msg(std::format("Call to MPI function returned with error:\n\t{}\n", error_msg),
-                LogLevel::error, location);
+                true, LogLevel::error, location);
     }
     //=============================================================================
     template <typename T>

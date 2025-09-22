@@ -94,7 +94,7 @@ namespace sfem::la::petsc
         {
             std::string msg = std::format("PetscKSP did not converge in {} iterations (reason {})\n",
                                           n_iter, static_cast<int>(reason));
-            log_msg(msg, LogLevel::warning);
+            log_msg(msg, true, LogLevel::warning);
         }
 
         return static_cast<int>(n_iter);

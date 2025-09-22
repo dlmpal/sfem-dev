@@ -3,9 +3,9 @@
 #include "logging.hpp"
 #include <format>
 
-#define SFEM_ERROR(msg)                            \
-    {                                              \
-        sfem::log_msg(msg, sfem::LogLevel::error); \
+#define SFEM_ERROR(msg)                                   \
+    {                                                     \
+        sfem::log_msg(msg, false, sfem::LogLevel::error); \
     }
 
 #define SFEM_CHECK_FILE_OPEN(file, filename)                                       \
