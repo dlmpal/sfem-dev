@@ -1,5 +1,6 @@
 #include "dense_matrix.hpp"
 #include "utils.hpp"
+#include <numeric>
 #include <format>
 
 namespace sfem::la
@@ -44,6 +45,11 @@ namespace sfem::la
     const std::vector<real_t> &DenseMatrix::values() const
     {
         return values_;
+    }
+    //=============================================================================
+    void DenseMatrix::set_all(real_t value)
+    {
+        std::fill(values_.begin(), values_.end(), value);
     }
     //=============================================================================
     DenseMatrix DenseMatrix::copy() const
@@ -238,5 +244,31 @@ namespace sfem::la
         DenseMatrix result = lhs.copy();
         result *= rhs;
         return result;
+    }
+    //=============================================================================
+    DenseMatrix submatrix(const DenseMatrix &mat,
+                          int start_row, int end_row,
+                          int start_col, int end_col)
+    {
+        DenseMatrix sub(end_row - start_row,
+                        end_col - start_col);
+        for (int i = start_row; i < end_row; i++)
+        {
+            for (int j = start_col; j < end_col; j++)
+            {
+                sub(i - start_row, j - start_col) = mat(i, j);
+            }
+        }
+        return sub;
+    }
+    //=============================================================================
+    real_t norm(const DenseMatrix &A)
+    {
+        return std::sqrt(std::accumulate(A.values().cbegin(),
+                                         A.values().cend(), 0.0,
+                                         [](real_t acc, real_t v)
+                                         {
+                                             return acc + v * v;
+                                         }));
     }
 }

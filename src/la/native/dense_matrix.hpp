@@ -44,6 +44,9 @@ namespace sfem::la
         /// @brief Get the matrix values (const version)
         const std::vector<real_t> &values() const;
 
+        /// @brief Set all matrix values to a uniform value
+        void set_all(real_t value);
+
         /// @brief Get a copy of the matrix
         DenseMatrix copy() const;
 
@@ -83,7 +86,7 @@ namespace sfem::la
         /// @brief Number of rows
         int n_rows_;
 
-        /// @brief NUmber of columns
+        /// @brief Number of columns
         int n_cols_;
 
         /// @brief Values
@@ -97,4 +100,12 @@ namespace sfem::la
     DenseMatrix operator-(const DenseMatrix &lhs, const DenseMatrix &rhs);
     DenseMatrix operator*(const DenseMatrix &lhs, const DenseMatrix &rhs);
     DenseMatrix operator*(const DenseMatrix &lhs, real_t rhs);
+
+    /// @brief Extract a submatrix
+    DenseMatrix submatrix(const DenseMatrix &mat,
+                          int start_row, int end_row,
+                          int start_col, int end_col);
+
+    /// @brief Compute the Frobenius norm for a dense matrix
+    real_t norm(const DenseMatrix &A);
 }
