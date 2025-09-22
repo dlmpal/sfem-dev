@@ -112,9 +112,10 @@ namespace sfem::la
     /// @note Values of ghost indices are NOT copied
     void copy(const Vector &src, Vector &dest);
 
-    // void scale();
+    /// @brief Perform the operation x = a * x
+    void scale(real_t a, Vector &x);
 
-    /// @brief Perform the operation: y = y + ax
+    /// @brief Perform the operation: y = y + a * x
     void axpy(real_t a, const Vector &x, Vector &y);
 
     /// @brief Perform the operation: z = a * x + b * y + c

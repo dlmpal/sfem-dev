@@ -140,6 +140,17 @@ namespace sfem::la
                   dest.values().begin());
     }
     //=============================================================================
+    void scale(real_t a, Vector &x)
+    {
+        for (int i = 0; i < x.n_owned(); i++)
+        {
+            for (int j = 0; j < x.block_size(); j++)
+            {
+                x(i, j) *= a;
+            }
+        }
+    }
+    //=============================================================================
     void axpy(real_t a, const Vector &x, Vector &y)
     {
         SFEM_CHECK_SIZES(x.block_size(), y.block_size());
