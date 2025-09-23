@@ -19,23 +19,26 @@ namespace sfem::la
         void single_iteration(int iter, const SparseMatrix &A,
                               const Vector &b, Vector &x) override;
 
-        void init_(int iter, const SparseMatrix &A,
-                   const Vector &b, Vector &x);
+        void restart(int iter, const SparseMatrix &A,
+                     const Vector &b, Vector &x);
 
     private:
         /// @brief Number of iterations before restart
         int n_restart_;
 
-        /// @brief Iteration since last restart
+        /// @brief Iterations since last restart
         int riter_;
 
-        // Workspace vectors
-        Vector v1;
-        Vector v2;
-        Vector x0;
+        /// @brief Initial solution vector (since last restart)
+        Vector x0_;
 
-        DenseMatrix Q;
-        DenseMatrix H;
-        DenseMatrix e1;
+        /// @brief Krylov subspace orthonormal basis vectors
+        std::vector<Vector> Q_;
+
+        /// @brief Hessenberg matrix
+        DenseMatrix H_;
+
+        /// @brief e1 vector (e1=[||r0||, 0, 0, ..., 0]^T)
+        DenseMatrix e1_;
     };
 }

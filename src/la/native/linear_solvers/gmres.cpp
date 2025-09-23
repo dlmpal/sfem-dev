@@ -8,99 +8,52 @@ namespace sfem::la
     GMRES::GMRES(real_t tol, int n_iter_max, bool verbose, int n_restart)
         : LinearSolver("GMRES", tol, n_iter_max, verbose),
           n_restart_(n_restart),
-          v1(std::make_shared<IndexMap>(), 1),
-          v2(std::make_shared<IndexMap>(), 1),
-          x0(std::make_shared<IndexMap>(), 1),
-          Q(1, 1), H(1, 1), e1(1, 1)
+          x0_(std::make_shared<IndexMap>(), 1),
+          H_(n_restart_ + 1, n_restart_),
+          e1_(n_restart_ + 1, 1)
     {
     }
-    //=============================================================================
-    // Helper function: Set a dense matrix column
-    // from the locally owned values of a vector
-    static void set_col(DenseMatrix &Q,
-                        const Vector &q, int idx)
-    {
-        SFEM_CHECK_SIZES(Q.n_rows(),
-                         q.n_owned() * q.block_size());
-        SFEM_CHECK_INDEX(idx, Q.n_cols());
-        const int bs = q.block_size();
-        for (int i = 0; i < q.n_owned(); i++)
-        {
-            for (int j = 0; j < bs; j++)
-            {
-                Q(i * bs + j, idx) = q(i, j);
-            }
-        }
-    };
-    //=============================================================================
-    // Helper function: Set the locally owned values
-    // of a vector from a column of a dense matrix
-    static void get_col(const DenseMatrix &Q,
-                        Vector &q, int idx)
-    {
-        SFEM_CHECK_SIZES(Q.n_rows(),
-                         q.n_owned() * q.block_size());
-        SFEM_CHECK_INDEX(idx, Q.n_cols());
-        const int bs = q.block_size();
-        for (int i = 0; i < q.n_owned(); i++)
-        {
-            for (int j = 0; j < bs; j++)
-            {
-                q(i, j) = Q(i * bs + j, idx);
-            }
-        }
-    };
     //=============================================================================
     void GMRES::init(const SparseMatrix &A,
                      const Vector &b, Vector &x)
     {
-        // Number of (local) equations
-        const int m = b.n_owned() * b.block_size();
-
-        // Degree of Krylov subspace
-        const int n = n_restart_;
-
         // Allocate workspace objects
-        v1 = Vector(b.index_map(), b.block_size());
-        v2 = Vector(b.index_map(), b.block_size());
-        x0 = Vector(b.index_map(), b.block_size());
-        Q = DenseMatrix(m, n + 1);
-        H = DenseMatrix(n + 1, n);
-        e1 = DenseMatrix(n + 1, 1);
+        x0_ = Vector(b.index_map(), b.block_size());
+        for (int i = 0; i < n_restart_; i++)
+        {
+            Q_.emplace_back(b.index_map(), b.block_size());
+        }
 
-        //
-        init_(0, A, b, x);
+        // Perform initial "restart"
+        restart(0, A, b, x);
     }
     //=============================================================================
-    void GMRES::init_(int iter, const SparseMatrix &A,
-                      const Vector &b, Vector &x)
+    void GMRES::restart(int iter, const SparseMatrix &A,
+                        const Vector &b, Vector &x)
     {
-        v1.set_all(0.0);
-        v2.set_all(0.0);
-        x0.set_all(0.0);
-        Q.set_all(0.0);
-        H.set_all(0.0);
-        e1.set_all(0.0);
+        // Save initial solution vector
+        copy(x, x0_);
+        x0_.update_ghosts();
 
-        //
-        copy(x, x0);
-        x0.update_ghosts();
+        // Reset basis vectors
+        for (auto &q : Q_)
+        {
+            q.set_all(0.0);
+        }
 
-        // Compute initial residual and its norm
-        spmv(A, x0, v1);              // v1 = A*x0
-        axpbypc(1, -1, 0, b, v1, v2); // v2 = b - v1 = b - A*x0
-        residual_history_[iter] = norm(v2, NormType::l2);
+        // Compute initial residual vector and its norm
+        spmv(A, x0_, Q_[0]);
+        axpy(-1, b, Q_[0]);
+        residual_history_[iter] = norm(Q_[0], NormType::l2);
 
-        // Normalize v2 to obtain q1
-        scale(1.0 / residual_history_[iter], v2);
+        // Normalize the initial residual vector to create the first basis vector
+        scale(1.0 / residual_history_[iter], Q_[0]);
 
-        //
-        set_col(Q, v2, 0);
+        // Reset Hessenberg matrix and e1 vector
+        H_.set_all(0.0);
+        e1_(0, 0) = residual_history_[iter];
 
-        //
-        e1(0, 0) = residual_history_[iter];
-
-        //
+        // Reset iterations since last restart
         riter_ = 0;
     }
     //=============================================================================
@@ -154,60 +107,46 @@ namespace sfem::la
     void GMRES::single_iteration(int iter, const SparseMatrix &A,
                                  const Vector &b, Vector &x)
     {
-        // Number of (local) equations
-        const int m = b.n_owned() * b.block_size();
-
-        // Degree of Krylov subspace
-        const int n = n_restart_;
-
-        // Iteration since last restart
         const int k = riter_;
 
         // Perform a single Arnoldi iteration
-        get_col(Q, v1, k); // v1 = q_(k-1)
-        v1.update_ghosts();
-        spmv(A, v1, v2); // v2 = A * v1 = A* q_(k-1)
+        Q_[k].update_ghosts();
+        spmv(A, Q_[k], Q_[k + 1]);
         for (int j = 0; j < k + 1; j++)
         {
-            get_col(Q, v1, j);      // v1 = q_j
-            H(j, k) = dot(v1, v2);  // H_(j, k-1) = <v1, v2>
-            axpy(-H(j, k), v1, v2); // v2 -= <v1, v2> v1
+            H_(j, k) = dot(Q_[j], Q_[k + 1]);
+            axpy(-H_(j, k), Q_[j], Q_[k + 1]);
         }
-        H(k + 1, k) = norm(v2, NormType::l2); // H(k, k-1) = <v2, v2>
-        if (std::abs(H(k + 1, k)) >= std::numeric_limits<real_t>::epsilon() and k + 1 < n)
+        H_(k + 1, k) = norm(Q_[k + 1], NormType::l2);
+        const real_t eps = std::numeric_limits<real_t>::epsilon();
+        if (std::abs(H_(k + 1, k)) >= eps and k + 1 < n_restart_)
         {
-            scale(1.0 / H(k + 1, k), v2); // v2 = v2 / ||v2||
+            scale(1.0 / H_(k + 1, k), Q_[k + 1]);
         }
-        set_col(Q, v2, k + 1);
 
         // Solve the least squares problem
-        auto Hk = submatrix(H, 0, k + 2, 0, k + 1);
-        auto e1k = submatrix(e1, 0, k + 2, 0, 1);
+        auto Hk = submatrix(H_, 0, k + 2, 0, k + 1);
+        auto e1k = submatrix(e1_, 0, k + 2, 0, 1);
         auto yk = lstsq(Hk, e1k);
 
-        // xk = x0 + Qk * yk
-        const auto &x0_values = x0.values();
-        auto &x_values = x.values();
-        for (int i = 0; i < m; i++)
+        // Update solution vector
+        copy(x0_, x);
+        for (int j = 0; j < k + 1; j++)
         {
-            x_values[i] = x0_values[i];
-            for (int j = 0; j < yk.n_rows(); j++)
-            {
-                x_values[i] += yk(j, 0) * Q(i, j);
-            }
+            axpy(yk(j, 0), Q_[j], x);
         }
 
         // Increment iteration (since last restart)
         riter_++;
 
         // Perform a restart, if required
+        // Else, update residual history
         if (riter_ == n_restart_)
         {
-            init_(iter, A, b, x);
+            restart(iter, A, b, x);
         }
         else
         {
-            // Update residual
             residual_history_[iter] = norm(Hk * yk - e1k);
         }
     }
