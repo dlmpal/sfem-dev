@@ -1,15 +1,14 @@
 # SFEM
-SFEM is a C++ framework for the solution of PDEs on unstructured meshes, using the Finite Elemenet and Finite Volume methods.
-It supports distributed memory parallelism via the MPI protocol. SFEM utilizes PETSc for sparse linear algebra computations, and METIS for mesh partitioning. SLEPc is an optional dependency, which enables the computation of eigenvalues of discretized operators.
+SFEM is a C++ framework for the solution of PDEs on unstructured meshes, using the Finite Element and Finite Volume methods. It supports distributed memory parallelism via the MPI protocol. SFEM utilizes METIS for mesh partitioning, and, optionally, PETSc and SLEPc can be used for solving linear and eigenproblems respectively. However, an iterative linear solver suite is also included natively with SFEM.
 
 ## Requirements
 * C++ 23 and above
 * Python 3.8 and above
 * CMake 3.16 and above 
-* MPI
-* PETSc
+* MPI (optional)
+* METIS (optional if MPI is disabled)
+* PETSc (optional)
 * SLEPc (optional)
-* METIS
 
 ## Installation and usage 
 Start by cloning the repository to your machine:
