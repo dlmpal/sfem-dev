@@ -51,6 +51,12 @@ namespace sfem::graph::partition
     std::vector<int> create_partition(const Connectivity &conn, int n_parts,
                                       PartitionerType type)
     {
+        // Return early for serial runs
+        if (n_parts == 1)
+        {
+            return std::vector<int>(conn.n_primary(), 0);
+        }
+
         auto type_to_string = [](PartitionerType type)
         {
             switch (type)
