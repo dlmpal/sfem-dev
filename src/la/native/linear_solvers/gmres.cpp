@@ -19,7 +19,8 @@ namespace sfem::la
     {
         // Allocate workspace objects
         x0_ = Vector(b.index_map(), b.block_size());
-        for (int i = 0; i < n_restart_; i++)
+        Q_.clear();
+        for (int i = 0; i < n_restart_ + 1; i++)
         {
             Q_.emplace_back(b.index_map(), b.block_size());
         }
@@ -47,7 +48,8 @@ namespace sfem::la
         residual_history_[iter] = norm(Q_[0], NormType::l2);
 
         // Normalize the initial residual vector to create the first basis vector
-        scale(1.0 / residual_history_[iter], Q_[0]);
+        // The negative sign is required since q0 was defined as Ax - b (instead of b - Ax)
+        scale(-1.0 / residual_history_[iter], Q_[0]);
 
         // Reset Hessenberg matrix and e1 vector
         H_.set_all(0.0);
