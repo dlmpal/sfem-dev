@@ -72,19 +72,22 @@ namespace sfem::fvm::ode
                 }
 
                 // Source term contribution
-                std::vector<real_t> source(flux->n_comp());
-                for (const auto &[cell, cell_idx] : mesh->region_cells(region.name()))
+                if (src)
                 {
-                    // Only integrate locally owned cells
-                    if (topology->entity_index_map(mesh->pdim())->is_ghost(cell_idx))
+                    std::vector<real_t> source(flux->n_comp());
+                    for (const auto &[cell, cell_idx] : mesh->region_cells(region.name()))
                     {
-                        continue;
-                    }
+                        // Only integrate locally owned cells
+                        if (topology->entity_index_map(mesh->pdim())->is_ghost(cell_idx))
+                        {
+                            continue;
+                        }
 
-                    src(V->cell_midpoint(cell_idx), source, time);
-                    for (int i = 0; i < flux->n_comp(); i++)
-                    {
-                        rhs(cell_idx, i) += source[i];
+                        src(V->cell_midpoint(cell_idx), source, time);
+                        for (int i = 0; i < flux->n_comp(); i++)
+                        {
+                            rhs(cell_idx, i) += source[i];
+                        }
                     }
                 }
             }

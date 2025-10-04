@@ -12,5 +12,5 @@ namespace sfem::fvm::ode
     /// @brief Create a RHS function for a given FV function, numerical flux and source function
     RHSFunction create_rhs(std::shared_ptr<const fvm::FVFunction> phi,
                            std::shared_ptr<const fvm::NumericalFlux> nflux,
-                           SourceFunction src);
+                           SourceFunction src = {});
 }
