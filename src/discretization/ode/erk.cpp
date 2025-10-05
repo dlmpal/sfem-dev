@@ -49,7 +49,7 @@ namespace sfem::ode
         }
     }
     //=============================================================================
-    ERKIntegrator create_fe(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
+    static ERKIntegrator create_fe(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
     {
         const int n_stages = 1;
         std::vector<real_t> nodes = {0.};
@@ -62,7 +62,7 @@ namespace sfem::ode
                              std::move(coeffs));
     }
     //=============================================================================
-    ERKIntegrator create_rk4(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
+    static ERKIntegrator create_rk4(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
     {
         const int n_stages = 4;
         std::vector<real_t> nodes = {0., 1. / 2., 1. / 2., 1.};
@@ -76,5 +76,19 @@ namespace sfem::ode
                              std::move(nodes),
                              std::move(weights),
                              std::move(coeffs));
+    }
+    //=============================================================================
+    ERKIntegrator create_erk(const la::Vector &state, ERKIntegrator::RHSFunction rhs, ERKType type)
+    {
+        switch (type)
+        {
+        case ERKType::fe:
+            return create_fe(state, rhs);
+        case ERKType::rk4:
+            return create_rk4(state, rhs);
+        default:
+            SFEM_ERROR("Invalid ERK type\n");
+            return ERKIntegrator(state, rhs, 0, {}, {}, la::DenseMatrix(1, 1));
+        }
     }
 }

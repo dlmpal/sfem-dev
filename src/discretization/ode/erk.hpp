@@ -57,9 +57,13 @@ namespace sfem::ode
         std::vector<la::Vector> stages_;
     };
 
-    /// @brief Create a Forward Euler integrator
-    ERKIntegrator create_fe(const la::Vector &state, ERKIntegrator::RHSFunction rhs);
+    /// @brief Available Explicit Runge-Kutta integrator types
+    enum class ERKType
+    {
+        fe, // Forward Euler
+        rk4 // Classic fourth-order Runge-Kutta
+    };
 
-    /// @brief Create a classic fourth order explicit Runge-Kutta integrator
-    ERKIntegrator create_rk4(const la::Vector &state, ERKIntegrator::RHSFunction rhs);
+    /// @brief Create an ERK integrator of specific type
+    ERKIntegrator create_erk(const la::Vector &state, ERKIntegrator::RHSFunction rhs, ERKType type);
 }
