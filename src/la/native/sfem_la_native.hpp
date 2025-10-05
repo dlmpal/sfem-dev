@@ -1,7 +1,7 @@
 #pragma once
 
-#include "utils.hpp"
 #include "dense_matrix.hpp"
+#include "dense_matrix_utils.hpp"
 #include "sparsity.hpp"
 #include "vector.hpp"
 #include "sparse_matrix.hpp"

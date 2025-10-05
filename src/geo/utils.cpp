@@ -1,5 +1,6 @@
 #include "utils.hpp"
-#include "../la/native/utils.hpp"
+#include "../la/native/dense_matrix_utils.hpp"
+#include <cmath>
 
 namespace sfem::geo
 {
@@ -49,18 +50,18 @@ namespace sfem::geo
         real_t dY2 = X4[1] - X3[1];
         real_t dZ2 = X4[2] - X3[2];
 
-        real_t A[3 * 2] = {dX1, -dX2,
-                           dY1, -dY2,
-                           dZ1, -dZ2};
+        std::array<real_t, 3 * 2> A = {dX1, -dX2,
+                                       dY1, -dY2,
+                                       dZ1, -dZ2};
 
-        real_t b[3 * 1] = {X3[0] - X1[0],
-                           X3[1] - X1[1],
-                           X3[2] - X1[2]};
+        std::array<real_t, 3> b = {X3[0] - X1[0],
+                                   X3[1] - X1[1],
+                                   X3[2] - X1[2]};
 
-        real_t Ainv[2 * 3]{};
+        std::array<real_t, 2 * 3> Ainv;
         la::utils::pinv(3, 2, A, Ainv);
 
-        real_t x[2]{};
+        std::array<real_t, 2> x;
         la::utils::matmult(2, 1, 3, Ainv, b, x);
 
         return {X1[0] + dX1 * x[0],
