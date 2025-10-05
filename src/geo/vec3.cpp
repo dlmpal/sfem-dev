@@ -1,4 +1,5 @@
 #include "vec3.hpp"
+#include <cmath>
 
 namespace sfem::geo
 {

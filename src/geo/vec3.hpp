@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../base/config.hpp"
-#include <cmath>
 #include <array>
-#include <concepts>
 
 namespace sfem::geo
 {
