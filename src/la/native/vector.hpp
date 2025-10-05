@@ -127,9 +127,9 @@ namespace sfem::la
 
     enum class NormType
     {
-        l1 = 0,
-        l2 = 1,
-        linf = 2
+        l1,
+        l2,
+        linf
     };
 
     /// @brief Compute a norm of a given type for a vector

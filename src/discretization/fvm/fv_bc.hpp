@@ -6,9 +6,9 @@ namespace sfem::fvm
 {
     enum class BCType
     {
-        zero_neumann = 0,
-        neumann = 1,
-        dirichlet = 2
+        zero_neumann,
+        neumann,
+        dirichlet
     };
 
     class FVBC

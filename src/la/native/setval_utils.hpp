@@ -18,8 +18,8 @@ namespace sfem::la
     /// existing ones) or adding them
     enum class SetMode
     {
-        add = 0,
-        insert = 1
+        add,
+        insert
     };
 
     using VecSet = std::function<void(std::span<const int>,

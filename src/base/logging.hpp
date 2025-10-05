@@ -7,10 +7,10 @@ namespace sfem
 {
     enum class LogLevel
     {
-        debug = 0,
-        info = 1,
-        warning = 2,
-        error = 3
+        debug,
+        info,
+        warning,
+        error
     };
 
     /// @brief Log a message

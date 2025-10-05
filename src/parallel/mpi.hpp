@@ -25,10 +25,10 @@ namespace sfem::mpi
 
     enum class ReduceOperation
     {
-        min = 0,
-        max = 1,
-        sum = 2,
-        prod = 3
+        min,
+        max,
+        sum,
+        prod
     };
 
     /// @brief Perform a reduce operation across all processes
