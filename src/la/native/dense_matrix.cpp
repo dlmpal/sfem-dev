@@ -70,7 +70,6 @@ namespace sfem::la
     //=============================================================================
     std::pair<DenseMatrix, real_t> DenseMatrix::invert() const
     {
-        /// @todo
         DenseMatrix inv(n_cols_, n_rows_);
         real_t det;
         if (n_rows_ == n_cols_)

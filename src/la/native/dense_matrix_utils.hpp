@@ -39,24 +39,20 @@ namespace sfem::la::utils
                 std::span<const real_t> m2, real_t a2,
                 std::span<real_t> m3);
 
-    /// @brief Compute the determinant of a square 3x3, 2x2 or 1x1 matrix
-    /// @param nr Number of rows (=number of columns)
-    /// @param m Matrix
-    /// @return Determinant
-    real_t det(int nr, std::span<const real_t> m);
-
-    /// @brief Inverse and determinant of a square 3x3, 2x2 or 1x1 matrix
+    /// @brief Compute the inverse and determinant of square matrix
     /// @param nr Number of rows (=number of columns)
     /// @param m Matrix
     /// @param mi Inverse matrix
     /// @return Determinant
+    /// @note Optimized for 3x3, 2x2 and 1x1 matrices
     real_t inv(int r, std::span<const real_t> m, std::span<real_t> mi);
 
-    /// @brief Moore-Penrose pseudo-inverse of a 3x2, 3x1 or 2x1 matrix
+    /// @brief Compute the Moore-Penrose pseudo-inverse of a matrix (and its determinant)
     /// @param nr Number of rows
     /// @param nc Number of columns
     /// @param m Matrix
     /// @param mi Matrix pseudo-inverse
     /// @return Determinant
+    /// @note Optimized for 3x2, 3x1 and 2x1 matrices
     real_t pinv(int r, int c, std::span<const real_t> m, std::span<real_t> mi);
 }

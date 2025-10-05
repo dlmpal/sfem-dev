@@ -1,15 +1,17 @@
 #include "dense_matrix_utils.hpp"
 #include "../../base/error.hpp"
 #include <cmath>
+#include <vector>
+#include <limits>
 
 namespace sfem::la::utils
 {
     //=============================================================================
     void transpose(int nr, int nc, std::span<const real_t> m, std::span<real_t> mt)
     {
-        for (auto i = 0; i < nr; i++)
+        for (int i = 0; i < nr; i++)
         {
-            for (auto j = 0; j < nc; j++)
+            for (int j = 0; j < nc; j++)
             {
                 mt[j * nr + i] = m[i * nc + j];
             }
@@ -51,7 +53,7 @@ namespace sfem::la::utils
         }
     }
     //=============================================================================
-    real_t det(int nr, std::span<const real_t> m)
+    real_t det3x3(int nr, std::span<const real_t> m)
     {
         real_t d = -1;
 
@@ -77,10 +79,10 @@ namespace sfem::la::utils
         return d;
     }
     //=============================================================================
-    real_t inv(int nr, std::span<const real_t> m, std::span<real_t> mi)
+    real_t inv3x3(int nr, std::span<const real_t> m, std::span<real_t> mi)
     {
         // Determinant and inverse
-        real_t d = det(nr, m);
+        real_t d = det3x3(nr, m);
         real_t di = 1 / d;
 
         if (nr == 3)
@@ -114,7 +116,110 @@ namespace sfem::la::utils
         return d;
     }
     //=============================================================================
-    real_t pinv(int nr, int nc, std::span<const real_t> m, std::span<real_t> mi)
+    real_t inv(int nr, std::span<const real_t> A, std::span<real_t> Ainv)
+    {
+        if (nr <= 3)
+        {
+            return inv3x3(nr, A, Ainv);
+        }
+
+        // Matrix copy
+        std::vector<real_t> A_(A.data(), A.data() + nr * nr);
+
+        // Initialize inverse as identity
+        for (int i = 0; i < nr; i++)
+        {
+            Ainv[i * nr + i] = 1.0;
+        }
+
+        const real_t eps = std::numeric_limits<real_t>::epsilon();
+
+        // Swap the rows r1 and r2
+        auto row_swap = [nr](std::span<real_t> mat, int r1, int r2)
+        {
+            for (int j = 0; j < nr; j++)
+            {
+                std::swap(mat[r1 * nr + j], mat[r2 * nr + j]);
+            }
+        };
+
+        // Scale row r1 by a
+        auto row_scale = [nr](std::span<real_t> mat, int r, real_t a)
+        {
+            for (int j = 0; j < nr; j++)
+            {
+                mat[r * nr + j] *= a;
+            }
+        };
+
+        // Add row r1 (scaled by a) to row r2
+        auto row_axpy = [nr](std::span<real_t> mat, int r1, int r2, real_t a)
+        {
+            for (int j = 0; j < nr; j++)
+            {
+                mat[r2 * nr + j] += a * mat[r1 * nr + j];
+            }
+        };
+
+        int n_swap = 0;
+        real_t det = 1.0;
+        for (int c = 0; c < nr; c++)
+        {
+            // Find pivot row
+            int p = c;
+            for (int r = c; r < nr; r++)
+            {
+                if (std::abs(A_[r * nr + c]) > std::abs(A_[p * nr + c]))
+                {
+                    p = r;
+                }
+            }
+
+            // Store pivot and check for singularity
+            const real_t pivot = A_[p * nr + c];
+            if (std::abs(pivot) < eps)
+            {
+                SFEM_ERROR("Singular matrix!\n");
+            }
+
+            det *= pivot;
+
+            // Swap rows
+            if (c != p)
+            {
+                row_swap(A_, c, p);
+                row_swap(Ainv, c, p);
+                n_swap++;
+            }
+
+            // Normalize pivot row
+            row_scale(A_, c, 1 / pivot);
+            row_scale(Ainv, c, 1 / pivot);
+
+            // Elimininate rows
+            for (int r = 0; r < nr; r++)
+            {
+                if (r == c)
+                {
+                    continue;
+                }
+
+                const real_t factor = -A_[r * nr + c];
+                row_axpy(A_, c, r, factor);
+                row_axpy(Ainv, c, r, factor);
+            }
+        }
+
+        // Adjust determinant's sign based on number of row swaps
+        if ((n_swap - 1) % 2 == 0)
+        {
+            det = -det;
+        }
+
+        return det;
+    }
+    //=============================================================================
+    real_t pinv3x3(int nr, int nc, std::span<const real_t> m, std::span<real_t> mi)
     {
         // Transpose
         std::array<real_t, 3 * 3> mt;
@@ -125,15 +230,42 @@ namespace sfem::la::utils
         matmult(nc, nc, nr, mt, m, mtm);
 
         // Invert intermediate product
-        std::array<real_t, 3 * 3> mtmi; /// < Suppress unitialized warning
-        inv(nc, mtm, mtmi);
+        std::array<real_t, 3 * 3> mtmi;
+        const real_t det = inv3x3(nc, mtm, mtmi);
 
         // Multiply by tranpose
         matmult(nc, nr, nc, mtmi, mt, mi);
 
-        // Compute the determinant
-        real_t d = std::sqrt(det(nc, mtm));
+        return det;
+    }
+    //=============================================================================
+    real_t pinv(int nr, int nc, std::span<const real_t> m, std::span<real_t> mi)
+    {
+        if (nr < nc)
+        {
+            SFEM_ERROR(std::format("Cannot compute pseudo-inverse for matrix with more columns ({}) than rows ({})\n", nc, nr));
+        }
 
-        return d;
+        if (nr <= 3)
+        {
+            return pinv3x3(nr, nc, m, mi);
+        }
+
+        // Transpose
+        std::vector<real_t> mt(nc * nr);
+        transpose(nr, nc, m, mt);
+
+        // Intermediate product
+        std::vector<real_t> mtm(nc * nc);
+        matmult(nc, nc, nr, mt, m, mtm);
+
+        // Invert intermediate product
+        std::vector<real_t> mtmi(nc * nc);
+        const real_t det = inv(nc, mtm, mtmi);
+
+        // Multiply by tranpose
+        matmult(nc, nr, nc, mtmi, mt, mi);
+
+        return det;
     }
 }

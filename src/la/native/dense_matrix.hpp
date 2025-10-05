@@ -56,8 +56,8 @@ namespace sfem::la
         /// @brief Get the transpose of the matrix
         DenseMatrix T() const;
 
-        /// @brief Invert the matrix
-        /// @note Works only for 1x1, 2x2 and 3x3 matrices
+        /// @brief Invert the matrix, while also computing its determinant
+        /// @note For non-square matrices, computes the pseudo-inverse
         std::pair<DenseMatrix, real_t> invert() const;
 
         /// @brief Get the values of a given row
