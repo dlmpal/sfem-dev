@@ -1,4 +1,5 @@
 #include "linear_elasticity.hpp"
+#include <cmath>
 
 namespace sfem::fem::kernels
 {
@@ -178,9 +179,9 @@ namespace sfem::fem::kernels
         const real_t s_xz = S(5, 0);
 
         // Von-Mises stress
-        real_t s_vm = pow(s_xx - s_yy, 2) + pow(s_yy - s_zz, 2) + pow(s_zz - s_xx, 2);
-        s_vm += 6 * (pow(s_xy, 2) + pow(s_yz, 2) + pow(s_xz, 2));
-        s_vm = sqrt(0.5 * s_vm);
+        real_t s_vm = std::pow(s_xx - s_yy, 2) + std::pow(s_yy - s_zz, 2) + std::pow(s_zz - s_xx, 2);
+        s_vm += 6 * (std::pow(s_xy, 2) + std::pow(s_yz, 2) + std::pow(s_xz, 2));
+        s_vm = std::sqrt(0.5 * s_vm);
 
         return la::DenseMatrix(1, 1, s_vm);
     }
