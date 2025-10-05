@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
     // Apply Dirichlet BC and solve
     fem::petsc::solve(A, b, x, bc);
-    U->assemble();
+    U->update_ghosts();
 
     // Save solution to VTK file
     io::vtk::write("post/solution_000", {U});

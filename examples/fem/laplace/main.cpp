@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
     // Apply Dirichlet BC and solve
     fem::petsc::solve(A, b, x, bc);
-    T->assemble();
+    T->update_ghosts();
 
     // Write solution to file
     io::vtk::write("post/solution_000", {T});
