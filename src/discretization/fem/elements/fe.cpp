@@ -1,5 +1,4 @@
 #include "fe.hpp"
-#include "../../../la/native/utils.hpp"
 
 namespace sfem::fem
 {
