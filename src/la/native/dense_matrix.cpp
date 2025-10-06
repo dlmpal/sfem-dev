@@ -205,7 +205,7 @@ namespace sfem::la
     DenseMatrix operator-(const DenseMatrix &lhs, const DenseMatrix &rhs)
     {
         DenseMatrix result = lhs.copy();
-        result += rhs;
+        result -= rhs;
         return result;
     }
     //=============================================================================
