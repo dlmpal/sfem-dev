@@ -24,8 +24,6 @@ namespace sfem::fem
             case 3:
                 element = new fixed_order::Line4;
                 break;
-            default:
-                break;
             }
             break;
         case mesh::CellType::triangle:
@@ -39,8 +37,6 @@ namespace sfem::fem
                 break;
             case 3:
                 element = new fixed_order::Tri10;
-                break;
-            default:
                 break;
             }
             break;
@@ -56,8 +52,6 @@ namespace sfem::fem
             case 3:
                 element = new fixed_order::Quad16;
                 break;
-            default:
-                break;
             }
             break;
         case mesh::CellType::tetrahedron:
@@ -69,8 +63,6 @@ namespace sfem::fem
             case 2:
                 element = new fixed_order::Tet10;
                 break;
-            default:
-                break;
             }
             break;
         case mesh::CellType::hexahedron:
@@ -78,8 +70,6 @@ namespace sfem::fem
             {
             case 1:
                 element = new fixed_order::Hex8;
-                break;
-            default:
                 break;
             }
             break;
