@@ -225,13 +225,13 @@ namespace sfem::la::utils
         std::array<real_t, 3 * 3> mt;
         transpose(nr, nc, m, mt);
 
-        // Intermediate product
+        // Matrix-transpose product
         std::array<real_t, 3 * 3> mtm;
         matmult(nc, nc, nr, mt, m, mtm);
 
-        // Invert intermediate product
+        // Invert matrix-transpose product
         std::array<real_t, 3 * 3> mtmi;
-        const real_t det = inv3x3(nc, mtm, mtmi);
+        const real_t det = std::sqrt(inv3x3(nc, mtm, mtmi));
 
         // Multiply by tranpose
         matmult(nc, nr, nc, mtmi, mt, mi);
@@ -255,13 +255,13 @@ namespace sfem::la::utils
         std::vector<real_t> mt(nc * nr);
         transpose(nr, nc, m, mt);
 
-        // Intermediate product
+        // Matrix-transpose product
         std::vector<real_t> mtm(nc * nc);
         matmult(nc, nc, nr, mt, m, mtm);
 
-        // Invert intermediate product
+        // Invert matrix-transpose product
         std::vector<real_t> mtmi(nc * nc);
-        const real_t det = inv(nc, mtm, mtmi);
+        const real_t det = std::sqrt(inv(nc, mtm, mtmi));
 
         // Multiply by tranpose
         matmult(nc, nr, nc, mtmi, mt, mi);
