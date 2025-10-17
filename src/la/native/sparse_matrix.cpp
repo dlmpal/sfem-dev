@@ -49,6 +49,11 @@ namespace sfem::la
         return bs_;
     }
     //=============================================================================
+    void SparseMatrix::set_all(real_t value)
+    {
+        std::fill(values_.begin(), values_.end(), value);
+    }
+    //=============================================================================
     void SparseMatrix::set_values(std::span<const int> row_idxs,
                                   std::span<const int> col_idxs,
                                   std::span<const real_t> values)

@@ -44,6 +44,9 @@ namespace sfem::la
         /// @brief Get the block size
         int block_size() const;
 
+        /// @brief Set all matrix values to a uniform value
+        void set_all(real_t value);
+
         /// @brief Set matrix values for a given set of (local) row and column indices
         /// @param row_idxs Local row indices
         /// @param col_idxs Local column indices
