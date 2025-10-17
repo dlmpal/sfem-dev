@@ -1,5 +1,8 @@
 #include "fv_gradient.hpp"
-#include <iostream>
+#include "../../geo/utils.hpp"
+#include "../../mesh/utils/geo_utils.hpp"
+#include "../../la/native/dense_matrix.hpp"
+
 namespace sfem::fvm
 {
     //=============================================================================
@@ -11,26 +14,23 @@ namespace sfem::fvm
         const auto V = phi.space();
         const auto mesh = V->mesh();
         const int dim = mesh->pdim();
-        const int n_comp = phi.n_comp();
 
         // Zero the gradient
+        // grad.set_all(0.0, true);
         grad.set_all(0.0);
 
-        FVFunction grad_est(V, grad.components());
-        grad_est.set_all(0.0);
-
-        // Integrate interior facets
+        // Loop over all facets
         for (const auto &region : mesh->regions())
         {
             for (const auto &[facet, facet_idx] : mesh->region_facets(region.name()))
             {
-                // Integrate locally owned facets only
+                // Skip ghost facets
                 if (mesh->topology()->entity_index_map(mesh->pdim() - 1)->is_ghost(facet_idx))
                 {
                     continue;
                 }
 
-                // Facet's adjacent cells
+                // Cells adjacent to the facet
                 const auto adjacent_cells = V->facet_adjacent_cells(facet_idx);
                 const auto &[cell_idx1, cell_idx2] = adjacent_cells;
 
@@ -41,150 +41,135 @@ namespace sfem::fvm
                 // Boundary facets
                 if (cell_idx1 == cell_idx2)
                 {
-                    for (int i = 0; i < n_comp; i++)
+                    // Boundary facet value
+                    // Corresponds to zero Neumann BC by default
+                    real_t phi_facet = phi(cell_idx1);
+                    if (bc.types_.contains(region.name()) and
+                        bc.types_.at(region.name()) != BCType::zero_neumann)
                     {
-                        // Boundary facet value
-                        // Corresponds to zero Neumann BC by default
-                        real_t value = phi(cell_idx1, i);
-                        if (bc.types_.contains(region.name()) and
-                            bc.types_.at(region.name()) != BCType::zero_neumann)
+                        if (bc.types_.at(region.name()) == BCType::dirichlet)
                         {
-                            if (bc.types_.at(region.name()) == BCType::dirichlet)
-                            {
-                                value = bc.values_.at(facet_idx * n_comp + i);
-                            }
-                            else if (bc.types_.at(region.name()) == BCType::neumann)
-                            {
-                                /// @todo
-                            }
+                            phi_facet = bc.values_.at(facet_idx);
                         }
+                        else if (bc.types_.at(region.name()) == BCType::neumann)
+                        {
+                            /// @todo
+                        }
+                    }
 
-                        for (int j = 0; j < dim; j++)
-                        {
-                            grad_est(cell_idx1, j) += value * area * normal(j);
-                        }
+                    // Add gradient contributions for the adjacent cell
+                    for (int j = 0; j < dim; j++)
+                    {
+                        grad(cell_idx1, j) += phi_facet * area * normal(j);
                     }
                 }
                 // Internal facets
                 else
                 {
-                    for (int i = 0; i < n_comp; i++)
-                    {
-                        // Adjacent cell values and facet value
-                        const real_t phi1 = phi(adjacent_cells[0], i);
-                        const real_t phi2 = phi(adjacent_cells[1], i);
-                        const real_t phi_facet = 0.5 * (phi1 + phi2);
-                        // const real_t phi_facet = V->compute_facet_value(facet_idx,
-                        // phi1, phi2);
+                    // Compute facet value from adjacent cell values
+                    const real_t phi1 = phi(cell_idx1);
+                    const real_t phi2 = phi(cell_idx2);
+                    const real_t phi_facet = V->compute_facet_value(facet_idx, phi1, phi2);
 
-                        for (int j = 0; j < dim; j++)
-                        {
-                            grad_est(cell_idx1, j) += phi_facet * area * normal(j);
-                            grad_est(cell_idx2, j) -= phi_facet * area * normal(j);
-                        }
+                    // Add gradient contributions for the adjacent cells
+                    for (int j = 0; j < dim; j++)
+                    {
+                        grad(cell_idx1, j) += phi_facet * area * normal(j);
+                        grad(cell_idx2, j) -= phi_facet * area * normal(j);
                     }
                 }
             }
         }
 
-        // Scale by (inverse) cell volume
-        for (int cell_idx = 0; cell_idx < grad.n_local(); cell_idx++)
+        // Gradient was incrementally constructed - needs assembly
+        grad.assemble();
+
+        // Scale by the (inverse) cell volume
+        for (int cell_idx = 0; cell_idx < grad.n_owned(); cell_idx++)
         {
-            const real_t vol_inv = 1 / V->cell_volume(cell_idx);
-            for (int i = 0; i < grad.n_comp(); i++)
-            {
-                grad_est(cell_idx, i) *= vol_inv;
-            }
-        }
-
-        // Integrate interior facets
-        for (const auto &region : mesh->regions())
-        {
-            for (const auto &[facet, facet_idx] : mesh->region_facets(region.name()))
-            {
-                // Integrate locally owned facets only
-                if (mesh->topology()->entity_index_map(mesh->pdim() - 1)->is_ghost(facet_idx))
-                {
-                    continue;
-                }
-
-                // Facet's adjacent cells
-                const auto adjacent_cells = V->facet_adjacent_cells(facet_idx);
-                const auto &[cell_idx1, cell_idx2] = adjacent_cells;
-
-                // Facet area and normal vector
-                const real_t area = V->facet_area(facet_idx);
-                const auto normal = V->facet_normal(facet_idx);
-
-                // Boundary facets
-                if (cell_idx1 == cell_idx2)
-                {
-                    for (int i = 0; i < n_comp; i++)
-                    {
-                        // Boundary facet value
-                        // Corresponds to zero Neumann BC by default
-                        real_t value = phi(cell_idx1, i);
-                        if (bc.types_.contains(region.name()) and
-                            bc.types_.at(region.name()) != BCType::zero_neumann)
-                        {
-                            if (bc.types_.at(region.name()) == BCType::dirichlet)
-                            {
-                                value = bc.values_.at(facet_idx * n_comp + i);
-                            }
-                            else if (bc.types_.at(region.name()) == BCType::neumann)
-                            {
-                                /// @todo
-                            }
-                        }
-
-                        for (int j = 0; j < dim; j++)
-                        {
-                            grad(cell_idx1, j) += value * area * normal(j);
-                        }
-                    }
-                }
-                // Internal facets
-                else
-                {
-                    for (int i = 0; i < n_comp; i++)
-                    {
-                        // Adjacent cell values and facet value
-                        const real_t phi1 = phi(adjacent_cells[0], i);
-                        const real_t phi2 = phi(adjacent_cells[1], i);
-                        const geo::Vec3 grad1(grad_est(cell_idx1, 0), grad_est(cell_idx1, 1), 0);
-                        const geo::Vec3 grad2(grad_est(cell_idx2, 0), grad_est(cell_idx2, 1), 0);
-                        geo::Vec3 rf({}, V->facet_midpoint(facet_idx));
-                        geo::Vec3 r1({}, V->cell_midpoint(cell_idx1));
-                        geo::Vec3 r2({}, V->cell_midpoint(cell_idx2));
-
-                        const real_t cor = geo::inner(grad1 + grad2, rf - 0.5 * (r1 + r2));
-                        const real_t phi_facet = 0.5 * (phi1 + phi2) + 0.5 * cor;
-
-                        for (int j = 0; j < dim; j++)
-                        {
-                            grad(cell_idx1, j) += phi_facet * area * normal(j);
-                            grad(cell_idx2, j) -= phi_facet * area * normal(j);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Scale by (inverse) cell volume
-        for (int cell_idx = 0; cell_idx < grad.n_local(); cell_idx++)
-        {
-            const real_t vol_inv = 1 / V->cell_volume(cell_idx);
+            const real_t vol_inv = 1.0 / V->cell_volume(cell_idx);
             for (int i = 0; i < grad.n_comp(); i++)
             {
                 grad(cell_idx, i) *= vol_inv;
             }
         }
+
+        // Ensure that ghost cell gradients are also updated
+        grad.update_ghosts();
     }
     //=============================================================================
-    void gradient(const FVFunction &phi,
-                  const FVBC &bc,
-                  FVFunction &grad,
-                  GradientMethod method)
+    void least_squares_gradient(const FVFunction &phi, FVFunction &grad)
+    {
+        // Quick access
+        const auto V = phi.space();
+        const auto mesh = V->mesh();
+        const auto topo = mesh->topology();
+        const int dim = mesh->pdim();
+
+        // Zero the gradient
+        // grad.set_all(0.0, true);
+        grad.set_all(0.0);
+
+        // Least-squares problem LHS matrix and RHS vector
+        la::DenseMatrix A(dim, dim);
+        la::DenseMatrix b(dim, 1);
+
+        // Loop over all cells
+        for (const auto &region : mesh->regions())
+        {
+            // Skip boundary regions
+            if (region.dim() < dim)
+            {
+                continue;
+            }
+
+            for (const auto &[cell, cell_idx] : mesh->region_cells(region.name()))
+            {
+                // Reset least-squares LHS and RHS
+                A.set_all(0.0);
+                b.set_all(0.0);
+
+                // Cell value and midpoint
+                const real_t phi1 = phi(cell_idx);
+                const auto r1 = V->cell_midpoint(cell_idx);
+
+                for (const auto neighour : topo->adjacent_entities(cell_idx, dim, dim))
+                {
+                    // Neighbour value and midpoint
+                    const real_t phi2 = phi(neighour);
+                    const auto r2 = V->cell_midpoint(neighour);
+
+                    // Value difference and intercell distance vector
+                    const real_t dphi = phi2 - phi1;
+                    const geo::Vec3 dr(r1, r2);
+
+                    // Weighting factor
+                    const real_t w = 1.0 / dr.mag();
+
+                    // Add contributions for this neighbour
+                    for (int i = 0; i < dim; i++)
+                    {
+                        for (int j = 0; j < dim; j++)
+                        {
+                            A(i, j) += w * dr(i) * dr(j);
+                        }
+
+                        b(i, 0) += w * dr(i) * dphi;
+                    }
+                }
+
+                // Solve least squares problem and compute cell gradient
+                const auto grad_cell = A.invert().first * b;
+                for (int i = 0; i < dim; i++)
+                {
+                    grad(cell_idx, i) = grad_cell(i, 0);
+                }
+            }
+        }
+    }
+    //=============================================================================
+    void gradient(const FVFunction &phi, const FVBC &bc,
+                  FVFunction &grad, GradientMethod method)
     {
         // Check that sizes match
         const real_t dim = phi.space()->mesh()->pdim();
@@ -195,14 +180,16 @@ namespace sfem::fvm
         case GradientMethod::green_gauss:
             green_gauss_gradient(phi, bc, grad);
             break;
+        case GradientMethod::least_squares:
+            least_squares_gradient(phi, grad);
+            break;
         default:
             SFEM_ERROR(std::format("Invalid gradient computation method: {}\n",
                                    static_cast<int>(method)));
         }
     }
     //=============================================================================
-    std::shared_ptr<FVFunction> gradient(const FVFunction &phi,
-                                         const FVBC &bc,
+    std::shared_ptr<FVFunction> gradient(const FVFunction &phi, const FVBC &bc,
                                          GradientMethod method)
     {
         // Quick access
