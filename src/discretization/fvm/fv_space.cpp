@@ -29,16 +29,16 @@ namespace sfem::fvm
         index_map_ = std::make_shared<IndexMap>(topology->entity_index_map(dim)->renumber());
 
         // CG space for integration
-        fem::CGSpace cg_space(mesh_, 1);
+        const fem::CGSpace cg_space(mesh_, 1);
 
         // Cell volumes and midpoints
         cell_volumes_.resize(n_cells, 0.0);
         cell_midpoints_.resize(n_cells);
         for (int i = 0; i < n_cells; i++)
         {
-            auto cell_type = topology->entity(i, dim).type;
-            auto cell_points = mesh_->entity_points(i, dim);
-            auto element = cg_space.element(cell_type);
+            const auto cell_type = topology->entity(i, dim).type;
+            const auto cell_points = mesh_->entity_points(i, dim);
+            const auto element = cg_space.element(cell_type);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
                 cell_volumes_[i] += element->transform(dim,
@@ -56,9 +56,9 @@ namespace sfem::fvm
         facet_adjacent_cells_.resize(n_facets);
         for (int i = 0; i < n_facets; i++)
         {
-            auto facet_type = topology->entity(i, dim - 1).type;
-            auto facet_points = mesh_->entity_points(i, dim - 1);
-            auto element = cg_space.element(facet_type);
+            const auto facet_type = topology->entity(i, dim - 1).type;
+            const auto facet_points = mesh_->entity_points(i, dim - 1);
+            const auto element = cg_space.element(facet_type);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
                 facet_areas_[i] += element->transform(dim,
