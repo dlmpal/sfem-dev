@@ -77,7 +77,7 @@ namespace sfem::la
         real_t operator()(int idx, int comp = 0) const;
 
         /// @brief Set all vector values to a uniform value
-        /// @note Ghost index values are NOT affected
+        /// @note Includes ghost values
         void set_all(real_t value);
 
         /// @brief Set vector values for a given set of (local) indices

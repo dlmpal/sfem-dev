@@ -79,9 +79,7 @@ namespace sfem::la
     //=============================================================================
     void Vector::set_all(real_t value)
     {
-        std::fill(values_.begin(),
-                  values_.begin() + n_owned() * bs_,
-                  value);
+        std::fill(values_.begin(), values_.end(), value);
     }
     //=============================================================================
     void Vector::set_values(std::span<const int> idxs,
