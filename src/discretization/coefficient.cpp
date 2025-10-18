@@ -23,34 +23,34 @@ namespace sfem
         return value_[comp];
     }
     //=============================================================================
-    FieldCoefficient::FieldCoefficient(Field &&field)
-        : field_(std::move(field))
+    FieldCoefficient::FieldCoefficient(std::shared_ptr<Field> phi)
+        : phi_(phi)
     {
     }
     //=============================================================================
-    FieldCoefficient::FieldCoefficient(std::shared_ptr<IndexMap> index_map,
+    FieldCoefficient::FieldCoefficient(std::shared_ptr<const IndexMap> index_map,
                                        const std::vector<std::string> &components)
-        : field_(index_map, components)
+        : phi_(std::make_shared<Field>(index_map, components))
     {
     }
     //=============================================================================
-    Field &FieldCoefficient::field()
+    std::shared_ptr<Field> FieldCoefficient::field()
     {
-        return field_;
+        return phi_;
     }
     //=============================================================================
-    const Field &FieldCoefficient::field() const
+    std::shared_ptr<const Field> FieldCoefficient::field() const
     {
-        return field_;
+        return phi_;
     }
     //=============================================================================
     real_t &FieldCoefficient::operator()(int idx, int comp)
     {
-        return field_(idx, comp);
+        return (*phi_)(idx, comp);
     }
     //=============================================================================
     real_t FieldCoefficient::operator()(int idx, int comp) const
     {
-        return field_(idx, comp);
+        return (*phi_)(idx, comp);
     }
 }

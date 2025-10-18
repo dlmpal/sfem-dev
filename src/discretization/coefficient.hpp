@@ -29,18 +29,20 @@ namespace sfem
     };
 
     /// @brief A coefficient whose values are defined by an underlying field
-    class FieldCoefficient : Coefficient
+    class FieldCoefficient : public Coefficient
     {
     public:
-        FieldCoefficient(Field &&field);
-        FieldCoefficient(std::shared_ptr<IndexMap>,
+        FieldCoefficient(std::shared_ptr<Field> phi);
+        FieldCoefficient(std::shared_ptr<const IndexMap>,
                          const std::vector<std::string> &components);
-        Field &field();
-        const Field &field() const;
+
+        std::shared_ptr<Field> field();
+        std::shared_ptr<const Field> field() const;
+
         real_t &operator()(int idx, int comp) override;
         real_t operator()(int idx, int comp) const override;
 
-    private:
-        Field field_;
+    protected:
+        std::shared_ptr<Field> phi_;
     };
 }
