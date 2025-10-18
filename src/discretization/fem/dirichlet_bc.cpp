@@ -5,8 +5,8 @@
 namespace sfem::fem
 {
     //=============================================================================
-    DirichletBC::DirichletBC(std::shared_ptr<const fem::FEField> field)
-        : field_(field)
+    DirichletBC::DirichletBC(std::shared_ptr<const fem::FEField> phi)
+        : phi_(phi)
     {
     }
     //=============================================================================
@@ -23,7 +23,7 @@ namespace sfem::fem
                                  std::span<const real_t> values)
     {
         // Quick access
-        const auto fe_space = field_->space();
+        const auto fe_space = phi_->space();
 
         // Get the DoF belonging to the region.
         // If the region is not included, obtain the DoF first
@@ -35,8 +35,8 @@ namespace sfem::fem
         const auto &dof = boundary_dof_.at(region_name);
 
         // Store the specified values
-        const int n_comp = field_->n_comp();
-        const int comp_idx = field_->comp_idx(component);
+        const int n_comp = phi_->n_comp();
+        const int comp_idx = phi_->comp_idx(component);
         if (values.size() == 1) ///< Single value provided for all region DoF
         {
             for (std::size_t i = 0; i < dof.size(); i++)

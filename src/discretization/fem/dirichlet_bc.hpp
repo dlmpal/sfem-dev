@@ -11,8 +11,8 @@ namespace sfem::fem
     {
     public:
         /// @brief Create a DirichletBC
-        /// @param func Finite-element field
-        DirichletBC(std::shared_ptr<const fem::FEField> func);
+        /// @param phi Finite-element field
+        DirichletBC(std::shared_ptr<const fem::FEField> phi);
 
         // Avoid copies
         DirichletBC(const DirichletBC &) = delete;
@@ -40,8 +40,8 @@ namespace sfem::fem
         void reset_values();
 
     private:
-        /// @brief Finite-element field
-        std::shared_ptr<const fem::FEField> field_;
+        /// @brief Finite element field
+        std::shared_ptr<const fem::FEField> phi_;
 
         /// @brief The DoF belonging to boundary regions.
         /// They are obtained from the field's FESpace only when a
