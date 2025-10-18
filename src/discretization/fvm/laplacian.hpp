@@ -6,20 +6,17 @@
 
 namespace sfem::fvm
 {
-    /// @brief Assemble the LHS matrix and RHS vector for the diffusion operator
+    /// @brief Assemble the LHS matrix and RHS vector for the Laplacian operator
     /// acting on a scalar finite-volume field
     /// @param phi Finite-volume field
     /// @param grad Field gradient
     /// @param bc Boundary condition
-    /// @param dt Timestep size
-    /// @param cell_coeff Cell coefficient
-    /// @param facet_coeff Facet coefficient
+    /// @param coeff Facet coefficient
     /// @param lhs LHS matrix
     /// @param rhs RHS vector
-    void diffusion(const FVField &phi,
+    void laplacian(const FVField &phi,
                    const FVField &grad,
-                   const FVBC &bc, real_t dt,
-                   const Coefficient &cell_coeff,
-                   const Coefficient &facet_coeff,
+                   const FVBC &bc,
+                   const Coefficient &coeff,
                    la::MatSet lhs, la::VecSet rhs);
 }

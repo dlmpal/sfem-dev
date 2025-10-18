@@ -10,5 +10,6 @@ namespace sfem::fvm
 #include "fv_field.hpp"
 #include "fv_bc.hpp"
 #include "fv_gradient.hpp"
+#include "laplacian.hpp"
 #include "diffusion.hpp"
 #include "hyperbolic.hpp"
