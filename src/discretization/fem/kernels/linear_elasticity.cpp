@@ -151,7 +151,7 @@ namespace sfem::fem::kernels
     //=============================================================================
     VonMises3D::VonMises3D(std::shared_ptr<const Coefficient> E,
                            std::shared_ptr<const Coefficient> nu,
-                           std::shared_ptr<const FEFunction> U)
+                           std::shared_ptr<const FEField> U)
         : E_(E), nu_(nu), U_(U)
     {
     }

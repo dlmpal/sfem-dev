@@ -12,8 +12,8 @@ namespace sfem::io::vtk
                const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
-               const std::vector<std::shared_ptr<const Function>> &cell_funcs,
-               const std::vector<std::shared_ptr<const Function>> &node_funcs,
+               const std::vector<std::shared_ptr<const Field>> &cell_funcs,
+               const std::vector<std::shared_ptr<const Field>> &node_funcs,
                VTKFileType type)
     {
         // Check that sizes match
@@ -61,8 +61,8 @@ namespace sfem::io::vtk
     //=============================================================================
     void write(std::filesystem::path filename,
                const mesh::Mesh &mesh,
-               const std::vector<std::shared_ptr<const Function>> &cell_funcs,
-               const std::vector<std::shared_ptr<const Function>> &node_funcs,
+               const std::vector<std::shared_ptr<const Field>> &cell_funcs,
+               const std::vector<std::shared_ptr<const Field>> &node_funcs,
                VTKFileType type)
     {
         // Quick access
@@ -82,7 +82,7 @@ namespace sfem::io::vtk
     }
     //=============================================================================
     void write(const std::filesystem::path &filename,
-               const std::vector<std::shared_ptr<const fem::FEFunction>> &funcs,
+               const std::vector<std::shared_ptr<const fem::FEField>> &funcs,
                VTKFileType type)
     {
         if (funcs.empty())
@@ -106,7 +106,7 @@ namespace sfem::io::vtk
         }
 
         // Cast FEFunctions to Functions
-        std::vector<std::shared_ptr<const Function>> funcs_;
+        std::vector<std::shared_ptr<const Field>> funcs_;
         for (const auto &func : funcs)
         {
             if (func->space()->name() != fe_space->name())

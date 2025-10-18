@@ -1,26 +1,28 @@
-#include "function.hpp"
+#include "field.hpp"
+#include "../base/logging.hpp"
+#include <format>
 
 namespace sfem
 {
   //=============================================================================
-  Function::Function(std::shared_ptr<const IndexMap> index_map,
-                     const std::vector<std::string> &components)
+  Field::Field(std::shared_ptr<const IndexMap> index_map,
+               const std::vector<std::string> &components)
       : la::Vector(index_map, static_cast<int>(components.size())),
         components_(components)
   {
   }
   //=============================================================================
-  std::vector<std::string> Function::components() const
+  std::vector<std::string> Field::components() const
   {
     return components_;
   }
   //=============================================================================
-  int Function::n_comp() const
+  int Field::n_comp() const
   {
     return bs_;
   }
   //=============================================================================
-  int Function::comp_idx(const std::string &component) const
+  int Field::comp_idx(const std::string &component) const
   {
     auto it = std::find(components_.cbegin(),
                         components_.end(),
@@ -40,17 +42,5 @@ namespace sfem
     {
       return static_cast<int>(std::distance(components_.cbegin(), it));
     }
-  }
-  //=============================================================================
-  MeshFunction::MeshFunction(std::shared_ptr<const mesh::Mesh> mesh, int dim,
-                             const std::vector<std::string> &components)
-      : Function(mesh->topology()->entity_index_map(dim), components),
-        mesh_(mesh)
-  {
-  }
-  //=============================================================================
-  std::shared_ptr<const mesh::Mesh> MeshFunction::mesh() const
-  {
-    return mesh_;
   }
 }

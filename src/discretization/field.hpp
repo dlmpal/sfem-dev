@@ -1,16 +1,16 @@
 #pragma once
 
-#include "../mesh/mesh.hpp"
 #include "../la/native/vector.hpp"
 
 namespace sfem
 {
-    class Function : public la::Vector
+    /// @brief A Field is a Vector with named components
+    class Field : public la::Vector
     {
     public:
         /// @param components The name of each component
-        Function(std::shared_ptr<const IndexMap> index_map,
-                 const std::vector<std::string> &components);
+        Field(std::shared_ptr<const IndexMap> index_map,
+              const std::vector<std::string> &components);
 
         /// @brief Get the name of each component
         std::vector<std::string> components() const;
@@ -26,20 +26,7 @@ namespace sfem
         int comp_idx(const std::string &component) const;
 
     protected:
-        /// @brief Names of function components
+        /// @brief Names of field components
         std::vector<std::string> components_;
-    };
-
-    class MeshFunction : public Function
-    {
-    public:
-        MeshFunction(std::shared_ptr<const mesh::Mesh> mesh, int dim,
-                     const std::vector<std::string> &components);
-
-        std::shared_ptr<const mesh::Mesh> mesh() const;
-
-    private:
-        /// @brief Mesh
-        std::shared_ptr<const mesh::Mesh> mesh_;
     };
 }

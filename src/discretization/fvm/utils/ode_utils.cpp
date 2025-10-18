@@ -3,7 +3,7 @@
 namespace sfem::fvm::ode
 {
     //=============================================================================
-    RHSFunction create_rhs(std::shared_ptr<const fvm::FVFunction> phi,
+    RHSFunction create_rhs(std::shared_ptr<const fvm::FVField> phi,
                            std::shared_ptr<const fvm::NumericalFlux> nflux,
                            SourceFunction src)
     {

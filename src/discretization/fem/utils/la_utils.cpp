@@ -4,13 +4,13 @@
 namespace sfem::fem
 {
     //=============================================================================
-    la::Vector create_vec(const FEFunction &phi)
+    la::Vector create_vec(const FEField &phi)
     {
         const auto fe_space = phi.space();
         return la::Vector(fe_space->index_map(), phi.n_comp());
     }
     //=============================================================================
-    la::SparseMatrix create_mat(const FEFunction &phi)
+    la::SparseMatrix create_mat(const FEField &phi)
     {
         const auto fe_space = phi.space();
         return la::SparseMatrix(fe_space->connectivity()[1],
@@ -25,13 +25,13 @@ namespace sfem::fem
 namespace sfem::fem::petsc
 {
     //=============================================================================
-    la::petsc::PetscVec create_vec(const FEFunction &phi)
+    la::petsc::PetscVec create_vec(const FEField &phi)
     {
         const auto fe_space = phi.space();
         return la::petsc::create_vec(*fe_space->index_map(), phi.n_comp());
     }
     //=============================================================================
-    la::petsc::PetscMat create_mat(const FEFunction &phi)
+    la::petsc::PetscMat create_mat(const FEField &phi)
     {
         const auto fe_space = phi.space();
         return la::petsc::create_mat(*fe_space->connectivity()[1],

@@ -66,13 +66,13 @@ namespace sfem::fem::kernels
     public:
         VonMises3D(std::shared_ptr<const Coefficient> E,
                    std::shared_ptr<const Coefficient> nu,
-                   std::shared_ptr<const FEFunction> U);
+                   std::shared_ptr<const FEField> U);
         la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
 
     private:
         std::shared_ptr<const Coefficient> E_;
         std::shared_ptr<const Coefficient> nu_;
-        std::shared_ptr<const FEFunction> U_;
+        std::shared_ptr<const FEField> U_;
     };
 
     class InertialLoad3D

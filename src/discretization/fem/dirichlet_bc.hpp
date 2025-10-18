@@ -1,18 +1,18 @@
 #pragma once
 
-#include "fe_function.hpp"
+#include "fe_field.hpp"
 
 namespace sfem::fem
 {
     /// @brief This class enables efficient and convenient handling
-    /// of Dirichlet boundary conditions for a function on a given
-    /// finite element space
+    /// of Dirichlet boundary conditions for a field defined on a
+    // finite-element space
     class DirichletBC
     {
     public:
         /// @brief Create a DirichletBC
-        /// @param func Finite element function
-        DirichletBC(std::shared_ptr<const fem::FEFunction> func);
+        /// @param func Finite-element field
+        DirichletBC(std::shared_ptr<const fem::FEField> func);
 
         // Avoid copies
         DirichletBC(const DirichletBC &) = delete;
@@ -40,11 +40,11 @@ namespace sfem::fem
         void reset_values();
 
     private:
-        /// @brief Finite element space
-        std::shared_ptr<const fem::FEFunction> func_;
+        /// @brief Finite-element field
+        std::shared_ptr<const fem::FEField> field_;
 
         /// @brief The DoF belonging to boundary regions.
-        /// They are obtained from the function's FESpace only when a
+        /// They are obtained from the field's FESpace only when a
         /// B.C. is specified on a boundary region for the first time.
         /// Thus, re-specifying the values on a boundary is relatively cheap
         std::unordered_map<std::string, std::vector<int>> boundary_dof_;

@@ -6,9 +6,9 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    void green_gauss_gradient(const FVFunction &phi,
+    void green_gauss_gradient(const FVField &phi,
                               const FVBC &bc,
-                              FVFunction &grad)
+                              FVField &grad)
     {
         // Quick access
         const auto V = phi.space();
@@ -98,7 +98,7 @@ namespace sfem::fvm
         grad.update_ghosts();
     }
     //=============================================================================
-    void least_squares_gradient(const FVFunction &phi, FVFunction &grad)
+    void least_squares_gradient(const FVField &phi, FVField &grad)
     {
         // Quick access
         const auto V = phi.space();
@@ -168,8 +168,8 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    void gradient(const FVFunction &phi, const FVBC &bc,
-                  FVFunction &grad, GradientMethod method)
+    void gradient(const FVField &phi, const FVBC &bc,
+                  FVField &grad, GradientMethod method)
     {
         // Check that sizes match
         const real_t dim = phi.space()->mesh()->pdim();
@@ -189,8 +189,8 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    std::shared_ptr<FVFunction> gradient(const FVFunction &phi, const FVBC &bc,
-                                         GradientMethod method)
+    std::shared_ptr<FVField> gradient(const FVField &phi, const FVBC &bc,
+                                      GradientMethod method)
     {
         // Quick access
         const auto V = phi.space();
@@ -211,7 +211,7 @@ namespace sfem::fvm
         }
 
         // Create, compute and return the gradient
-        auto grad = std::make_shared<FVFunction>(V, components);
+        auto grad = std::make_shared<FVField>(V, components);
         gradient(phi, bc, *grad, method);
         return grad;
     }

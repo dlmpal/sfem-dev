@@ -7,10 +7,10 @@
 namespace sfem::fem
 {
     /// @brief Create a vector for a finite element function
-    la::Vector create_vec(const FEFunction &phi);
+    la::Vector create_vec(const FEField &phi);
 
     /// @brief Create a matrix for a finite element function
-    la::SparseMatrix create_mat(const FEFunction &phi);
+    la::SparseMatrix create_mat(const FEField &phi);
 }
 
 #ifdef SFEM_HAS_PETSC
@@ -18,10 +18,10 @@ namespace sfem::fem
 namespace sfem::fem::petsc
 {
     /// @brief Create a PETSc vector for a finite element function
-    la::petsc::PetscVec create_vec(const FEFunction &phi);
+    la::petsc::PetscVec create_vec(const FEField &phi);
 
     /// @brief Create a PETSc matrix for a finite element function
-    la::petsc::PetscMat create_mat(const FEFunction &phi);
+    la::petsc::PetscMat create_mat(const FEField &phi);
 
     /// @brief Form and solve the linear system Ax=b.
     /// Before the system is solved, the Dirichlet boundary condition is applied

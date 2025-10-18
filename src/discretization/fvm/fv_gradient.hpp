@@ -14,20 +14,20 @@ namespace sfem::fvm
     /// @brief Compute the gradient of a finite-volume function
     /// @param phi Finite-volume function
     /// @param bc Boundary condition
-    /// @param grad Function gradient
+    /// @param grad Field gradient
     /// @param method Gradient evaluation method
-    void gradient(const FVFunction &phi,
+    void gradient(const FVField &phi,
                   const FVBC &bc,
-                  FVFunction &grad,
+                  FVField &grad,
                   GradientMethod method = GradientMethod::green_gauss);
 
     /// @brief Compute the gradient of a finite-volume function
     /// @param phi Finite-volume function
     /// @param bc Boundary condition
     /// @param method Gradient evaluation method
-    /// @return Function gradient
-    [[nodiscard]] std::shared_ptr<FVFunction> gradient(const FVFunction &phi,
-                                                       const FVBC &bc,
-                                                       GradientMethod method = GradientMethod::green_gauss);
+    /// @return Field gradient
+    [[nodiscard]] std::shared_ptr<FVField> gradient(const FVField &phi,
+                                                    const FVBC &bc,
+                                                    GradientMethod method = GradientMethod::green_gauss);
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fv_function.hpp"
+#include "fv_field.hpp"
 
 namespace sfem::fvm
 {
@@ -14,7 +14,7 @@ namespace sfem::fvm
     class FVBC
     {
     public:
-        FVBC(std::shared_ptr<const FVFunction> phi);
+        FVBC(std::shared_ptr<const FVField> phi);
 
         // Avoid copies
         FVBC(const FVBC &) = delete;
@@ -30,7 +30,7 @@ namespace sfem::fvm
                        const std::string &comp_name,
                        BCType type, real_t value);
 
-        std::shared_ptr<const FVFunction> phi_;
+        std::shared_ptr<const FVField> phi_;
         std::unordered_map<std::string, BCType> types_;
         std::unordered_map<int, real_t> values_;
     };

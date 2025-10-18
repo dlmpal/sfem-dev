@@ -3,7 +3,7 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    FVBC::FVBC(std::shared_ptr<const FVFunction> phi)
+    FVBC::FVBC(std::shared_ptr<const FVField> phi)
         : phi_(phi)
     {
         // Set all boundary region BC types to

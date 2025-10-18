@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../fe_function.hpp"
+#include "../fe_field.hpp"
 #include "../../../la/native/setval_utils.hpp"
 
 namespace sfem::fem
@@ -8,21 +8,21 @@ namespace sfem::fem
     using FECellKernel = std::function<la::DenseMatrix(int, const FEData &)>;
     using FEFacetKernel = std::function<la::DenseMatrix(int, const FEData &, const geo::Vec3 &)>;
 
-    void assemble_matrix_cells(const FEFunction &phi, const std::string &region,
+    void assemble_matrix_cells(const FEField &phi, const std::string &region,
                                FECellKernel kernel, la::MatSet mat);
 
-    void assemble_matrix_facets(const FEFunction &phi, const std::string &region,
+    void assemble_matrix_facets(const FEField &phi, const std::string &region,
                                 FEFacetKernel kernel, la::MatSet mat);
 
-    void assemble_vec_cells(const FEFunction &phi, const std::string &region,
+    void assemble_vec_cells(const FEField &phi, const std::string &region,
                             FECellKernel kernel, la::VecSet vec);
 
-    void assemble_vec_facets(const FEFunction &phi, const std::string &region,
+    void assemble_vec_facets(const FEField &phi, const std::string &region,
                              FEFacetKernel kernel, la::VecSet vec);
 
-    la::DenseMatrix integrate_cells(const FEFunction &phi, const std::string &region,
+    la::DenseMatrix integrate_cells(const FEField &phi, const std::string &region,
                                     FECellKernel kernel);
 
-    la::DenseMatrix integrate_facets(const FEFunction &phi, const std::string &region,
+    la::DenseMatrix integrate_facets(const FEField &phi, const std::string &region,
                                      FEFacetKernel kernel);
 }

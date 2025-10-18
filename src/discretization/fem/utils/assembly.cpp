@@ -5,7 +5,7 @@
 namespace sfem::fem
 {
     //=============================================================================
-    void assemble_matrix_cells(const FEFunction &phi, const std::string &region,
+    void assemble_matrix_cells(const FEField &phi, const std::string &region,
                                FECellKernel kernel, la::MatSet mat)
     {
         // Quick access
@@ -41,7 +41,7 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_matrix_facets(const FEFunction &phi, const std::string &region,
+    void assemble_matrix_facets(const FEField &phi, const std::string &region,
                                 FEFacetKernel kernel, la::MatSet mat)
     {
         // Quick access
@@ -80,7 +80,7 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_vec_cells(const FEFunction &phi, const std::string &region,
+    void assemble_vec_cells(const FEField &phi, const std::string &region,
                             FECellKernel kernel, la::VecSet vec)
     {
         // Quick access
@@ -118,7 +118,7 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    void assemble_vec_facets(const FEFunction &phi, const std::string &region,
+    void assemble_vec_facets(const FEField &phi, const std::string &region,
                              FEFacetKernel kernel, la::VecSet vec)
     {
         // Quick access
