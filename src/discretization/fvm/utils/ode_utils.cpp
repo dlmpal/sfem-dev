@@ -5,7 +5,7 @@ namespace sfem::fvm::ode
     //=============================================================================
     RHSFunction create_rhs(std::shared_ptr<const fvm::FVField> phi,
                            std::shared_ptr<const fvm::NumericalFlux> nflux,
-                           SourceFunction src)
+                           FieldFunction src)
     {
         return [=](const la::Vector &S,
                    la::Vector &rhs,

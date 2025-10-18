@@ -6,11 +6,10 @@
 
 namespace sfem::fvm::ode
 {
-    using SourceFunction = std::function<void(const std::array<real_t, 3> &, std::vector<real_t> &, real_t)>;
     using RHSFunction = sfem::ode::ERKIntegrator::RHSFunction;
 
-    /// @brief Create a RHS function for a given FV function, numerical flux and source function
+    /// @brief Create a RHS function for a given finite volume field, numerical flux and source function
     RHSFunction create_rhs(std::shared_ptr<const fvm::FVField> phi,
                            std::shared_ptr<const fvm::NumericalFlux> nflux,
-                           SourceFunction src = {});
+                           FieldFunction src = {});
 }

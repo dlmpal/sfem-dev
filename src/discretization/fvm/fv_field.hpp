@@ -9,7 +9,7 @@ namespace sfem::fvm
     class FVField : public Field
     {
     public:
-        /// @brief Create a FVFunction
+        /// @brief Create a FVField for a given space
         /// @param fv_space Finite volume space
         /// @param components Component names
         FVField(std::shared_ptr<const FVSpace> fv_space,
@@ -22,4 +22,13 @@ namespace sfem::fvm
         /// @brief Finite volume space
         std::shared_ptr<const FVSpace> fv_space_;
     };
+
+    using FieldFunction = std::function<void(const std::array<real_t, 3> &pt,
+                                             std::span<real_t> values, real_t time)>;
+
+    /// @brief Explicitly evaluate a finite volume field
+    /// @param phi Finite volume field
+    /// @param func Evaluation function
+    /// @param time Current simulation time
+    void eval_field(FVField &phi, FieldFunction func, real_t time);
 }
