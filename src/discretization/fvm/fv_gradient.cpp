@@ -125,6 +125,12 @@ namespace sfem::fvm
 
             for (const auto &[cell, cell_idx] : mesh->region_cells(region.name()))
             {
+                // Skip ghost cells
+                if (mesh->topology()->entity_index_map(mesh->pdim())->is_ghost(cell_idx))
+                {
+                    continue;
+                }
+
                 // Reset least-squares LHS and RHS
                 A.set_all(0.0);
                 b.set_all(0.0);
@@ -166,6 +172,9 @@ namespace sfem::fvm
                 }
             }
         }
+
+        //
+        grad.update_ghosts();
     }
     //=============================================================================
     void gradient(const FVField &phi, const FVBC &bc,

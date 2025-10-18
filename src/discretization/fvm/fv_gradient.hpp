@@ -11,8 +11,8 @@ namespace sfem::fvm
         least_squares
     };
 
-    /// @brief Compute the gradient of a finite-volume function
-    /// @param phi Finite-volume function
+    /// @brief Compute the gradient of a finite volume field
+    /// @param phi Finite volume field
     /// @param bc Boundary condition
     /// @param grad Field gradient
     /// @param method Gradient evaluation method
@@ -21,8 +21,8 @@ namespace sfem::fvm
                   FVField &grad,
                   GradientMethod method = GradientMethod::green_gauss);
 
-    /// @brief Compute the gradient of a finite-volume function
-    /// @param phi Finite-volume function
+    /// @brief Compute the gradient of a finite volume field
+    /// @param phi Finite volume field
     /// @param bc Boundary condition
     /// @param method Gradient evaluation method
     /// @return Field gradient
