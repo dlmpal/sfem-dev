@@ -1,4 +1,4 @@
-#include "fv_source.hpp"
+#include "source.hpp"
 
 namespace sfem::fvm
 {
