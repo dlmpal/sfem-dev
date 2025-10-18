@@ -1,30 +1,46 @@
 #pragma once
 
-#include "function.hpp"
+#include "field.hpp"
 
 namespace sfem
 {
+    /// @brief Coefficients represent various physical quantities
+    /// present in the underlying PDE. They are used by both FEM and FVM
+    /// assembly kernels
     class Coefficient
     {
     public:
         virtual real_t &operator()(int idx, int comp) = 0;
         virtual real_t operator()(int idx, int comp) const = 0;
-        virtual real_t operator()(const std::array<real_t, 3> &pt, real_t time) const = 0;
-        virtual real_t &operator()(const std::array<real_t, 3> &pt, real_t time) = 0;
     };
 
+    /// @brief A coefficient thats constant everywhere
     class ConstantCoefficient : public Coefficient
     {
     public:
+        ConstantCoefficient(const std::vector<real_t> &value);
         ConstantCoefficient(real_t value);
-
         real_t &operator()(int idx, int comp) override;
         real_t operator()(int idx, int comp) const override;
-        real_t operator()(const std::array<real_t, 3> &pt, real_t time) const override;
-        real_t &operator()(const std::array<real_t, 3> &pt, real_t time) override;
 
     private:
         /// @brief Constant value
-        real_t value_;
+        std::vector<real_t> value_;
+    };
+
+    /// @brief A coefficient whose values are defined by an underlying field
+    class FieldCoefficient : Coefficient
+    {
+    public:
+        FieldCoefficient(Field &&field);
+        FieldCoefficient(std::shared_ptr<IndexMap>,
+                         const std::vector<std::string> &components);
+        Field &field();
+        const Field &field() const;
+        real_t &operator()(int idx, int comp) override;
+        real_t operator()(int idx, int comp) const override;
+
+    private:
+        Field field_;
     };
 }
