@@ -7,8 +7,8 @@
 namespace sfem::fvm
 {
     /// @brief Assemble the LHS matrix and RHS vector for the Laplacian operator
-    /// acting on a scalar finite-volume field
-    /// @param phi Finite-volume field
+    /// acting on a scalar finite volume field
+    /// @param phi Finite volume field
     /// @param grad Field gradient
     /// @param bc Boundary condition
     /// @param coeff Facet coefficient

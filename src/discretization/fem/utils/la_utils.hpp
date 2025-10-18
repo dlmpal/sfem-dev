@@ -6,10 +6,10 @@
 
 namespace sfem::fem
 {
-    /// @brief Create a vector for a finite element function
+    /// @brief Create a vector for a finite element field
     la::Vector create_vec(const FEField &phi);
 
-    /// @brief Create a matrix for a finite element function
+    /// @brief Create a matrix for a finite element field
     la::SparseMatrix create_mat(const FEField &phi);
 }
 
@@ -17,10 +17,10 @@ namespace sfem::fem
 
 namespace sfem::fem::petsc
 {
-    /// @brief Create a PETSc vector for a finite element function
+    /// @brief Create a PETSc vector for a finite element field
     la::petsc::PetscVec create_vec(const FEField &phi);
 
-    /// @brief Create a PETSc matrix for a finite element function
+    /// @brief Create a PETSc matrix for a finite element field
     la::petsc::PetscMat create_mat(const FEField &phi);
 
     /// @brief Form and solve the linear system Ax=b.
