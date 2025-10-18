@@ -10,7 +10,7 @@ namespace sfem::la
     /// according to a given index map. The vector stores values for both
     /// locally owned and ghost indices.
     ///
-    /// If vector values are inserted incrementally (e.g. in finite-element assembly)
+    /// If vector values are inserted incrementally (e.g. in finite element assembly)
     /// the user should first call assemble(), before trying to access vector values.
     /// Calling assemble() will zero-out ghost index values after sending them to their
     /// respective owner processes. If ghost index values are also to be accessed,
