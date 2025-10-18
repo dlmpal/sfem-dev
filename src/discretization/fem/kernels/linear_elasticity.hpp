@@ -2,7 +2,7 @@
 
 #include "../elements/fe.hpp"
 #include "../../coefficient.hpp"
-#include "../fe_function.hpp"
+#include "../fe_field.hpp"
 
 namespace sfem::fem::kernels
 {
