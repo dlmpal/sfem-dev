@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../fv_field.hpp"
-#include "../hyperbolic.hpp"
+#include "../hyperbolic/numerical_flux.hpp"
 #include "../../ode/erk.hpp"
 
 namespace sfem::fvm::ode
