@@ -8,7 +8,8 @@ namespace sfem::fvm
     {
         zero_neumann,
         neumann,
-        dirichlet
+        dirichlet,
+        robin
     };
 
     class FVBC
@@ -28,10 +29,10 @@ namespace sfem::fvm
 
         void set_value(const std::string &region,
                        const std::string &comp_name,
-                       BCType type, real_t value);
+                       BCType type, std::array<real_t, 2> values);
 
         std::shared_ptr<const FVField> phi_;
         std::unordered_map<std::string, BCType> types_;
-        std::unordered_map<int, real_t> values_;
+        std::unordered_map<int, std::array<real_t, 2>> values_;
     };
 }

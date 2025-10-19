@@ -20,7 +20,7 @@ namespace sfem::fvm
     //=============================================================================
     void FVBC::set_value(const std::string &region,
                          const std::string &comp_name,
-                         BCType type, real_t value)
+                         BCType type, std::array<real_t, 2> values)
     {
         // Quick access
         const auto V = phi_->space();
@@ -34,7 +34,8 @@ namespace sfem::fvm
         // Loop over region facets and store BC value for boundary cells
         for (const auto &[facet, facet_idx] : mesh->region_facets(region))
         {
-            values_[facet_idx * n_comp + comp_idx] = value;
+            values_[facet_idx * n_comp + comp_idx][0] = values[0];
+            values_[facet_idx * n_comp + comp_idx][1] = values[1];
         }
     }
 }
