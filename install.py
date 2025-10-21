@@ -230,7 +230,7 @@ parser.add_argument('--build-dir', type=str, metavar="",
 
 # Fortran compiler
 parser.add_argument('--f-compiler', type=str,
-                    metavar="", default='gfotran',
+                    metavar="", default='gfortran',
                     help='Fortran compiler. Ignored if --with-mpi is provided.')
 
 # C compiler
@@ -466,7 +466,7 @@ run_shell_cmd(run_make_install, cwd=args.build_dir)
 if args.with_pysfem:
     # __init__.py
     pysfem_src_dir = os.path.join(os.getcwd(), "pysfem")
-    pysfem_install_dir = get_pysfem_dir(args.install_dir)
+    pysfem_install_dir = os.path.join(args.install_dir, "lib", "pysfem")
     init_filepath = os.path.join(pysfem_src_dir, "__init__.py")
     install_init_file = f"cp {init_filepath} {pysfem_install_dir}"
     run_shell_cmd(install_init_file)
