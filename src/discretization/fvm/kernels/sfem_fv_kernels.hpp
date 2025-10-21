@@ -1,5 +1,6 @@
 #pragma once
 
-#include "source.hpp"
 #include "laplacian.hpp"
-#include "diffusion.hpp"
+#include "convection.hpp"
+#include "transient.hpp"
+#include "source.hpp"
