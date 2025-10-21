@@ -11,7 +11,7 @@ namespace sfem::fvm
     /// @param phi Finite volume field
     /// @param grad Field gradient
     /// @param bc Boundary condition
-    /// @param coeff Facet coefficient
+    /// @param coeff Cell coefficient
     /// @param lhs LHS matrix
     /// @param rhs RHS vector
     void laplacian(const FVField &phi,
