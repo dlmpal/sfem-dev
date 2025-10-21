@@ -23,6 +23,11 @@ namespace sfem
         return value_[comp];
     }
     //=============================================================================
+    int ConstantCoefficient::n_comp() const
+    {
+        return static_cast<int>(value_.size());
+    }
+    //=============================================================================
     FieldCoefficient::FieldCoefficient(std::shared_ptr<Field> phi)
         : phi_(phi)
     {
@@ -52,5 +57,10 @@ namespace sfem
     real_t FieldCoefficient::operator()(int idx, int comp) const
     {
         return (*phi_)(idx, comp);
+    }
+    //=============================================================================
+    int FieldCoefficient::n_comp() const
+    {
+        return phi_->n_comp();
     }
 }

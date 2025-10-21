@@ -12,6 +12,7 @@ namespace sfem
     public:
         virtual real_t &operator()(int idx, int comp) = 0;
         virtual real_t operator()(int idx, int comp) const = 0;
+        virtual int n_comp() const = 0;
     };
 
     /// @brief A coefficient thats constant everywhere
@@ -22,6 +23,7 @@ namespace sfem
         ConstantCoefficient(real_t value);
         real_t &operator()(int idx, int comp) override;
         real_t operator()(int idx, int comp) const override;
+        int n_comp() const override;
 
     private:
         /// @brief Constant value
@@ -41,6 +43,7 @@ namespace sfem
 
         real_t &operator()(int idx, int comp) override;
         real_t operator()(int idx, int comp) const override;
+        int n_comp() const override;
 
     protected:
         std::shared_ptr<Field> phi_;
