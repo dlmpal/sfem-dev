@@ -55,12 +55,8 @@ namespace sfem::fvm
         /// @brief Check whether a given facet is located on the boundary
         bool is_boundary(int facet_idx) const;
 
-        /// @brief Compute a distance weighted average at the facet of two
-        /// adjacent cells, given the value of each cell
-        real_t compute_facet_value(int facet_idx,
-                                   real_t value1,
-                                   real_t value2,
-                                   bool harmonic = false) const;
+        /// @brief Get the geometric interpolation factor for a facet
+        real_t facet_interp_factor(int facet_idx) const;
 
     private:
         /// @brief The mesh
@@ -95,5 +91,11 @@ namespace sfem::fvm
 
         /// @brief Cells adjacent to each facet
         std::vector<std::array<int, 2>> facet_adjacent_cells_;
+
+        /// @brief Geometric interpolation factor for each facet
+        /// @note Defined as the ratio of the distance of the midpoint
+        /// of the non-owner cell and the facet midpoint, over the
+        /// distance of the two adjacent cell midpoints
+        std::vector<real_t> facet_interp_factor_;
     };
 }

@@ -74,6 +74,7 @@ namespace sfem::fvm
         // Distances
         facet_cell_distances_.resize(n_facets);
         intercell_distances_.resize(n_facets);
+        facet_interp_factor_.resize(n_facets);
         for (int i = 0; i < n_facets; i++)
         {
             for (int j = 0; j < 2; j++)
@@ -92,6 +93,8 @@ namespace sfem::fvm
                 intercell_distances_[i] = geo::Vec3(cell_midpoints_[facet_adjacent_cells_[i][0]],
                                                     cell_midpoints_[facet_adjacent_cells_[i][1]]);
             }
+
+            facet_interp_factor_[i] = facet_cell_distances_[i][1] / intercell_distances_[i].mag();
         }
     }
     //=============================================================================
@@ -163,18 +166,8 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    real_t FVSpace::compute_facet_value(int facet_idx, real_t value1, real_t value2, bool harmonic) const
+    real_t FVSpace::facet_interp_factor(int facet_idx) const
     {
-        const real_t d = intercell_distances_[facet_idx].mag();
-        const auto &[d1, d2] = facet_cell_distances_[facet_idx];
-        const real_t w = d2 / d;
-        if (harmonic)
-        {
-            return 1 / (w / value1 + (1 - w) / value2);
-        }
-        else
-        {
-            return w * value1 + (1 - w) * value2;
-        }
+        return facet_interp_factor_[facet_idx];
     }
 }

@@ -64,10 +64,13 @@ namespace sfem::fvm
             // Internal facets
             else
             {
+                // Facet geometric interpolation factor
+                const real_t g = V->facet_interp_factor(facet_idx);
+
                 // Compute facet value from adjacent cell values
                 const real_t phi1 = phi(cell_idx1);
                 const real_t phi2 = phi(cell_idx2);
-                const real_t phi_facet = V->compute_facet_value(facet_idx, phi1, phi2);
+                const real_t phi_facet = g * phi1 + (1 - g) * phi2;
 
                 // Add gradient contributions for the adjacent cells
                 for (int j = 0; j < mesh.pdim(); j++)

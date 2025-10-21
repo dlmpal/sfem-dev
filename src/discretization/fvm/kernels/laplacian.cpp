@@ -70,10 +70,13 @@ namespace sfem::fvm
             // Internal facets
             else
             {
-                // Facet coefficient
+                // Facet geometric interpolation factor
+                const real_t g = V->facet_interp_factor(facet_idx);
+
+                // Compute facet value from adjacent cell values
                 const real_t coeff1 = coeff(cell_idx1, 0);
                 const real_t coeff2 = coeff(cell_idx2, 0);
-                const real_t coeff_facet = V->compute_facet_value(facet_idx, coeff1, coeff2);
+                const real_t coeff_facet = g * coeff1 + (1 - g) * coeff2;
 
                 // Facet normal decomposition vectors
                 const geo::Vec3 delta = (d12 / geo::inner(normal, d12));
@@ -90,7 +93,7 @@ namespace sfem::fvm
                 {
                     const real_t grad1 = grad(cell_idx1, i);
                     const real_t grad2 = grad(cell_idx2, i);
-                    const real_t grad_facet = V->compute_facet_value(facet_idx, grad1, grad2);
+                    const real_t grad_facet = g * grad1 + (1 - g) * grad2;
                     rhs_values[0] += coeff_facet * grad_facet * kappa(i) * area;
                     rhs_values[1] -= coeff_facet * grad_facet * kappa(i) * area;
                 }
