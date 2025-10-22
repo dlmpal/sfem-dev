@@ -80,7 +80,7 @@ namespace sfem::io::vtk::xml
                     cell_nodes.assign(cell_to_node.links(i).cbegin(),
                                       cell_to_node.links(i).cend());
                     cell_node_ordering_to_vtk(cell_types[i], cell_nodes);
-                    for (int j = 0; j < cell_to_node.n_links(j); j++)
+                    for (int j = 0; j < cell_to_node.n_links(i); j++)
                     {
                         file << cell_nodes[j] << " ";
                     }
