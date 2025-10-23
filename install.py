@@ -188,6 +188,19 @@ def add_metis(metis_dir: str, c_compiler: str):
                     working_dir=metis_subdirs["metis"])
 
 
+def add_argparse(argparse_dir: str, cxx_compiler: str):
+    '''
+    Fetch and build argparse.
+    '''
+    fetch_dependency_git("https://github.com/dlmpal/argparse.git",
+                         os.path.dirname(argparse_dir))
+    build_dependecy(
+        config_cmd=f"cmake -S . -B build -DCMAKE_INSTALL_PREFIX={argparse_dir}",
+        build_cmd=f"cmake --build build",
+        install_cmd="cmake --install build",
+        working_dir=argparse_dir)
+
+
 def add_nanobind():
     '''
     Installs nanobind via pip.
@@ -320,6 +333,11 @@ parser.add_argument('--metis-dir', type=str,
 parser.add_argument('--download-metis', action='store_true',
                     help="Download and build METIS")
 
+# ArgParse
+parser.add_argument("--argparse-dir", type=str,
+                    metavar="", default=os.getenv("ARGPARSE_DIR"),
+                    help="The installtion directory for ArgParse")
+
 # Parse
 args = parser.parse_args()
 # ==============================================================================
@@ -416,6 +434,14 @@ if args.metis_dir is None or os.path.exists(args.metis_dir) is False:
     metis_error += "Either provide a valid metis-dir, or add argument --download-metis"
     raise RuntimeError(metis_error)
 
+# ArgParse
+args.download_argparse = False
+print(args.argparse_dir)
+if args.argparse_dir is None or os.path.exists(args.argparse_dir) is False:
+    args.download_argparse = True
+    args.argparse_dir = os.path.join(args.third_party_dir, "argparse")
+    add_argparse(args.argparse_dir, "g++")
+
 # nanobind
 if args.with_pysfem:
     add_nanobind()
@@ -440,6 +466,7 @@ cmake_args = {
     "PETSC_ARCH": args.petsc_arch,
     "SLEPC_DIR": args.slepc_dir,
     "METIS_DIR": args.metis_dir,
+    "ARGPARSE_DIR": args.argparse_dir
 }
 
 if args.floating_point_spec == FloatingPointPrecision.double:
@@ -506,6 +533,10 @@ if args.download_slepc:
     bashrc_app += "export SLEPC_DIR=${SFEM_THIRD_PARTY_DIR}/slepc\n"
     bashrc_app += "export PYTHONPATH=${PYTHONPATH}:${SLEPC_DIR}/${PETSC_ARCH}/lib\n"
 
+if args.download_argparse:
+    bashrc_app += "# ArgParse\n"
+    bashrc_app += "export ARGPARSE_DIR=${SFEM_THIRD_PARTY_DIR}/argparse\n"
+
 sep_line = "#=================================================#\n"
 with open("summary.log", "w") as file:
     lines = sep_line
@@ -555,6 +586,12 @@ with open("summary.log", "w") as file:
     if args.download_metis:
         lines += "Downloaded METIS\n"
     lines += f"METIS directory: {args.metis_dir}\n"
+
+    # ArgParse
+    lines += sep_line
+    if args.download_argparse:
+        lines += "Downloaded ArgParse\n"
+    lines += f"ArgParse directory: {args.argparse_dir}\n"
 
     lines += sep_line
     lines += "INSTALLATION COMPLETE\n"
