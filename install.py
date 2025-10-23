@@ -436,7 +436,6 @@ if args.metis_dir is None or os.path.exists(args.metis_dir) is False:
 
 # ArgParse
 args.download_argparse = False
-print(args.argparse_dir)
 if args.argparse_dir is None or os.path.exists(args.argparse_dir) is False:
     args.download_argparse = True
     args.argparse_dir = os.path.join(args.third_party_dir, "argparse")
