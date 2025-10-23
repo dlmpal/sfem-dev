@@ -1,3 +1,7 @@
+// Solve Laplace's equation on a 2D or 3D domain
+// Create the mesh with the cart-mesh application by:
+// ${SFEM_DEV_INSTALL_DIR}/bin/cart-mesh -d=2 -Nx=100 -Ny=100 -x-low=0 -x-high=1 -y-low=0 -y-high=1
+
 #include "sfem.hpp"
 
 using namespace sfem;
