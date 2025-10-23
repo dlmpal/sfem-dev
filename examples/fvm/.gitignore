@@ -1,4 +1,15 @@
-laplace/build
-laplace/post
+laplace/build/
+laplace/post/
+laplace/meshes/
+laplace/laplace.cpp/
+laplace/results/
 
-euler/
+
+euler/build/
+euler/post/
+euler/mesh/
+euler/euler2d.cpp
+euler/advection.cpp
+
+diffusion/
+advection/

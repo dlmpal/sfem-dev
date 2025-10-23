@@ -1,6 +1,4 @@
 #include "sfem.hpp"
-#include <iostream>
-#include <numeric>
 
 using namespace sfem;
 
@@ -13,8 +11,8 @@ int main(int argc, char **argv)
 
     // Finite volume space and functions
     auto V = std::make_shared<fvm::FVSpace>(mesh);
-    auto T = std::make_shared<fvm::FVFunction>(V, std::vector<std::string>{"T"});
-    auto gradT = std::make_shared<fvm::FVFunction>(V, std::vector<std::string>{"Tx", "Ty"});
+    auto T = std::make_shared<fvm::FVField>(V, std::vector<std::string>{"T"});
+    auto gradT = std::make_shared<fvm::FVField>(V, std::vector<std::string>{"Tx", "Ty"});
 
     // LHS matrix
     auto A = fvm::create_mat(*T);
@@ -22,33 +20,49 @@ int main(int argc, char **argv)
     // RHS vector
     auto b = fvm::create_vec(*T);
 
+    // Diffusion coefficient
+    ConstantCoefficient coeff(1.0);
+
+    std::vector<real_t> _vel = {0.0, 1.5};
+    ConstantCoefficient vel(_vel);
+
     // Setup Dirichlet B.C.
     fvm::FVBC bc(T);
-    bc.set_value("Left", "T", fvm::BCType::dirichlet, 10);
-    bc.set_value("Right", "T", fvm::BCType::dirichlet, 100);
+    bc.set_value("Left", "T", fvm::BCType::dirichlet, {1});
+    bc.set_value("Right", "T", fvm::BCType::dirichlet, {0});
 
-    // Assemble the LHS matrix and RHS vector
-    ConstantCoefficient coeff(1.0);
-    fvm::diffusion(*T, *gradT, bc, coeff,
-                   la::create_matset(A),
-                   la::create_vecset(b));
-    A.assemble();
-    b.assemble();
-    b.update_ghosts();
-
-    // Solve the resulting linear system using GMRES
+    // Solve the linear system using CG
     const real_t tol = 1e-5;
-    const int n_iter_max = 600;
+    const int n_iter_max = 2500;
     const bool verbose = true;
-    const int n_restart = 300;
-    la::GMRES solver(tol, n_iter_max, verbose, n_restart);
-    solver.run(A, b, *T);
+    la::CG solver(tol, n_iter_max, verbose);
 
-    // Update ghosted cell values (required for plotting)
-    T->update_ghosts();
+    const int n_orthogonal_correctors = 1;
+    for (int i = 0; i < n_orthogonal_correctors; i++)
+    {
+        log_msg(std::format("Non-Orthogonal Corrector - Iteration: {}\n", i), true);
 
-    // Save solution to file
-    io::vtk::write(std::format("post/solution_000"), *mesh, {T});
+        // Reset LHS and RHS
+        A.set_all(0.0);
+        b.set_all(0.0);
+
+        // Assemble the LHS matrix and RHS vector
+        fvm::laplacian(*T, *gradT, bc, coeff,
+                       la::create_matset(A),
+                       la::create_vecset(b));
+        A.assemble();
+        b.assemble();
+
+        // Solve and update ghosted cell values
+        solver.run(A, b, *T);
+        T->update_ghosts();
+
+        // Compute the gradient
+        fvm::gradient(*T, bc, *gradT, fvm::GradientMethod::least_squares);
+
+        // Save solution to file
+        io::vtk::write(std::format("post/solution_00{}", i), *mesh, {T, gradT});
+    }
 
     return 0;
 }
