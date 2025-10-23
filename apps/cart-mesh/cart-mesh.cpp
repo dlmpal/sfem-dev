@@ -16,9 +16,12 @@ int main(int argc, char *argv[])
     parser.add_argument(argparse::Argument("Nx", true));
     parser.add_argument(argparse::Argument("Ny", true));
     parser.add_argument(argparse::Argument("Nz", false).value<int>(1));
-    parser.add_argument(argparse::Argument("Lx", true));
-    parser.add_argument(argparse::Argument("Ly", true));
-    parser.add_argument(argparse::Argument("Lz", false).value<real_t>(1.0));
+    parser.add_argument(argparse::Argument("x-low", true));
+    parser.add_argument(argparse::Argument("y-low", true));
+    parser.add_argument(argparse::Argument("z-low", false).value<real_t>(0.0));
+    parser.add_argument(argparse::Argument("x-high", true));
+    parser.add_argument(argparse::Argument("y-high", true));
+    parser.add_argument(argparse::Argument("z-high", false).value<real_t>(1.0));
     parser.add_argument(argparse::Argument("dir", false).value("mesh"));
     parser.parse_args(argc, argv);
 
@@ -32,7 +35,8 @@ int main(int argc, char *argv[])
     if (dim == 2)
     {
         parser.get_argument("Nz")->value(1);
-        parser.get_argument("Lz")->value(1.0);
+        parser.get_argument("z-low")->value(0.0);
+        parser.get_argument("z-high")->value(1.0);
     }
 
     // Number of cells per direction
@@ -52,14 +56,17 @@ int main(int argc, char *argv[])
 
     // Domain length per direction
     /// @todo Check that these are valid (!=0)
-    const real_t Lx = parser.get_argument("Lx")->value<real_t>();
-    const real_t Ly = parser.get_argument("Ly")->value<real_t>();
-    const real_t Lz = parser.get_argument("Lz")->value<real_t>();
+    const real_t x_low = parser.get_argument("x-low")->value<real_t>();
+    const real_t y_low = parser.get_argument("y-low")->value<real_t>();
+    const real_t z_low = parser.get_argument("z-low")->value<real_t>();
+    const real_t x_high = parser.get_argument("x-high")->value<real_t>();
+    const real_t y_high = parser.get_argument("y-high")->value<real_t>();
+    const real_t z_high = parser.get_argument("z-high")->value<real_t>();
 
     // Cell size per direction
-    const real_t dx = Lx / static_cast<real_t>(Nx);
-    const real_t dy = Ly / static_cast<real_t>(Ny);
-    const real_t dz = Lz / static_cast<real_t>(Nz);
+    const real_t dx = (x_high - x_low) / static_cast<real_t>(Nx);
+    const real_t dy = (y_high - y_low) / static_cast<real_t>(Ny);
+    const real_t dz = (z_high - z_low) / static_cast<real_t>(Nz);
 
     // Cell type and number of nodes per cell
     const CellType cell_type = dim == 3 ? CellType::hexahedron : CellType::quadrilateral;
@@ -255,9 +262,9 @@ int main(int argc, char *argv[])
             for (int i = 0; i < nx; i++)
             {
                 const int node_idx = k * ny * nx + j * nx + i;
-                points[node_idx][0] = i * dx;
-                points[node_idx][1] = j * dy;
-                points[node_idx][2] = k * dz;
+                points[node_idx][0] = i * dx + x_low;
+                points[node_idx][1] = j * dy + y_low;
+                points[node_idx][2] = k * dz + z_low;
             }
         }
     }
