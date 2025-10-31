@@ -32,6 +32,16 @@ namespace sfem::geo
         return x_[2];
     }
     //=============================================================================
+    real_t &Vec3::operator()(int dir)
+    {
+        if (dir < 0 or dir > 2)
+        {
+            /// @todo error
+        }
+
+        return x_[dir];
+    }
+    //=============================================================================
     real_t Vec3::operator()(int dir) const
     {
         if (dir < 0 or dir > 2)

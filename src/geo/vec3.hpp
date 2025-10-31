@@ -26,6 +26,9 @@ namespace sfem::geo
         real_t z() const;
 
         /// @brief Get the vector's component in a given direction
+        real_t &operator()(int dir);
+
+        /// @brief Get the vector's component in a given direction (const version)
         real_t operator()(int dir) const;
 
         /// @brief Add another vector
