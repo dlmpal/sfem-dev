@@ -17,8 +17,12 @@ namespace sfem::fvm
         // Finite volume space
         const auto V = phi.space();
 
+        // Mesh dimension and number of components
+        const int dim = V->mesh()->pdim();
+        const int n_comp = phi.n_comp();
+
         // Construct gradient
-        auto facet_work = [&](const mesh::Mesh &mesh,
+        auto facet_work = [&](const mesh::Mesh &,
                               const mesh::Region &region,
                               const mesh::Cell &,
                               int facet_idx)
@@ -34,31 +38,34 @@ namespace sfem::fvm
             // Boundary facets
             if (cell_idx1 == cell_idx2)
             {
-                // Boundary facet value
-                // Corresponds to zero Neumann BC by default
-                real_t phi_facet = phi(cell_idx1);
-                if (bc.types_.contains(region.name()) and
-                    bc.types_.at(region.name()) != BCType::zero_neumann)
+                for (int i = 0; i < n_comp; i++)
                 {
-                    if (bc.types_.at(region.name()) == BCType::dirichlet)
+                    // Boundary facet value
+                    // Corresponds to zero Neumann BC by default
+                    real_t phi_facet = phi(cell_idx1, i);
+                    if (bc.types_.contains(region.name()) and
+                        bc.types_.at(region.name()) != BCType::zero_neumann)
                     {
-                        phi_facet = bc.values_.at(facet_idx)[0];
+                        if (bc.types_.at(region.name()) == BCType::dirichlet)
+                        {
+                            phi_facet = bc.values_.at(facet_idx * n_comp + i)[0];
+                        }
+                        else if (bc.types_.at(region.name()) == BCType::neumann)
+                        {
+                            const real_t d = V->facet_cell_distances(facet_idx)[0];
+                            phi_facet += bc.values_.at(facet_idx * n_comp + i)[0] * d;
+                        }
+                        else if (bc.types_.at(region.name()) == BCType::robin)
+                        {
+                            /// @todo
+                        }
                     }
-                    else if (bc.types_.at(region.name()) == BCType::neumann)
-                    {
-                        const real_t d = V->facet_cell_distances(facet_idx)[0];
-                        phi_facet += bc.values_.at(facet_idx)[0] * d;
-                    }
-                    else if (bc.types_.at(region.name()) == BCType::robin)
-                    {
-                        /// @todo
-                    }
-                }
 
-                // Add gradient contributions for the adjacent cell
-                for (int j = 0; j < mesh.pdim(); j++)
-                {
-                    grad(cell_idx1, j) += phi_facet * area * normal(j);
+                    // Add gradient contributions for the adjacent cell
+                    for (int j = 0; j < dim; j++)
+                    {
+                        grad(cell_idx1, i * dim + j) += phi_facet * area * normal(j);
+                    }
                 }
             }
             // Internal facets
@@ -67,16 +74,20 @@ namespace sfem::fvm
                 // Facet geometric interpolation factor
                 const real_t g = V->facet_interp_factor(facet_idx);
 
-                // Compute facet value from adjacent cell values
-                const real_t phi1 = phi(cell_idx1);
-                const real_t phi2 = phi(cell_idx2);
-                const real_t phi_facet = g * phi1 + (1 - g) * phi2;
-
-                // Add gradient contributions for the adjacent cells
-                for (int j = 0; j < mesh.pdim(); j++)
+                // Compute gradient componentwise
+                for (int i = 0; i < n_comp; i++)
                 {
-                    grad(cell_idx1, j) += phi_facet * area * normal(j);
-                    grad(cell_idx2, j) -= phi_facet * area * normal(j);
+                    // Compute facet value from adjacent cell values
+                    const real_t phi1 = phi(cell_idx1, i);
+                    const real_t phi2 = phi(cell_idx2, i);
+                    const real_t phi_facet = g * phi1 + (1 - g) * phi2;
+
+                    // Add gradient contributions for the adjacent cells
+                    for (int j = 0; j < dim; j++)
+                    {
+                        grad(cell_idx1, i * dim + j) += phi_facet * area * normal(j);
+                        grad(cell_idx2, i * dim + j) -= phi_facet * area * normal(j);
+                    }
                 }
             }
         };
@@ -110,15 +121,19 @@ namespace sfem::fvm
 
         // Finite volume space, mesh and topology
         const auto V = phi.space();
-        const auto mesh_ = V->mesh();
-        const auto topo = mesh_->topology();
+        const auto mesh = V->mesh();
+        const auto topo = mesh->topology();
+
+        // Mesh dimension and number of components
+        const int dim = mesh->pdim();
+        const int n_comp = phi.n_comp();
 
         // Least-squares problem LHS matrix and RHS vector
-        la::DenseMatrix A(mesh_->pdim(), mesh_->pdim());
-        la::DenseMatrix b(mesh_->pdim(), 1);
+        la::DenseMatrix A(dim, dim);
+        la::DenseMatrix b(dim, n_comp);
 
         // Construct gradient
-        auto work = [&](const mesh::Mesh &mesh,
+        auto work = [&](const mesh::Mesh &,
                         const mesh::Region &,
                         const mesh::Cell &,
                         int cell_idx)
@@ -127,43 +142,46 @@ namespace sfem::fvm
             A.set_all(0.0);
             b.set_all(0.0);
 
-            // Cell value and midpoint
-            const real_t phi1 = phi(cell_idx);
+            // Cell midpoint
             const auto r1 = V->cell_midpoint(cell_idx);
 
-            for (const auto neighour : topo->adjacent_entities(cell_idx, mesh.pdim(), mesh.pdim()))
+            for (const auto neighour : topo->adjacent_entities(cell_idx, dim, dim))
             {
-                // Neighbour value and midpoint
-                const real_t phi2 = phi(neighour);
+                // Neighbour cell midpoint
                 const auto r2 = V->cell_midpoint(neighour);
 
-                // Value difference and intercell distance vector
-                const real_t dphi = phi2 - phi1;
-                const geo::Vec3 dr(r1, r2);
+                // Intercell distance vector
+                const geo::Vec3 d12(r1, r2);
 
                 // Weighting factor
-                const real_t w = 1.0 / dr.mag();
+                const real_t w = 1.0 / d12.mag();
 
                 // Add contributions for this neighbour
-                for (int i = 0; i < mesh.pdim(); i++)
+                for (int i = 0; i < dim; i++)
                 {
-                    for (int j = 0; j < mesh.pdim(); j++)
+                    for (int j = 0; j < dim; j++)
                     {
-                        A(i, j) += w * dr(i) * dr(j);
+                        A(i, j) += w * d12(i) * d12(j);
                     }
 
-                    b(i, 0) += w * dr(i) * dphi;
+                    for (int k = 0; k < n_comp; k++)
+                    {
+                        b(i, k) += w * d12(i) * (phi(neighour, k) - phi(cell_idx, k));
+                    }
                 }
             }
 
             // Solve least squares problem and compute cell gradient
             const auto grad_cell = A.invert().first * b;
-            for (int i = 0; i < mesh.pdim(); i++)
+            for (int i = 0; i < dim; i++)
             {
-                grad(cell_idx, i) = grad_cell(i, 0);
+                for (int k = 0; k < n_comp; k++)
+                {
+                    grad(cell_idx, k * dim + i) = grad_cell(i, k);
+                }
             }
         };
-        mesh::utils::for_all_cells(*mesh_, work);
+        mesh::utils::for_all_cells(*mesh, work);
 
         // Ensure that ghost cell gradients are also updated
         grad.update_ghosts();
@@ -190,7 +208,8 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    std::shared_ptr<FVField> gradient(const FVField &phi, const FVBC &bc,
+    std::shared_ptr<FVField> gradient(const FVField &phi,
+                                      const FVBC &bc,
                                       GradientMethod method)
     {
         // Quick access
