@@ -49,4 +49,18 @@ namespace sfem::fvm
                                    const geo::Vec3 &normal,
                                    std::vector<real_t> &normal_flux) const override;
     };
+
+    // Forward Declaration
+    class EulerFlux;
+
+    // Harten, Lax and Van Leer (HLL) approximate Riemann problem solver for the Euler equations
+    class HLLFlux : public NumericalFlux
+    {
+    public:
+        HLLFlux(std::shared_ptr<const EulerFlux> flux);
+        real_t compute_normal_flux(const std::vector<real_t> &state1,
+                                   const std::vector<real_t> &state2,
+                                   const geo::Vec3 &normal,
+                                   std::vector<real_t> &normal_flux) const override;
+    };
 }

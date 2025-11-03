@@ -1,4 +1,5 @@
 #include "numerical_flux.hpp"
+#include "euler.hpp"
 
 namespace sfem::fvm
 {
@@ -71,5 +72,42 @@ namespace sfem::fvm
         }
 
         return s;
+    }
+    //=============================================================================
+    HLLFlux::HLLFlux(std::shared_ptr<const EulerFlux> flux)
+        : NumericalFlux(flux)
+    {
+    }
+    //=============================================================================
+    double HLLFlux::compute_normal_flux(const std::vector<real_t> &state1,
+                                        const std::vector<real_t> &state2,
+                                        const geo::Vec3 &normal,
+                                        std::vector<real_t> &normal_flux) const
+    {
+        // Compute left and right normal fluxes (and wave speeds)
+        const real_t s1_ = flux_->compute_normal_flux(state1, normal, flux1_);
+        const real_t s2_ = flux_->compute_normal_flux(state2, normal, flux2_);
+
+        // HLL wavespeeds
+        const real_t s1 = -std::max(s1_, s2_);
+        const real_t s2 = std::max(s1_, s2_);
+
+        for (int i = 0; i < flux_->n_comp(); i++)
+        {
+            if (s1 > 0)
+            {
+                normal_flux[i] = flux1_[i];
+            }
+            else if (s2 > 0)
+            {
+                normal_flux[i] = (s2 * flux1_[i] - s1 * flux2_[i] + s1 * s2 * (state2[i] - state1[i])) / (s2 - s1);
+            }
+            else
+            {
+                normal_flux[i] = flux2_[i];
+            }
+        }
+
+        return std::max(s1, s2);
     }
 }
