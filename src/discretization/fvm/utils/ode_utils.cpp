@@ -55,10 +55,15 @@ namespace sfem::fvm::ode
                 for (int i = 0; i < flux->n_comp(); i++)
                 {
                     rhs(cell_idx_left, i) -= normal_flux[i] * area * vol_inv_left;
-                    rhs(cell_idx_right, i) -= -normal_flux[i] * area * vol_inv_right;
+
+                    /// @todo cleanup
+                    if (cell_idx_left != cell_idx_right)
+                    {
+                        rhs(cell_idx_right, i) -= -normal_flux[i] * area * vol_inv_right;
+                    }
                 }
             };
-            mesh::utils::for_all_facets(*V->mesh(), facet_work, true, true);
+            mesh::utils::for_all_facets(*V->mesh(), facet_work);
 
             // Add source term contribution
             if (src)
