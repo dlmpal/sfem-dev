@@ -62,6 +62,37 @@ namespace sfem::ode
                              std::move(coeffs));
     }
     //=============================================================================
+    ERKIntegrator create_rk2(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
+    {
+        const int n_stages = 2;
+        const double a = 2. / 3.;
+        std::vector<double> nodes = {0., a};
+        std::vector<double> weights = {1. - 0.5 / a, 0.5 / a};
+        la::DenseMatrix coeffs(n_stages, n_stages);
+        coeffs(1, 0) = a;
+
+        return ERKIntegrator(state, rhs, n_stages,
+                             std::move(nodes),
+                             std::move(weights),
+                             std::move(coeffs));
+    }
+    //=============================================================================
+    ERKIntegrator create_rk3(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
+    {
+        const int n_stages = 3;
+        std::vector<double> nodes = {0, 1., 0.5};
+        std::vector<double> weights = {1. / 6., 1. / 6., 2. / 3.};
+        la::DenseMatrix coeffs(n_stages, n_stages);
+        coeffs(1, 0) = 1.0;
+        coeffs(2, 0) = 0.25;
+        coeffs(2, 1) = 0.25;
+
+        return ERKIntegrator(state, rhs, n_stages,
+                             std::move(nodes),
+                             std::move(weights),
+                             std::move(coeffs));
+    }
+    //=============================================================================
     static ERKIntegrator create_rk4(const la::Vector &state, ERKIntegrator::RHSFunction rhs)
     {
         const int n_stages = 4;
@@ -84,6 +115,10 @@ namespace sfem::ode
         {
         case ERKType::fe:
             return create_fe(state, rhs);
+        case ERKType::rk2:
+            return create_rk2(state, rhs);
+        case ERKType::rk3:
+            return create_rk3(state, rhs);
         case ERKType::rk4:
             return create_rk4(state, rhs);
         default:

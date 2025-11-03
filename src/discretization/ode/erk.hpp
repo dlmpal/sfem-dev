@@ -60,8 +60,10 @@ namespace sfem::ode
     /// @brief Available Explicit Runge-Kutta integrator types
     enum class ERKType
     {
-        fe, // Forward Euler
-        rk4 // Classic fourth-order Runge-Kutta
+        fe,  // Forward Euler
+        rk2, // Second-order Runge-Kutta
+        rk3, // Third-order Runge-Kutta
+        rk4  // Classic fourth-order Runge-Kutta
     };
 
     /// @brief Create an ERK integrator of specific type
