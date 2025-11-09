@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../native/dense_matrix.hpp"
 #include "../../graph/connectivity.hpp"
 #include "../../parallel/index_map.hpp"
+#include "../../base/config.hpp"
 #include <memory>
 
 // Forward declaration
@@ -68,6 +68,16 @@ namespace sfem::la
         /// @brief Assemble the matrix
         void assemble();
 
+        /// @brief Fill an existing vector with the diagonal entries of the matrix
+        void diagonal(Vector &diag) const;
+
+        /// @brief Fill a component of an existing vector with the diagonal entries of the matrix
+        /// for a given component
+        void diagonal(Vector &diag, int src_comp, int dest_comp) const;
+
+        /// @brief Scale the diagonal entries of the matrix
+        void scale_diagonal(real_t a);
+
     private:
         /// @brief Row-to-column connectivity
         std::shared_ptr<const graph::Connectivity> row_to_col_;
@@ -89,7 +99,6 @@ namespace sfem::la
     real_t norm(const SparseMatrix &mat);
 
     /// @brief Sparse matrix-vector multiplication: y = Ax
-    void spmv(const SparseMatrix &A,
-              const Vector &x,
-              Vector &y);
+    /// @note The ghost index values of x should be updated before calling
+    void spmv(const SparseMatrix &A, const Vector &x, Vector &y);
 }

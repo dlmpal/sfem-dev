@@ -113,7 +113,6 @@ namespace sfem::la
         int displ = 0;
         for (int i = row_im_->n_owned(); i < row_im_->n_local(); i++)
         {
-
             std::fill(ghost_rows.begin() + displ,
                       ghost_rows.begin() + displ + row_to_col_->n_links(i),
                       i);
@@ -169,6 +168,49 @@ namespace sfem::la
         }
     }
     //=============================================================================
+    void SparseMatrix::diagonal(Vector &diag) const
+    {
+        SFEM_CHECK_SIZES(row_im_->n_owned(), diag.n_owned());
+        SFEM_CHECK_SIZES(bs_, diag.block_size());
+        for (int r = 0; r < row_im_->n_owned(); r++)
+        {
+            const int offset = row_to_col_->offset(r);
+            const int rel_idx = row_to_col_->relative_index(r, r);
+            const int start = (offset + rel_idx) * bs_ * bs_;
+            for (int k = 0; k < bs_; k++)
+            {
+                diag(r, k) = values_[start + k * bs_ + k];
+            }
+        }
+    }
+    //=============================================================================
+    void SparseMatrix::diagonal(Vector &diag, int src_comp, int dest_comp) const
+    {
+        SFEM_CHECK_SIZES(row_im_->n_owned(), diag.n_owned());
+        SFEM_CHECK_INDEX(src_comp, bs_);
+        for (int r = 0; r < row_im_->n_owned(); r++)
+        {
+            const int offset = row_to_col_->offset(r);
+            const int rel_idx = row_to_col_->relative_index(r, r);
+            const int start = (offset + rel_idx) * bs_ * bs_;
+            diag(r, dest_comp) = values_[start + src_comp * bs_ + src_comp];
+        }
+    }
+    //=============================================================================
+    void SparseMatrix::scale_diagonal(real_t a)
+    {
+        for (int r = 0; r < row_im_->n_owned(); r++)
+        {
+            const int offset = row_to_col_->offset(r);
+            const int rel_idx = row_to_col_->relative_index(r, r);
+            const int start = (offset + rel_idx) * bs_ * bs_;
+            for (int k = 0; k < bs_; k++)
+            {
+                values_[start + k * bs_ + k] *= a;
+            }
+        }
+    }
+    //=============================================================================
     real_t norm(const SparseMatrix &A)
     {
         real_t norm = std::accumulate(A.values().cbegin(),
@@ -192,16 +234,16 @@ namespace sfem::la
         SFEM_CHECK_SIZES(bs, y.block_size());
 
         y.set_all(0.0);
-        for (int i = 0; i < row_im->n_owned(); i++)
+        for (int r = 0; r < row_im->n_owned(); r++)
         {
-            const auto [cols, values] = A.row_data(i);
-            for (std::size_t j = 0; j < cols.size(); j++)
+            const auto [cols, values] = A.row_data(r);
+            for (std::size_t c = 0; c < cols.size(); c++)
             {
                 for (int k1 = 0; k1 < bs; k1++)
                 {
                     for (int k2 = 0; k2 < bs; k2++)
                     {
-                        y(i, k1) += x(cols[j], k2) * values[j * bs * bs + k1 * bs + k2];
+                        y(r, k1) += x(cols[c], k2) * values[c * bs * bs + k1 * bs + k2];
                     }
                 }
             }
