@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
     parser.add_argument(argparse::Argument("Nx", true));
     parser.add_argument(argparse::Argument("Ny", true));
     parser.add_argument(argparse::Argument("Nz", false).value<int>(1));
-    parser.add_argument(argparse::Argument("x-low", true));
-    parser.add_argument(argparse::Argument("y-low", true));
+    parser.add_argument(argparse::Argument("x-low", false).value<real_t>(0.0));
+    parser.add_argument(argparse::Argument("y-low", false).value<real_t>(0.0));
     parser.add_argument(argparse::Argument("z-low", false).value<real_t>(0.0));
     parser.add_argument(argparse::Argument("x-high", true));
     parser.add_argument(argparse::Argument("y-high", true));
