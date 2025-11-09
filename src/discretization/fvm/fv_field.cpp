@@ -15,6 +15,12 @@ namespace sfem::fvm
         return fv_space_;
     }
     //=============================================================================
+    std::shared_ptr<FVField> create_field(std::shared_ptr<const FVSpace> V,
+                                          const std::vector<std::string> &compoments)
+    {
+        return std::make_shared<FVField>(V, compoments);
+    }
+    //=============================================================================
     void eval_field(FVField &phi, FieldFunction func, real_t time)
     {
         // Quick access

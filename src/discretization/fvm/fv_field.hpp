@@ -23,6 +23,10 @@ namespace sfem::fvm
         std::shared_ptr<const FVSpace> fv_space_;
     };
 
+    /// @brief Create a finite volume field
+    std::shared_ptr<FVField> create_field(std::shared_ptr<const FVSpace> V,
+                                          const std::vector<std::string> &compoments);
+
     using FieldFunction = std::function<void(const std::array<real_t, 3> &pt,
                                              std::span<real_t> values, real_t time)>;
 
