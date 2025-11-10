@@ -128,37 +128,37 @@ int main(int argc, char *argv[])
 
     const int left = 0;
     const int right = 1;
-    const int top = 2;
-    const int bottom = 3;
-    const int front = 4;
-    const int back = 5;
+    const int front = 2;
+    const int back = 3;
+    const int top = 4;
+    const int bottom = 5;
 
     const std::array<int, 6> boundary_tags =
         {
             2, // Left
             3, // Right
-            4, // Top
-            5, // Bottom
-            6, // Front
-            7  // Back
+            4, // Front
+            5, // Back
+            6, // Top
+            7  // Bottom
         };
 
     std::array<int, 6> boundary_rel_idx;
     if (dim == 3)
     {
-        boundary_rel_idx[left] = 0;
-        boundary_rel_idx[right] = 5;
-        boundary_rel_idx[bottom] = 4;
-        boundary_rel_idx[top] = 1;
-        boundary_rel_idx[front] = 2;
-        boundary_rel_idx[back] = 3;
+        boundary_rel_idx[left] = 2;
+        boundary_rel_idx[right] = 3;
+        boundary_rel_idx[front] = 1;
+        boundary_rel_idx[back] = 4;
+        boundary_rel_idx[bottom] = 0;
+        boundary_rel_idx[top] = 5;
     }
     else
     {
         boundary_rel_idx[left] = 3;
         boundary_rel_idx[right] = 1;
-        boundary_rel_idx[bottom] = 0;
-        boundary_rel_idx[top] = 2;
+        boundary_rel_idx[front] = 0;
+        boundary_rel_idx[back] = 2;
     }
 
     // Calculate the number of boundary facets
@@ -194,49 +194,49 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Bottom boundary
+    // Front boundary
     for (int k = 0; k < Nz; k++)
     {
         for (int i = 0; i < Nx; i++)
         {
             bfacet_owners[bfacet_idx] = k * Ny * Nx + 0 * Nx + i;
-            bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[bottom];
-            bfacet_tag[bfacet_idx++] = boundary_tags[bottom];
+            bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[front];
+            bfacet_tag[bfacet_idx++] = boundary_tags[front];
         }
     }
 
-    // Top boundary
+    // Back boundary
     for (int k = 0; k < Nz; k++)
     {
         for (int i = 0; i < Nx; i++)
         {
             bfacet_owners[bfacet_idx] = k * Ny * Nx + (Ny - 1) * Nx + i;
-            bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[top];
-            bfacet_tag[bfacet_idx++] = boundary_tags[top];
+            bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[back];
+            bfacet_tag[bfacet_idx++] = boundary_tags[back];
         }
     }
 
     if (dim == 3)
     {
-        // Front boundary
+        // Bottom boundary
         for (int j = 0; j < Ny; j++)
         {
             for (int i = 0; i < Nx; i++)
             {
-                bfacet_owners[bfacet_idx] = 0 * Ny * Nx + (Ny - 1) * Nx + i;
-                bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[front];
-                bfacet_tag[bfacet_idx++] = boundary_tags[front];
+                bfacet_owners[bfacet_idx] = 0 * Ny * Nx + j * Nx + i;
+                bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[bottom];
+                bfacet_tag[bfacet_idx++] = boundary_tags[bottom];
             }
         }
 
-        // Back boundary
+        // Top boundary
         for (int j = 0; j < Ny; j++)
         {
             for (int i = 0; i < Nx; i++)
             {
-                bfacet_owners[bfacet_idx] = (Nz - 1) * Ny * Nx + (Ny - 1) * Nx + i;
-                bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[back];
-                bfacet_tag[bfacet_idx++] = boundary_tags[back];
+                bfacet_owners[bfacet_idx] = (Nz - 1) * Ny * Nx + j * Nx + i;
+                bfacet_rel_idx[bfacet_idx] = boundary_rel_idx[top];
+                bfacet_tag[bfacet_idx++] = boundary_tags[top];
             }
         }
     }
@@ -249,8 +249,8 @@ int main(int argc, char *argv[])
         const int owner = bfacet_owners[i];
         const int rel_idx = bfacet_rel_idx[i];
         const int tag = bfacet_tag[i];
-        const int bfacet_idx = topology->adjacent_entities(owner, dim, dim - 1)[rel_idx];
-        topology->set_facet_tag(bfacet_idx, tag);
+        const int facet_idx = topology->adjacent_entities(owner, dim, dim - 1)[rel_idx];
+        topology->set_facet_tag(facet_idx, tag);
     }
 
     // Create the mesh points
@@ -270,19 +270,24 @@ int main(int argc, char *argv[])
     }
 
     // Create the mesh regions
-    std::vector<Region> regions =
-        {
-            Region("Internal", internal_tag, dim),
-            Region("Left", boundary_tags[left], dim - 1),
-            Region("Right", boundary_tags[right], dim - 1),
-            Region("Bottom", boundary_tags[bottom], dim - 1),
-            Region("Top", boundary_tags[top], dim - 1),
-
-        };
+    std::vector<Region> regions;
     if (dim == 3)
     {
-        regions.emplace_back("Front", boundary_tags[front], dim - 1);
-        regions.emplace_back("Back", boundary_tags[back], dim - 1);
+        regions = {Region("Internal", internal_tag, dim),
+                   Region("Left", boundary_tags[left], dim - 1),
+                   Region("Right", boundary_tags[right], dim - 1),
+                   Region("Front", boundary_tags[front], dim - 1),
+                   Region("Back", boundary_tags[back], dim - 1),
+                   Region("Bottom", boundary_tags[bottom], dim - 1),
+                   Region("Top", boundary_tags[top], dim - 1)};
+    }
+    else
+    {
+        regions = {Region("Internal", internal_tag, dim),
+                   Region("Left", boundary_tags[left], dim - 1),
+                   Region("Right", boundary_tags[right], dim - 1),
+                   Region("Bottom", boundary_tags[front], dim - 1),
+                   Region("Top", boundary_tags[back], dim - 1)};
     }
 
     // Create the mesh
