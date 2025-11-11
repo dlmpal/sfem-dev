@@ -5,17 +5,16 @@
 
 namespace sfem::la
 {
+    /// @brief Conjugate Gradient solver
     class CG : public LinearSolver
     {
     public:
-        CG(real_t tol, int n_iter_max, bool verbose);
+        CG(const SolverOptions &options);
 
     private:
-        void single_iteration(int iter, const SparseMatrix &A,
-                              const Vector &b, Vector &x) override;
+        void init(const SparseMatrix &A, const Vector &b, Vector &x) override;
 
-        void init(const SparseMatrix &A,
-                  const Vector &b, Vector &x) override;
+        void single_iteration(int iter, const SparseMatrix &A, const Vector &b, Vector &x) override;
 
     private:
         /// @brief  Workspace vector, used for storing intermediate products

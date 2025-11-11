@@ -6,21 +6,18 @@
 
 namespace sfem::la
 {
-
+    /// @brief Generalized Minimum Residual solver
     class GMRES : public LinearSolver
     {
     public:
-        GMRES(real_t tol, int n_iter_max, bool verbose, int n_restart = 50);
+        GMRES(const SolverOptions &options, int n_restart = 50);
 
     private:
-        void init(const SparseMatrix &A,
-                  const Vector &b, Vector &x) override;
+        void init(const SparseMatrix &A, const Vector &b, Vector &x) override;
 
-        void single_iteration(int iter, const SparseMatrix &A,
-                              const Vector &b, Vector &x) override;
+        void single_iteration(int iter, const SparseMatrix &A, const Vector &b, Vector &x) override;
 
-        void restart(int iter, const SparseMatrix &A,
-                     const Vector &b, Vector &x);
+        void restart(int iter, const SparseMatrix &A, const Vector &b, Vector &x);
 
     private:
         /// @brief Number of iterations before restart

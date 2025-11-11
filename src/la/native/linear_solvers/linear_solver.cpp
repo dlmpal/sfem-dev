@@ -1,17 +1,15 @@
 #include "linear_solver.hpp"
 #include "../../../base/error.hpp"
+#include "../vector.hpp"
+#include "../sparse_matrix.hpp"
 
 namespace sfem::la
 {
     //=============================================================================
-    LinearSolver::LinearSolver(const std::string &name, real_t tol, int n_iter_max, bool verbose)
+    LinearSolver::LinearSolver(const std::string &name, const SolverOptions &options)
         : name_(name),
-          tol_(tol),
-          n_iter_max_(n_iter_max),
-          verbose_(verbose),
-          residual_history_(n_iter_max_)
+          options_(options)
     {
-        /// @todo check values of tole and n_iter_max
     }
     //=============================================================================
     std::string LinearSolver::name() const
@@ -19,20 +17,14 @@ namespace sfem::la
         return name_;
     }
     //=============================================================================
-    real_t LinearSolver::tol() const
+    SolverOptions &LinearSolver::options()
     {
-        return tol_;
+        return options_;
     }
-    //=============================================================================
-
-    int LinearSolver::n_iter_max() const
+    //======================================================================
+    SolverOptions LinearSolver::options() const
     {
-        return n_iter_max_;
-    }
-    //=============================================================================
-    bool LinearSolver::verbose() const
-    {
-        return verbose_;
+        return options_;
     }
     //=============================================================================
     std::vector<real_t> LinearSolver::residual_history() const
@@ -40,61 +32,63 @@ namespace sfem::la
         return residual_history_;
     }
     //=============================================================================
-    void LinearSolver::run(const SparseMatrix &A,
-                           const Vector &b,
-                           Vector &x)
+    bool LinearSolver::run(const SparseMatrix &A, const Vector &b, Vector &x)
     {
+        // Check that options are valid
+        if (options_.tol < 0)
+        {
+            SFEM_ERROR(std::format("Invalid tolerance {} (<0)\n", options_.tol));
+        }
+        if (options_.n_iter_max <= 0)
+        {
+            SFEM_ERROR(std::format("Invalid number of iterations {} (<=0)\n", options_.n_iter_max));
+        }
+
         // Reset residual history
-        std::fill(residual_history_.begin(),
-                  residual_history_.end(), 0.0);
+        residual_history_.resize(options_.n_iter_max + 1, 0.0);
 
         // Initialize the solver
         init(A, b, x);
-        if (verbose_)
+        if (options_.print_iter)
         {
             log_msg(std::format("{} - Iteration 0, Residual {}\n",
                                 name_, residual_history_[0]),
                     true);
         }
 
-        int iter = 1;
-        bool converged = false;
-        for (; iter < n_iter_max_; iter++)
+        // Perform iterations
+        int iter = 0;
+        while (residual_history_[iter] >= options_.tol && iter < options_.n_iter_max)
         {
-            // Perform a single iteration
+            iter++;
             single_iteration(iter, A, b, x);
 
-            // Print current iteration number and residual
-            if (verbose_)
+            if (options_.print_iter)
             {
                 log_msg(std::format("{} - Iteration {}, Residual {}\n",
                                     name_, iter, residual_history_[iter]),
                         true);
             }
-
-            // Check for convergence
-            if (residual_history_[iter] <= tol_)
-            {
-                converged = true;
-                break;
-            }
         }
 
+        // Check for convergence
+        bool converged = residual_history_[iter] < options_.tol ? true : false;
+
         // Print convergence message
-        if (verbose_)
+        if (options_.print_conv)
         {
             if (converged)
             {
-                log_msg(std::format("{} has converged in {} iterations\n",
-                                    name_, iter - 1),
-                        true);
+                log_msg(std::format("{} has converged in {} iterations\n", name_, iter), true);
             }
             else
             {
                 log_msg(std::format("{} has failed to converge in {} iterations. Residual ({}) is greater than tolerance ({})\n",
-                                    name_, n_iter_max_, residual_history_[iter - 1], tol_),
+                                    name_, options_.n_iter_max, residual_history_[iter], options_.tol),
                         true);
             }
         }
+
+        return converged;
     }
 }

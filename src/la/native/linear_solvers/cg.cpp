@@ -4,8 +4,8 @@
 namespace sfem::la
 {
     //=============================================================================
-    CG::CG(real_t tol, int n_iter_max, bool verbose)
-        : LinearSolver("CG", tol, n_iter_max, verbose),
+    CG::CG(const SolverOptions &options)
+        : LinearSolver("CG", options),
           Ap(std::make_shared<IndexMap>(), 1),
           p(std::make_shared<IndexMap>(), 1),
           r(std::make_shared<IndexMap>(), 1)

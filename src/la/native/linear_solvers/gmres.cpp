@@ -5,8 +5,8 @@
 namespace sfem::la
 {
     //=============================================================================
-    GMRES::GMRES(real_t tol, int n_iter_max, bool verbose, int n_restart)
-        : LinearSolver("GMRES", tol, n_iter_max, verbose),
+    GMRES::GMRES(const SolverOptions &options, int n_restart)
+        : LinearSolver("GMRES", options),
           n_restart_(n_restart),
           x0_(std::make_shared<IndexMap>(), 1),
           H_(n_restart_ + 1, n_restart_),
@@ -29,8 +29,7 @@ namespace sfem::la
         restart(0, A, b, x);
     }
     //=============================================================================
-    void GMRES::restart(int iter, const SparseMatrix &A,
-                        const Vector &b, Vector &x)
+    void GMRES::restart(int iter, const SparseMatrix &A, const Vector &b, Vector &x)
     {
         // Save initial solution vector
         copy(x, x0_);
@@ -129,7 +128,8 @@ namespace sfem::la
         // Solve the least squares problem
         auto Hk = submatrix(H_, 0, k + 2, 0, k + 1);
         auto e1k = submatrix(e1_, 0, k + 2, 0, 1);
-        auto yk = lstsq(Hk, e1k);
+        // auto yk = lstsq(Hk, e1k);
+        auto yk = Hk.invert().first * e1k;
 
         // Update solution vector
         copy(x0_, x);
