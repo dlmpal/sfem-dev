@@ -17,19 +17,15 @@ namespace sfem::fvm
     /// @brief Assemble the LHS matrix and RHS vector for the convenction operator
     /// acting on a scalar finite volume field
     /// @param phi Finite volume field
-    /// @param grad Field gradient
     /// @param bc Boundary condition
-    /// @param vel Convecting velocity field
+    /// @param vel Convective velocity field
     /// @param lhs LHS matrix
     /// @param rhs RHS vector
     /// @param scheme Differencing scheme
     /// @param implicit Whether to treat this term implicitly (add contributions to LHS),
     /// or explicitly (add contributions to RHS)
     void convection(const FVField &phi,
-                    const FVField &grad,
                     const FVBC &bc,
                     const Coefficient &vel,
-                    la::MatSet lhs, la::VecSet rhs,
-                    DifferencingScheme scheme = DifferencingScheme::upwind,
-                    bool implicit = true);
+                    la::MatSet lhs, la::VecSet rhs);
 }
