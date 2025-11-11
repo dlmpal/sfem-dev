@@ -1,4 +1,4 @@
-// Solve Laplace's equation on a 2D or 3D domain
+// Solve the convection-diffusion equation on a 2D or 3D domain
 // Create the mesh with the cart-mesh application by:
 // ${SFEM_DEV_INSTALL_DIR}/bin/cart-mesh -d=2 -Nx=100 -Ny=100 -x-low=0 -x-high=1 -y-low=0 -y-high=1
 
@@ -23,38 +23,62 @@ int main(int argc, char **argv)
     // Diffusivity
     ConstantCoefficient nu(1.0);
 
+    // Convective velocity
+    ConstantCoefficient vel({0.0, 0.0});
+
+    // Initial condition
+    T->set_all(0.0);
+    io::vtk::write("post/solution_0", *mesh, {T});
+
+    // Boundary conditions
+    fvm::FVBC bc(T);
+    bc.set_value("Left", "T", fvm::BCType::dirichlet, {0});
+    bc.set_value("Right", "T", fvm::BCType::dirichlet, {0});
+    bc.set_value("Top", "T", fvm::BCType::dirichlet, {0});
+    bc.set_value("Bottom", "T", fvm::BCType::dirichlet, {0});
+
     // LHS matrix
     auto A = fvm::create_mat(*T);
 
     // RHS vector
     auto b = fvm::create_vec(*T);
 
-    // Boundary conditions
-    fvm::FVBC bc(T);
-    bc.set_value("Left", "T", fvm::BCType::dirichlet, {1});
-    bc.set_value("Right", "T", fvm::BCType::dirichlet, {0});
-
     // Linear solver
     la::SolverOptions options;
     options.tol = 1e-8;
     options.n_iter_max = 500;
     options.print_conv = true;
-    options.print_iter = true;
-    la::CG solver(options);
+    la::GMRES solver(options);
 
-    const int n_orthogonal_correctors = 2;
-    for (int i = 0; i < n_orthogonal_correctors; i++)
+    // Timestepping
+    const real_t t_final = 50.0;
+    const real_t t_start = 0.0;
+    const real_t dt = 0.1;
+    real_t time = t_start;
+    int timestep = 0;
+    while (time < t_final)
     {
-        log_msg(std::format("Non-Orthogonal Corrector - Iteration: {}\n", i), true);
+        // Increment time
+        time += dt;
+        timestep++;
+        log_msg(std::format("Time: {}, Timestep: {}\n", time, timestep), true);
 
         // Reset LHS and RHS
         A.set_all(0.0);
         b.set_all(0.0);
 
-        // Assemble the LHS matrix and RHS vector
+        // Add contributions
         fvm::laplacian(*T, *gradT, bc, nu,
                        la::create_matset(A),
                        la::create_vecset(b));
+        fvm::convection(*T, bc, vel,
+                        la::create_matset(A),
+                        la::create_vecset(b));
+        fvm::ddt(*T, ConstantCoefficient(1.0), dt,
+                 la::create_matset(A),
+                 la::create_vecset(b));
+
+        // Assemble the LHS matrix and RHS vector
         A.assemble();
         b.assemble();
 
@@ -62,11 +86,8 @@ int main(int argc, char **argv)
         solver.run(A, b, *T);
         T->update_ghosts();
 
-        // Compute the gradient
-        fvm::gradient(*T, bc, *gradT, fvm::GradientMethod::least_squares);
-
         // Save solution to file
-        io::vtk::write(std::format("post/solution_00{}", i), *mesh, {T, gradT});
+        io::vtk::write(std::format("post/solution_{}", timestep), *mesh, {T});
     }
 
     return 0;

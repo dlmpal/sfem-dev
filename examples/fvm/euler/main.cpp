@@ -1,169 +1,244 @@
-// Solve the linearized 2D Euler equations for an acoustic monopole source
-// Create the mesh with the cart-mesh application by:
-// ${SFEM_DEV_INSTALL_DIR}/bin/cart-mesh -d=2 -Nx=200 -Ny=200 -x-low=-100 -x-high=100 -y-low=-100 -y-high=100
-
 #include "sfem.hpp"
 
 using namespace sfem;
 
-namespace sfem::fvm
+void riemann1d(fvm::FVField &U, real_t gamma);
+void riemann2d1(fvm::FVField &U, real_t gamma);
+void riemann2d2(fvm::FVField &U, real_t gamma);
+void cylindrical(fvm::FVField &U, real_t gamma);
+
+namespace sfem::fvm::ode
 {
-    struct AccousticParams
+    double compute_dt_estimate(const fvm::FVField &U,
+                               const fvm::FluxFunction &flux,
+                               double CFL)
     {
-        AccousticParams()
+        SFEM_CHECK_SIZES(U.n_comp(), flux.n_comp());
+
+        // Quick access
+        const int dim = flux.dim();
+        const int n_comp = flux.n_comp();
+        const auto V = U.space();
+
+        // Cell state and flux
+        std::vector<real_t> u1(n_comp);
+        std::vector<real_t> u2(n_comp);
+        std::vector<real_t> f1(n_comp);
+        std::vector<real_t> f2(n_comp);
+
+        real_t dt = std::numeric_limits<real_t>::max();
+
+        auto work = [&](const mesh::Mesh &mesh,
+                        const mesh::Region &region,
+                        const mesh::Cell &facet, int facet_idx)
         {
-            sound = std::sqrt(temp * gamma * R);
-        }
+            const auto [cell_idx1, cell_idx2] = V->facet_adjacent_cells(facet_idx);
+            const geo::Vec3 normal = V->facet_normal(facet_idx);
+            const real_t d12 = V->intercell_distance(facet_idx).mag();
 
-        real_t rho = 1.293;
-        real_t temp = 289;
-
-        real_t gamma = 1.4;
-        real_t R = 287.0;
-
-        real_t freq = 14;
-        real_t alpha = 0.167;
-        real_t mach = 0.0;
-        real_t sound;
-
-        std::array<real_t, 3> center = {};
-    };
-
-    class Monopole
-    {
-    public:
-        Monopole(const AccousticParams &params)
-            : params_(params)
-        {
-        }
-
-        void operator()(const std::array<real_t, 3> &pt,
-                        std::span<real_t> values,
-                        real_t time)
-        {
-            const real_t r = geo::compute_distance(pt, params_.center);
-            const real_t c = params_.sound;
-            const real_t f = params_.freq;
-            const real_t a = params_.alpha;
-            values[0] = std::sin(2 * M_PI * f * time) * std::exp(-a * r * r) / (c / c);
-        }
-
-    private:
-        AccousticParams params_;
-    };
-
-    std::array<real_t, 3> compute_flux_x(real_t rho0, real_t c0, real_t u0,
-                                         real_t rho, real_t u, real_t v)
-    {
-        return {u0 * rho + rho0 * u,
-                c0 * c0 / rho0 * rho + u0 * u,
-                u0 * v};
-    }
-
-    std::array<real_t, 3> compute_flux_y(real_t rho0, real_t c0, real_t u0,
-                                         real_t rho, real_t u, real_t v)
-    {
-        return {rho0 * v,
-                0.0,
-                c0 * c0 / rho0 * rho};
-    }
-
-    class LinearizedEuler2D : public FluxFunction
-    {
-
-    public:
-        LinearizedEuler2D(const AccousticParams &params)
-            : FluxFunction(3, 2), params_(params)
-        {
-        }
-
-        real_t compute_flux(const std::vector<real_t> &state,
-                            std::vector<real_t> &flux,
-                            int dir) const
-        {
-            const real_t rho0 = params_.rho;
-            const real_t c0 = params_.sound;
-            const real_t u0 = params_.mach * c0;
-
-            const real_t rho = state[0];
-            const real_t u = state[1];
-            const real_t v = state[2];
-
-            std::array<real_t, 3> f;
-            if (dir == 0)
+            for (int n = 0; n < n_comp; n++)
             {
-                f = compute_flux_x(rho0, c0, u0,
-                                   rho, u, v);
-            }
-            else if (dir == 1)
-            {
-                f = compute_flux_y(rho0, c0, u0,
-                                   rho, u, v);
+                u1[n] = U(cell_idx1, n);
+                u2[n] = U(cell_idx2, n);
             }
 
-            flux[0] = f[0];
-            flux[1] = f[1];
-            flux[2] = f[2];
+            const real_t s1 = flux.compute_normal_flux(u1, normal, f1);
+            const real_t s2 = flux.compute_normal_flux(u2, normal, f2);
+            const real_t s = std::max(s1, s2);
 
-            return c0 + u0;
-        }
+            const real_t dt_facet = CFL * d12 / s;
+            if (dt_facet < dt)
+            {
+                dt = dt_facet;
+            }
+        };
+        mesh::utils::for_all_facets(*V->mesh(), work, true, true);
 
-        real_t compute_normal_flux(const std::vector<real_t> &state,
-                                   const geo::Vec3 &n,
-                                   std::vector<real_t> &normal_flux) const
+        return mpi::reduce(dt, mpi::ReduceOperation::min);
+    }
+
+    double minbee(double r)
+    {
+        if (r <= 0)
         {
-            const real_t rho0 = params_.rho;
-            const real_t c0 = params_.sound;
-            const real_t u0 = params_.mach * c0;
-
-            const real_t rho = state[0];
-            const real_t u = state[1];
-            const real_t v = state[2];
-
-            const auto f_x = compute_flux_x(rho0, c0, u0,
-                                            rho, u, v);
-            const auto f_y = compute_flux_y(rho0, c0, u0,
-                                            rho, u, v);
-
-            normal_flux[0] = f_x[0] * n.x() + f_y[0] * n.y();
-            normal_flux[1] = f_x[1] * n.x() + f_y[1] * n.y();
-            normal_flux[2] = f_x[2] * n.x() + f_y[2] * n.y();
-
-            return c0 + u0;
+            return 0;
         }
+        else if (r < 1)
+        {
+            return r;
+        }
+        else
+        {
+            return std::min(1.0, 2 / (1 + r));
+        }
+    }
 
-    private:
-        AccousticParams params_;
-    };
+    double van_leer(double r)
+    {
+        return (r + std::abs(r)) / (1 + std::abs(r));
+    }
+
+    RHSFunction create_rhs_(std::shared_ptr<const FVField> phi,
+                            std::shared_ptr<const FVField> grad,
+                            std::shared_ptr<const NumericalFlux> nflux,
+                            FieldFunction src = {})
+    {
+        return [=](const la::Vector &S,
+                   la::Vector &rhs,
+                   real_t time)
+        {
+            // Reset RHS vector
+            rhs.set_all(0.0);
+
+            // Finite volume space and flux function
+            const auto V = phi->space();
+            const auto flux = nflux->flux_function();
+
+            fvm::FVBC bc(phi);
+
+            // Left and right state fluxes and normal flux
+            std::vector<real_t> state_left(flux->n_comp());
+            std::vector<real_t> state_right(flux->n_comp());
+            std::vector<real_t> normal_flux(flux->n_comp());
+
+            // Add flux contribution
+            auto facet_work = [&](const mesh::Mesh &,
+                                  const mesh::Region &,
+                                  const mesh::Cell &,
+                                  int facet_idx)
+            {
+                // Get the facet's adjacent cells
+                const auto [cell_idx_left, cell_idx_right] = V->facet_adjacent_cells(facet_idx);
+
+                // Facet area and normal vector
+                const real_t area = V->facet_area(facet_idx);
+                const auto normal = V->facet_normal(facet_idx);
+                const real_t g = V->facet_interp_factor(facet_idx);
+                const geo::Vec3 d = V->intercell_distance(facet_idx).normalize();
+
+                // Get the adjacent cell states
+                for (int i = 0; i < flux->n_comp(); i++)
+                {
+                    state_left[i] = S(cell_idx_left, i);
+                    state_right[i] = S(cell_idx_right, i);
+                }
+
+                // Reconstruct the adjacent cell states
+                real_t normal_vel = 0.0;
+                for (int i = 0; i < flux->dim(); i++)
+                {
+                    normal_vel += (g * state_left[i + 1] + (1 - g) * state_right[i + 2]) * normal(i);
+                }
+
+                const int upwind_idx = normal_vel > 0 ? cell_idx_left : cell_idx_right;
+                const int downwind_idx = normal_vel < 0 ? cell_idx_left : cell_idx_right;
+
+                const geo::Vec3 x_left(V->cell_midpoint(cell_idx_left),
+                                       V->facet_midpoint(facet_idx));
+                const geo::Vec3 x_right(V->cell_midpoint(cell_idx_right),
+                                        V->facet_midpoint(facet_idx));
+
+                const real_t eps = 1e-10;
+                for (int i = 0; i < flux->n_comp(); i++)
+                {
+                    real_t denom = 0.0;
+                    for (int j = 0; j < flux->dim(); j++)
+                    {
+                        denom += (*grad)(upwind_idx, i * flux->dim() + j) * d(j);
+                    }
+                    const real_t r = 1.0 - 0.5 * (S(downwind_idx, i) - S(upwind_idx, i)) / (denom + eps);
+
+                    for (int j = 0; j < flux->dim(); j++)
+                    {
+                        state_left[i] += 0.5 * van_leer(r) * x_left(j) * (*grad)(cell_idx_left, i * flux->dim() + j);
+                        state_right[i] += 0.5 * van_leer(r) * x_right(j) * (*grad)(cell_idx_right, i * flux->dim() + j);
+                    }
+                }
+
+                // Compute the (numerical) normal flux at the face
+                nflux->compute_normal_flux(state_left, state_right, normal, normal_flux);
+
+                // Inverse left and right cell volumes
+                const real_t vol_inv_left = 1 / V->cell_volume(cell_idx_left);
+                const real_t vol_inv_right = 1 / V->cell_volume(cell_idx_right);
+
+                // Add the flux contributions to the RHS vector
+                for (int i = 0; i < flux->n_comp(); i++)
+                {
+                    rhs(cell_idx_left, i) -= normal_flux[i] * area * vol_inv_left;
+
+                    /// @todo cleanup
+                    if (cell_idx_left != cell_idx_right)
+                    {
+                        rhs(cell_idx_right, i) -= -normal_flux[i] * area * vol_inv_right;
+                    }
+                }
+            };
+            mesh::utils::for_all_facets(*V->mesh(), facet_work);
+
+            // Add source term contribution
+            if (src)
+            {
+                std::vector<real_t> source(flux->n_comp());
+                auto cell_work = [&](const mesh::Mesh &,
+                                     const mesh::Region &,
+                                     const mesh::Cell &,
+                                     int cell_idx)
+                {
+                    src(V->cell_midpoint(cell_idx), source, time);
+                    for (int i = 0; i < flux->n_comp(); i++)
+                    {
+                        rhs(cell_idx, i) += source[i];
+                    }
+                };
+                mesh::utils::for_all_cells(*V->mesh(), cell_work);
+            };
+
+            // RHS was incrementally constructed - needs assembly
+            rhs.assemble();
+        };
+    }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     initialize(argc, argv);
 
+    // Read the mesh from file
     auto mesh = io::read_mesh(argv[1], mesh::PartitionCriterion::shared_facet);
 
+    // Finite volume space
     auto V = std::make_shared<fvm::FVSpace>(mesh);
-    auto S_new = std::make_shared<fvm::FVField>(V, std::vector<std::string>{"rho", "u", "v"});
-    auto S_old = std::make_shared<fvm::FVField>(V, std::vector<std::string>{"rho", "u", "v"});
-    auto rhs = std::make_shared<fvm::FVField>(V, std::vector<std::string>{"rho", "u", "v"});
 
-    const real_t dt = 1e-3;
-    const real_t time_start = 0.;
-    const real_t time_stop = 0.1;
-    const int plot_int = 5;
+    // State vectors, gradient and RHS
+    auto U_new = fvm::create_field(V, {"rho", "momx", "momy", "E"});
+    auto U_old = fvm::create_field(V, {"rho", "momx", "momy", "E"});
+    auto gradU = fvm::create_gradient(*U_new);
+    auto rhs = fvm::create_field(V, {"rho", "momx", "momy", "E"});
 
-    int step = 0;
-    real_t time = 0.0;
+    // Adiabatic index
+    const real_t gamma = 1.4;
 
-    fvm::AccousticParams params;
-    fvm::Monopole src(params);
+    // Initial condition
+    cylindrical(*U_old, gamma);
+    U_old->update_ghosts();
+    io::vtk::write(std::format("post/solution_{}", 0), *mesh, {U_old});
 
-    // U_(n+1) = U_n + dt (Q - dV * sum_([F(UL,UR), G(UL,UR)] * [n_x, n_y]))
-    auto flux = std::make_shared<fvm::LinearizedEuler2D>(params);
+    // Flux function and numerical flux
+    auto flux = std::make_shared<fvm::EulerFlux>(gamma, 2);
     auto nflux = std::make_shared<fvm::RusanovFlux>(flux);
-    auto integrator = ode::create_erk(*S_new, fvm::ode::create_rhs(S_new, nflux, src), ode::ERKType::rk4);
 
+    // Integrator
+    auto rhs_func = fvm::ode::create_rhs_(U_new, gradU, nflux);
+    auto erk = ode::create_erk(*U_new, rhs_func, ode::ERKType::rk2);
+
+    const real_t CFL = 0.35;
+    real_t dt = fvm::ode::compute_dt_estimate(*U_old, *flux, CFL);
+    const real_t time_start = 0.;
+    const real_t time_stop = 0.25;
+    const int plot_int = 10;
+    int step = 0;
+    real_t time = time_start;
     while (time <= time_stop)
     {
         // Increment time
@@ -172,17 +247,200 @@ int main(int argc, char **argv)
         log_msg(std::format("Time: {}, Step: {}\n", time, step), true);
 
         // Advance
-        integrator.advance(*S_old, *S_new, time, dt);
+        erk.advance(*U_old, *U_new, time, dt);
+
+        // Recompute timestep
+        real_t dt_ = fvm::ode::compute_dt_estimate(*U_new, *flux, CFL);
+        if (dt_ < dt)
+        {
+            dt = dt_;
+        }
 
         // Save solution to file
         if (step % plot_int == 0)
         {
-            S_new->update_ghosts();
-            io::vtk::write(std::format("post/solution_{}", step), *mesh, {S_new});
+            U_new->update_ghosts();
+            io::vtk::write(std::format("post/solution_{}", step), *mesh, {U_new});
         }
 
-        la::copy(*S_new, *S_old);
+        la::copy(*U_new, *U_old);
     }
 
     return 0;
+}
+
+void riemann1d(fvm::FVField &U, real_t gamma)
+{
+    const int dim = U.n_comp() - 2;
+    const auto V = U.space();
+
+    const double rho_l = 1.0;
+    const double u_l = 0.0;
+    const double p_l = 1.0;
+    const double e_l = p_l / rho_l / (gamma - 1);
+    const double E_l = rho_l * (e_l + 0.5 * u_l * u_l);
+
+    const double rho_r = 0.125;
+    const double u_r = 0.0;
+    const double p_r = 0.1;
+    const double e_r = p_r / rho_r / (gamma - 1);
+    const double E_r = rho_r * (e_r + 0.5 * u_r * u_r);
+
+    auto work = [&](const mesh::Mesh &mesh,
+                    const mesh::Region &region,
+                    const mesh::Cell &cell, int cell_idx)
+    {
+        if (V->cell_midpoint(cell_idx)[1] < 0.5)
+        {
+            U(cell_idx, 0) = rho_l;
+            U(cell_idx, 2) = rho_l * u_l;
+            U(cell_idx, dim + 1) = E_l;
+        }
+        else
+        {
+            U(cell_idx, 0) = rho_r;
+            U(cell_idx, 2) = rho_r * u_r;
+            U(cell_idx, dim + 1) = E_r;
+        }
+    };
+    mesh::utils::for_all_cells(*V->mesh(), work);
+}
+
+void riemann2d1(fvm::FVField &U, real_t gamma)
+{
+    const int dim = U.n_comp() - 2;
+    const auto V = U.space();
+
+    const real_t rho_high = 1.0;
+    const real_t rho_medium = 0.4;
+    const real_t rho_low = 0.125;
+
+    const real_t p_high = 1.0;
+    const real_t p_medium = 0.3;
+    const real_t p_low = 0.1;
+
+    const real_t x_lim = 0.75;
+    const real_t y_lim = 0.75;
+
+    auto work = [&](const mesh::Mesh &mesh,
+                    const mesh::Region &region,
+                    const mesh::Cell &cell,
+                    int cell_idx)
+    {
+        const auto [x, y, z] = V->cell_midpoint(cell_idx);
+
+        if (x > x_lim)
+        {
+            if (y > y_lim)
+            {
+                U(cell_idx, 0) = rho_high;
+                U(cell_idx, dim + 1) = p_high / (gamma - 1.0);
+            }
+            else
+            {
+                U(cell_idx, 0) = rho_medium;
+                U(cell_idx, dim + 1) = p_medium / (gamma - 1.0);
+            }
+        }
+        else
+        {
+            if (y > y_lim)
+            {
+                U(cell_idx, 0) = rho_medium;
+                U(cell_idx, dim + 1) = p_medium / (gamma - 1.0);
+            }
+            else
+            {
+                U(cell_idx, 0) = rho_low;
+                U(cell_idx, dim + 1) = p_low / (gamma - 1.0);
+            }
+        }
+    };
+    mesh::utils::for_all_cells(*V->mesh(), work);
+}
+
+void riemann2d2(fvm::FVField &U, real_t gamma)
+{
+    const int dim = U.n_comp() - 2;
+    const auto V = U.space();
+    const real_t x_lim = 1.0;
+    const real_t y_lim = 1.0;
+
+    auto work = [&](const mesh::Mesh &mesh,
+                    const mesh::Region &region,
+                    const mesh::Cell &cell,
+                    int idx)
+    {
+        const auto [x, y, z] = V->cell_midpoint(idx);
+
+        if (x > x_lim)
+        {
+            if (y > y_lim)
+            {
+                U(idx, 0) = 1.5;
+                U(idx, dim + 1) = 1.5 / (gamma - 1.0);
+            }
+            else
+            {
+                U(idx, 0) = 33. / 62.;
+                U(idx, 2) = 4. / std::sqrt(11);
+                U(idx, dim + 1) = 0.3 / (gamma - 1.0);
+            }
+        }
+        else
+        {
+            if (y > y_lim)
+            {
+                U(idx, 0) = 33. / 62.;
+                U(idx, 1) = 4 / std::sqrt(11);
+                U(idx, dim + 1) = 0.3 / (gamma - 1.0);
+            }
+            else
+            {
+                U(idx, 0) = 77. / 558.;
+                U(idx, 1) = 4 / std::sqrt(11);
+                U(idx, 2) = 4 / std::sqrt(11);
+                U(idx, dim + 1) = 9. / 310. / (gamma - 1.0);
+            }
+        }
+        //
+    };
+}
+
+void cylindrical(fvm::FVField &U, real_t gamma)
+{
+    const int dim = U.n_comp() - 2;
+    const auto V = U.space();
+
+    const double rho_l = 1.0;
+    const double u_l = 0.0;
+    const double v_l = 0.0;
+    const double p_l = 1.0;
+    const double e_l = p_l / rho_l / (gamma - 1);
+    const double E_l = rho_l * e_l;
+
+    const double rho_r = 0.125;
+    const double u_r = 0.0;
+    const double v_r = 0.0;
+    const double p_r = 0.1;
+    const double e_r = p_r / rho_r / (gamma - 1);
+    const double E_r = rho_r * e_r;
+
+    auto work = [&](const mesh::Mesh &mesh,
+                    const mesh::Region &region,
+                    const mesh::Cell &cell, int cell_idx)
+    {
+        const real_t r = geo::compute_distance({}, V->cell_midpoint(cell_idx));
+        if (r < 0.4)
+        {
+            U(cell_idx, 0) = rho_l;
+            U(cell_idx, dim + 1) = E_l;
+        }
+        else
+        {
+            U(cell_idx, 0) = rho_r;
+            U(cell_idx, dim + 1) = E_r;
+        }
+    };
+    mesh::utils::for_all_cells(*V->mesh(), work);
 }
