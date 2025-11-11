@@ -7,6 +7,29 @@
 namespace sfem::fvm
 {
     //=============================================================================
+    std::shared_ptr<FVField> create_gradient(const FVField &phi)
+    {
+        // Quick access
+        const auto V = phi.space();
+        const auto mesh = V->mesh();
+        const int dim = mesh->pdim();
+        const int n_comp = phi.n_comp();
+
+        // Set component names for the gradient
+        std::vector<std::string> components(n_comp * dim);
+        std::array<std::string, 3> suffixes = {"_x", "_y", "_z"};
+        for (int i = 0; i < n_comp; i++)
+        {
+            const auto comp = phi.components()[i];
+            for (int j = 0; j < dim; j++)
+            {
+                components[i * dim + j] = comp + suffixes[j];
+            }
+        }
+
+        return std::make_shared<FVField>(V, components);
+    }
+    //=============================================================================
     void green_gauss_gradient(const FVField &phi,
                               const FVBC &bc,
                               FVField &grad)
@@ -206,33 +229,5 @@ namespace sfem::fvm
             SFEM_ERROR(std::format("Invalid gradient computation method: {}\n",
                                    static_cast<int>(method)));
         }
-    }
-    //=============================================================================
-    std::shared_ptr<FVField> gradient(const FVField &phi,
-                                      const FVBC &bc,
-                                      GradientMethod method)
-    {
-        // Quick access
-        const auto V = phi.space();
-        const auto mesh = V->mesh();
-        const int dim = mesh->pdim();
-        const int n_comp = phi.n_comp();
-
-        // Set component names for the gradient
-        std::vector<std::string> components(n_comp * dim);
-        std::array<std::string, 3> suffixes = {"_x", "_y", "_z"};
-        for (int i = 0; i < n_comp; i++)
-        {
-            const auto comp = phi.components()[i];
-            for (int j = 0; j < dim; j++)
-            {
-                components[i * dim + j] = comp + suffixes[j];
-            }
-        }
-
-        // Create, compute and return the gradient
-        auto grad = std::make_shared<FVField>(V, components);
-        gradient(phi, bc, *grad, method);
-        return grad;
     }
 }
