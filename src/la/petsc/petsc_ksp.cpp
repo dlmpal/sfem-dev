@@ -5,6 +5,7 @@
 #include "petsc_vec.hpp"
 #include "../../base/timer.hpp"
 #include "../../base/error.hpp"
+#include "../native/linear_solvers/linear_solver.hpp"
 
 namespace sfem::la::petsc
 {
@@ -60,6 +61,15 @@ namespace sfem::la::petsc
     KSP PetscKSP::ksp() const
     {
         return ksp_;
+    }
+    //=============================================================================
+    void PetscKSP::set_options(SolverOptions options) const
+    {
+        KSPSetTolerances(ksp_,
+                         options.rtol,
+                         options.atol,
+                         options.dtol,
+                         options.n_iter_max);
     }
     //=============================================================================
     void PetscKSP::set_from_options() const

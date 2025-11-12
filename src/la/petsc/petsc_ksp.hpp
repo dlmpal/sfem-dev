@@ -6,6 +6,12 @@
 #include "petsc_mat.hpp"
 #include <petscksp.h>
 
+// Forward declaration
+namespace sfem::la
+{
+    struct SolverOptions;
+}
+
 namespace sfem::la::petsc
 {
     /// @brief Thin wrapper around PETSc's linear solvers (KSP)
@@ -33,6 +39,10 @@ namespace sfem::la::petsc
 
         /// @brief Get the underlying KSP
         KSP ksp() const;
+
+        /// @brief Set the KSP tolerances using native solver options
+        /// @note Not all entries in options are utilized
+        void set_options(SolverOptions options) const;
 
         /// @brief Set the KSP options from the options database
         void set_from_options() const;
