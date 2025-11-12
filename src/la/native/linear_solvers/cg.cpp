@@ -4,7 +4,7 @@
 namespace sfem::la
 {
     //=============================================================================
-    CG::CG(const SolverOptions &options)
+    CG::CG(SolverOptions options)
         : LinearSolver("CG", options),
           Ap(std::make_shared<IndexMap>(), 1),
           p(std::make_shared<IndexMap>(), 1),

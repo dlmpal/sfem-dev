@@ -36,9 +36,6 @@ int main(int argc, char **argv)
 
     // Linear solver
     la::SolverOptions options;
-    options.tol = 1e-8;
-    options.n_iter_max = 500;
-    options.print_conv = true;
     options.print_iter = true;
     la::CG solver(options);
 

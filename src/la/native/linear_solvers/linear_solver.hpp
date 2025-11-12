@@ -13,17 +13,23 @@ namespace sfem::la
     /// @brief Linear solver options
     struct SolverOptions
     {
-        /// @brief Termination tolerance
-        real_t tol;
+        /// @brief Absolute tolerance
+        real_t atol = 1e-10;
+
+        /// @brief Relative tolerance
+        real_t rtol = 1e-6;
+
+        /// @brief Divergence tolerance
+        real_t dtol = 1e3;
 
         /// @brief Number of maximum iterations
-        int n_iter_max;
+        int n_iter_max = 500;
 
         /// @brief Whether to print convergence related info
-        bool print_conv;
+        bool print_conv = true;
 
         /// @brief Whether to print iteration info
-        bool print_iter;
+        bool print_iter = false;
     };
 
     /// @brief Linear solver ABC
@@ -31,7 +37,7 @@ namespace sfem::la
     {
     public:
         /// @brief Create a solver
-        LinearSolver(const std::string &name, const SolverOptions &options);
+        LinearSolver(const std::string &name, SolverOptions options);
 
         /// @brief Get the solver's name
         std::string name() const;

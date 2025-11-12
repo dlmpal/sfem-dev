@@ -10,7 +10,7 @@ namespace sfem::la
     class GMRES : public LinearSolver
     {
     public:
-        GMRES(const SolverOptions &options, int n_restart = 50);
+        GMRES(SolverOptions options = {}, int n_restart = 50);
 
     private:
         void init(const SparseMatrix &A, const Vector &b, Vector &x) override;

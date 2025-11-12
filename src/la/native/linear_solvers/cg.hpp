@@ -9,7 +9,7 @@ namespace sfem::la
     class CG : public LinearSolver
     {
     public:
-        CG(const SolverOptions &options);
+        CG(SolverOptions options = {});
 
     private:
         void init(const SparseMatrix &A, const Vector &b, Vector &x) override;

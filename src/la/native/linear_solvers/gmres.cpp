@@ -5,7 +5,7 @@
 namespace sfem::la
 {
     //=============================================================================
-    GMRES::GMRES(const SolverOptions &options, int n_restart)
+    GMRES::GMRES(SolverOptions options, int n_restart)
         : LinearSolver("GMRES", options),
           n_restart_(n_restart),
           x0_(std::make_shared<IndexMap>(), 1),
