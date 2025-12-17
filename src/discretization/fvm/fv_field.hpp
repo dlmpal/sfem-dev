@@ -1,38 +1,97 @@
 #pragma once
 
 #include "fv_space.hpp"
-#include "../field.hpp"
+#include "fv_gradient.hpp"
+#include "fv_bc.hpp"
+
+// Forward declaration
+namespace sfem::la
+{
+    class Vector;
+}
 
 namespace sfem::fvm
 {
-    /// @brief Field defined on a finite volume space
-    class FVField : public Field
+    class IField
     {
     public:
-        /// @brief Create a FVField for a given space
-        /// @param fv_space Finite volume space
-        /// @param components Component names
-        FVField(std::shared_ptr<const FVSpace> fv_space,
-                const std::vector<std::string> &components);
+        IField(const std::vector<std::string> &components);
+        virtual ~IField() = default;
 
-        /// @brief Get the finite volume space
-        std::shared_ptr<const FVSpace> space() const;
+        std::vector<std::string> components() const;
+        int n_comp() const;
 
-    private:
-        /// @brief Finite volume space
-        std::shared_ptr<const FVSpace> fv_space_;
+        virtual real_t &cell_value(int cell_idx, int comp_idx = 0) = 0;
+        virtual real_t cell_value(int cell_idx, int comp_idx = 0) const = 0;
+
+        virtual real_t facet_value(int facet_idx, int comp_idx = 0) const = 0;
+
+        virtual geo::Vec3 cell_grad(int cell_idx, int comp_idx = 0) const = 0;
+        virtual geo::Vec3 facet_grad(int cell_idx, int comp_idx = 0) const = 0;
+
+    protected:
+        std::vector<std::string> components_;
     };
 
-    /// @brief Create a finite volume field
-    std::shared_ptr<FVField> create_field(std::shared_ptr<const FVSpace> V,
-                                          const std::vector<std::string> &compoments);
+    class ConstantField : public IField
+    {
+    public:
+        ConstantField(const std::vector<std::string> &components,
+                      const std::vector<real_t> &value);
 
-    using FieldFunction = std::function<void(const std::array<real_t, 3> &pt,
-                                             std::span<real_t> values, real_t time)>;
+        ConstantField(const std::string &name, real_t value);
 
-    /// @brief Explicitly evaluate a finite volume field
-    /// @param phi Finite volume field
-    /// @param func Evaluation function
-    /// @param time Current simulation time
-    void eval_field(FVField &phi, FieldFunction func, real_t time);
+        real_t &cell_value(int cell_idx, int comp_idx = 0) override;
+        real_t cell_value(int cell_idx, int comp_idx = 0) const override;
+
+        real_t facet_value(int facet_idx, int comp_idx = 0) const override;
+
+        geo::Vec3 cell_grad(int cell_idx, int comp_idx = 0) const override;
+        geo::Vec3 facet_grad(int cell_idx, int comp_idx = 0) const override;
+
+    private:
+        std::vector<real_t> value_;
+    };
+
+    class FVField : public IField
+    {
+    public:
+        FVField(std::shared_ptr<const FVSpace> V,
+                const std::vector<std::string> &components,
+                GradientMethod gradient_method = GradientMethod::none);
+
+        std::shared_ptr<const FVSpace> space() const;
+
+        FVBC &boundary_condition();
+        const FVBC &boundary_condition() const;
+
+        la::Vector &values();
+        const la::Vector &values() const;
+
+        GradientMethod grad_method() const;
+
+        la::Vector &grad();
+        const la::Vector &grad() const;
+
+        real_t &cell_value(int cell_idx, int comp_idx = 0) override;
+        real_t cell_value(int cell_idx, int comp_idx = 0) const override;
+
+        real_t facet_value(int facet_idx, int comp_idx = 0) const override;
+
+        geo::Vec3 cell_grad(int cell_idx, int comp_idx = 0) const override;
+        geo::Vec3 facet_grad(int facet_idx, int comp_idx = 0) const override;
+
+        void update_gradient();
+
+    private:
+        std::shared_ptr<const FVSpace> V_;
+
+        std::shared_ptr<FVBC> bc_;
+
+        std::shared_ptr<la::Vector> values_;
+
+        GradientMethod gradient_method_;
+
+        std::shared_ptr<la::Vector> grad_;
+    };
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fe_field.hpp"
+#include "fe_space.hpp"
 
 namespace sfem::fem
 {
@@ -12,7 +12,7 @@ namespace sfem::fem
     public:
         /// @brief Create a DirichletBC
         /// @param phi Finite-element field
-        DirichletBC(std::shared_ptr<const fem::FEField> phi);
+        DirichletBC(std::shared_ptr<const FESpace> V, int n_comp = 1);
 
         // Avoid copies
         DirichletBC(const DirichletBC &) = delete;
@@ -23,14 +23,12 @@ namespace sfem::fem
         DirichletBC &operator=(DirichletBC &&) = default;
 
         /// @brief Set the value of a specific component on a boundary region
-        void set_value(const std::string &region_name,
-                       const std::string &comp_name,
-                       real_t value);
+        void set_value(const std::string &region_name, real_t value, int comp_idx = 0);
 
         /// @brief Set the values of a specific component on a boundary region
         void set_values(const std::string &region_name,
-                        const std::string &comp_name,
-                        std::span<const real_t> values);
+                        std::span<const real_t> values,
+                        int comp_idx = 0);
 
         /// @brief Get all specified DoFs and their values
         std::pair<std::vector<int>, std::vector<real_t>>
@@ -40,8 +38,9 @@ namespace sfem::fem
         void reset_values();
 
     private:
-        /// @brief Finite element field
-        std::shared_ptr<const fem::FEField> phi_;
+        std::shared_ptr<const FESpace> V_;
+
+        int n_comp_;
 
         /// @brief The DoF belonging to boundary regions.
         /// They are obtained from the field's FESpace only when a

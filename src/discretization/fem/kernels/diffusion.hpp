@@ -1,27 +1,24 @@
 #pragma once
 
 #include "../elements/fe.hpp"
-#include "../../coefficient.hpp"
+#include "../fe_field.hpp"
 
 namespace sfem::fem::kernels
 {
-    class Diffusion2D
+    class Diffusion
     {
     public:
-        Diffusion2D(std::shared_ptr<const Coefficient> coeff);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
+        Diffusion(FEField phi, Field &D);
+
+        FEField field() const;
+
+        Field &D();
+        const Field &D() const;
+
+        void operator()(la::MatSet lhs, la::VecSet rhs);
 
     private:
-        std::shared_ptr<const Coefficient> coeff_;
-    };
-
-    class Diffusion3D
-    {
-    public:
-        Diffusion3D(std::shared_ptr<const Coefficient> coeff);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
-
-    private:
-        std::shared_ptr<const Coefficient> coeff_;
+        FEField phi_;
+        Field &D_;
     };
 }

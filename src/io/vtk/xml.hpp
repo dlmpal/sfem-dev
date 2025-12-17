@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../io_field.hpp"
 #include "../../mesh/mesh.hpp"
-#include "../../discretization/field.hpp"
 #include <filesystem>
 
 /// @brief VTK XML file writers
@@ -18,12 +18,12 @@ namespace sfem::io::vtk::xml
                    const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
-                   const std::vector<std::shared_ptr<const Field>> &cell_fields,
-                   const std::vector<std::shared_ptr<const Field>> &node_fields);
+                   const std::vector<IOField> &cell_fields,
+                   const std::vector<IOField> &node_fields);
 
     /// @brief Create a parallel VTK unstructured grid file (.pvtu)
     void write_pvtu(const std::filesystem::path &filename,
                     const std::vector<std::filesystem::path> &sources,
-                    const std::vector<std::shared_ptr<const Field>> &cell_fields,
-                    const std::vector<std::shared_ptr<const Field>> &node_fields);
+                    const std::vector<IOField> &cell_fields,
+                    const std::vector<IOField> &node_fields);
 }

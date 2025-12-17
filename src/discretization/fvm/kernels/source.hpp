@@ -5,5 +5,20 @@
 
 namespace sfem::fvm
 {
-    void add_source_term(const fvm::FVField &phi, la::VecSet vecset);
+    class Source
+    {
+    public:
+        using SourceFunc = std::function<void(const FVField &, int, std::span<real_t>)>;
+
+        Source(FVField phi, SourceFunc func);
+
+        FVField field() const;
+
+        void operator()(la::MatSet lhs, la::VecSet rhs);
+
+    private:
+        FVField phi_;
+
+        SourceFunc func_;
+    };
 }

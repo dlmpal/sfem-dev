@@ -1,12 +1,12 @@
 #include "ode_utils.hpp"
+#include "../../../la/native/vector.hpp"
 #include "../../../mesh/utils/loop_utils.hpp"
 
 namespace sfem::fvm::ode
 {
     //=============================================================================
     RHSFunction create_rhs(std::shared_ptr<const fvm::FVField> phi,
-                           std::shared_ptr<const fvm::NumericalFlux> nflux,
-                           FieldFunction src)
+                           std::shared_ptr<const fvm::NumericalFlux> nflux)
     {
         return [=](const la::Vector &S,
                    la::Vector &rhs,
@@ -64,24 +64,6 @@ namespace sfem::fvm::ode
                 }
             };
             mesh::utils::for_all_facets(*V->mesh(), facet_work);
-
-            // Add source term contribution
-            if (src)
-            {
-                std::vector<real_t> source(flux->n_comp());
-                auto cell_work = [&](const mesh::Mesh &,
-                                     const mesh::Region &,
-                                     const mesh::Cell &,
-                                     int cell_idx)
-                {
-                    src(V->cell_midpoint(cell_idx), source, time);
-                    for (int i = 0; i < flux->n_comp(); i++)
-                    {
-                        rhs(cell_idx, i) += source[i];
-                    }
-                };
-                mesh::utils::for_all_cells(*V->mesh(), cell_work);
-            };
 
             // RHS was incrementally constructed - needs assembly
             rhs.assemble();

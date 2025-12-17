@@ -1,7 +1,7 @@
 #pragma once
 
-#include "assembly.hpp"
-#include "../dirichlet_bc.hpp"
+#include "../fe_field.hpp"
+#include "../../../la/backend.hpp"
 #include "../../../la/petsc/sfem_petsc.hpp"
 
 namespace sfem::fem
@@ -11,6 +11,12 @@ namespace sfem::fem
 
     /// @brief Create a matrix for a finite element field
     la::SparseMatrix create_mat(const FEField &phi);
+
+    /// @brief Create a linear system for a finite element field
+    std::shared_ptr<la::LinearSystem> create_axb(const FEField &phi,
+                                                 la::SolverType solver_type = la::SolverType::gmres,
+                                                 la::SolverOptions solver_options = {},
+                                                 la::Backend backend = la::Backend::native);
 }
 
 #ifdef SFEM_HAS_PETSC
@@ -22,13 +28,6 @@ namespace sfem::fem::petsc
 
     /// @brief Create a PETSc matrix for a finite element field
     la::petsc::PetscMat create_mat(const FEField &phi);
-
-    /// @brief Form and solve the linear system Ax=b.
-    /// Before the system is solved, the Dirichlet boundary condition is applied
-    void solve(la::petsc::PetscMat &A,
-               la::petsc::PetscVec &b,
-               la::petsc::PetscVec &x,
-               const DirichletBC &bc);
 }
 
 #endif // SFEM_HAS_PETSC

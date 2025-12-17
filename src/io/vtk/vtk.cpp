@@ -12,27 +12,19 @@ namespace sfem::io::vtk
                const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
-               const std::vector<std::shared_ptr<const Field>> &cell_funcs,
-               const std::vector<std::shared_ptr<const Field>> &node_funcs,
+               const std::vector<IOField> &cell_fields,
+               const std::vector<IOField> &node_fields,
                VTKFileType type)
     {
         // Check that sizes match
         SFEM_CHECK_SIZES(cell_types.size(), cell_to_node.n_primary());
         SFEM_CHECK_SIZES(cell_to_node.n_secondary(), points.size());
-        for (const auto &func : cell_funcs)
-        {
-            SFEM_CHECK_SIZES(cell_types.size(), func->n_local());
-        }
-        for (const auto &func : node_funcs)
-        {
-            SFEM_CHECK_SIZES(points.size(), func->n_local());
-        }
 
         if (type == VTKFileType::legacy)
         {
             legacy::write_vtk(filename.replace_extension(".vtk"),
                               cell_types, cell_to_node, points,
-                              cell_funcs, node_funcs);
+                              cell_fields, node_fields);
         }
         else if (type == VTKFileType::xml)
         {
@@ -42,7 +34,7 @@ namespace sfem::io::vtk
             // Create the individual .vtu files (one for each process)
             xml::write_vtu(filename.parent_path() / filename.stem() / std::format("proc_{}.vtu", mpi::rank()),
                            cell_types, cell_to_node, points,
-                           cell_funcs, node_funcs);
+                           cell_fields, node_fields);
 
             // Root process creates the .pvtu file
             int n_procs = mpi::n_procs();
@@ -54,15 +46,15 @@ namespace sfem::io::vtk
                     sources.push_back(filename.stem() / std::format("proc_{}.vtu", i));
                 }
 
-                xml::write_pvtu(filename.replace_extension(".pvtu"), sources, cell_funcs, node_funcs);
+                xml::write_pvtu(filename.replace_extension(".pvtu"), sources, cell_fields, node_fields);
             }
         }
     }
     //=============================================================================
     void write(std::filesystem::path filename,
                const mesh::Mesh &mesh,
-               const std::vector<std::shared_ptr<const Field>> &cell_funcs,
-               const std::vector<std::shared_ptr<const Field>> &node_funcs,
+               const std::vector<IOField> &cell_fields,
+               const std::vector<IOField> &node_fields,
                VTKFileType type)
     {
         // Quick access
@@ -78,20 +70,35 @@ namespace sfem::io::vtk
         }
 
         write(filename, cell_types, cell_to_node, mesh.points(),
-              cell_funcs, node_funcs, type);
+              cell_fields, node_fields, type);
     }
     //=============================================================================
     void write(const std::filesystem::path &filename,
-               const std::vector<std::shared_ptr<const fem::FEField>> &funcs,
+               const std::vector<fvm::FVField> &fields,
                VTKFileType type)
     {
-        if (funcs.empty())
+        std::vector<IOField> cell_fields;
+        for (const auto &field : fields)
         {
-            SFEM_ERROR("Cannot create VTK file with 0 FEFunctions\n");
+            cell_fields.emplace_back(field.components(), [field](int idx, int comp_idx)
+                                     { return field.cell_value(idx, comp_idx); });
+        }
+
+        write(filename, *fields.front().space()->mesh(), cell_fields, {}, type);
+    }
+    //=============================================================================
+    void write(const std::filesystem::path &filename,
+               const std::vector<fem::FEField> &node_fields,
+               const std::vector<fem::FEField> &cell_fields,
+               VTKFileType type)
+    {
+        if (node_fields.empty() && cell_fields.empty())
+        {
+            SFEM_ERROR("Cannot create VTK file with 0 FEFields\n");
         }
 
         // Quick access
-        const auto fe_space = funcs.front()->space();
+        const auto fe_space = node_fields.front().space();
         const auto mesh = fe_space->mesh();
         const auto topology = mesh->topology();
         int dim = topology->dim();
@@ -105,18 +112,29 @@ namespace sfem::io::vtk
                                              fe_space->order());
         }
 
-        // Cast FEFunctions to Functions
-        std::vector<std::shared_ptr<const Field>> funcs_;
-        for (const auto &func : funcs)
+        std::vector<IOField> node_fields_;
+        for (const auto &field : node_fields)
         {
-            if (func->space()->name() != fe_space->name())
+            if (field.space()->name() != fe_space->name())
             {
                 SFEM_ERROR("All FEFunctions must belong to the same space\n");
             }
-            funcs_.push_back(func);
+            node_fields_.emplace_back(field.components(), [field](int idx, int comp_idx)
+                                      { return field.dof_values()(idx, comp_idx); });
+        }
+
+        std::vector<IOField> cell_fields_;
+        for (const auto &field : cell_fields)
+        {
+            if (field.space()->name() != fe_space->name())
+            {
+                SFEM_ERROR("All FEFunctions must belong to the same space\n");
+            }
+            cell_fields_.emplace_back(field.components(), [field](int idx, int comp_idx)
+                                      { return field.dof_values()(idx, comp_idx); });
         }
 
         write(filename, cell_types, *fe_space->connectivity()[0],
-              fe_space->dof_points(), {}, funcs_, type);
+              fe_space->dof_points(), cell_fields_, node_fields_, type);
     }
 }

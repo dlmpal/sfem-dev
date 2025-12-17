@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../fv_field.hpp"
+#include "../../../la/backend.hpp"
+#include "../../../la/native/linear_system.hpp"
 #include "../../../la/petsc/sfem_petsc.hpp"
 
 namespace sfem::fvm
@@ -10,6 +12,12 @@ namespace sfem::fvm
 
     /// @brief Create a matrix for a finite volume field
     la::SparseMatrix create_mat(const FVField &phi);
+
+    /// @brief Create a linear system for a finite volume field
+    std::shared_ptr<la::LinearSystem> create_axb(const FVField &phi,
+                                                 la::SolverType solver_type = la::SolverType::gmres,
+                                                 la::SolverOptions solver_options = {},
+                                                 la::Backend backend = la::Backend::native);
 }
 
 #ifdef SFEM_HAS_PETSC

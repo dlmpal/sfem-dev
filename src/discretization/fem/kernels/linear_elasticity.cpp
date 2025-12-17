@@ -1,93 +1,122 @@
 #include "linear_elasticity.hpp"
-#include <cmath>
+#include "../../../mesh/utils/loop_utils.hpp"
 
-namespace sfem::fem::kernels
+namespace sfem::fem::kernels::elasticity
 {
     //=============================================================================
-    LinearElasticity2D::LinearElasticity2D(std::shared_ptr<const Coefficient> E,
-                                           std::shared_ptr<const Coefficient> nu,
-                                           std::shared_ptr<const Coefficient> thick)
-        : E_(E), nu_(nu), thick_(thick)
+    LinearElasticIsotropic::LinearElasticIsotropic(Field &E, Field &nu, Field &rho)
+        : E_(E),
+          nu_(nu),
+          rho_(rho)
     {
     }
     //=============================================================================
-    la::DenseMatrix LinearElasticity2D::operator()(int cell_idx, const fem::FEData &data) const
+    Field &LinearElasticIsotropic::E()
     {
-        // Cell coefficients
-        const real_t E = (*E_)(cell_idx, 0);
-        const real_t nu = (*nu_)(cell_idx, 0);
-        const real_t thick = (*thick_)(cell_idx, 0);
-
-        // Stress-strain matrix
+        return E_;
+    }
+    //=============================================================================
+    const Field &LinearElasticIsotropic::E() const
+    {
+        return E_;
+    }
+    //=============================================================================
+    Field &LinearElasticIsotropic::nu()
+    {
+        return nu_;
+    }
+    //=============================================================================
+    const Field &LinearElasticIsotropic::nu() const
+    {
+        return nu_;
+    }
+    //=============================================================================
+    Field &LinearElasticIsotropic::rho()
+    {
+        return rho_;
+    }
+    //=============================================================================
+    const Field &LinearElasticIsotropic::rho() const
+    {
+        return rho_;
+    }
+    //=============================================================================
+    LinearElasticPlaneStress::LinearElasticPlaneStress(Field &E, Field &nu,
+                                                       Field &rho, Field &thick)
+        : LinearElasticIsotropic(E, nu, rho),
+          thick_(thick)
+    {
+    }
+    //=============================================================================
+    Field &LinearElasticPlaneStress::thick()
+    {
+        return thick_;
+    }
+    //=============================================================================
+    const Field &LinearElasticPlaneStress::thick() const
+    {
+        return thick_;
+    }
+    //=============================================================================
+    int LinearElasticPlaneStress::dim() const
+    {
+        return 2;
+    }
+    //=============================================================================
+    int LinearElasticPlaneStress::n_strain() const
+    {
+        return 3;
+    }
+    //=============================================================================
+    void LinearElasticPlaneStress::tangent(int cell_idx,
+                                           mesh::CellType cell_type,
+                                           const std::array<real_t, 3> &pt,
+                                           la::DenseMatrix &D) const
+    {
+        const real_t E = E_.value(cell_idx, cell_type, pt);
+        const real_t nu = nu_.value(cell_idx, cell_type, pt);
+        const real_t t = thick_.value(cell_idx, cell_type, pt);
+        const real_t c = t * E / (1 - nu * nu);
+        D(0, 0) = c * 1.0;
+        D(0, 1) = c * nu;
+        D(1, 0) = c * nu;
+        D(1, 1) = c * 1.0;
+        D(2, 2) = c * (1 - nu) * 0.5;
+    }
+    //=============================================================================
+    void LinearElasticPlaneStress::stress(int cell_idx,
+                                          mesh::CellType cell_type,
+                                          const std::array<real_t, 3> &pt,
+                                          const la::DenseMatrix &strain,
+                                          la::DenseMatrix &stress) const
+    {
         la::DenseMatrix D(3, 3);
-        const real_t coeff = thick * E / (1 - nu * nu);
-        D(0, 0) = coeff * 1.0;
-        D(0, 1) = coeff * nu;
-        D(1, 0) = coeff * nu;
-        D(1, 1) = coeff * 1.0;
-        D(2, 2) = coeff * (1 - nu) * 0.5;
-
-        // Strain-displacement matrix
-        const auto &dNdX = data.dNdX;
-        const int n_cols = dNdX.n_rows() * 2;
-        const int n_rows = 3;
-        la::DenseMatrix B(n_rows, n_cols);
-        for (int i = 0; i < dNdX.n_rows(); i++)
-        {
-            B(0, i * 2 + 0) = dNdX(i, 0); ///< exx
-            B(1, i * 2 + 1) = dNdX(i, 1); ///< eyy
-            B(2, i * 2 + 0) = dNdX(i, 1); ///< exy
-            B(2, i * 2 + 1) = dNdX(i, 0); ///< exy
-        }
-
-        return B.T() * D * B;
+        tangent(cell_idx, cell_type, pt, D);
+        stress = D * strain;
     }
     //=============================================================================
-    InertialLoad2D::InertialLoad2D(std::shared_ptr<const Coefficient> thick,
-                                   std::shared_ptr<const Coefficient> rho,
-                                   const std::array<real_t, 2> &g)
-        : thick_(thick), rho_(rho), g_(g)
+    LinearElastic3D::LinearElastic3D(Field &E, Field &nu, Field &rho)
+        : LinearElasticIsotropic(E, nu, rho)
     {
     }
     //=============================================================================
-    la::DenseMatrix InertialLoad2D::operator()(int cell_idx, const fem::FEData &data)
+    int LinearElastic3D::dim() const
     {
-        const real_t thick = (*thick_)(cell_idx, 0);
-        const real_t rho = (*rho_)(cell_idx, 0);
-        la::DenseMatrix F(data.N.n_rows() * 2, 1);
-        for (int i = 0; i < data.N.n_rows(); i++)
-        {
-            F(i * 2 + 0, 0) = rho * thick * g_[0] * data.N(i, 0);
-            F(i * 2 + 1, 0) = rho * thick * g_[1] * data.N(i, 0);
-        }
-        return F;
+        return 3;
     }
     //=============================================================================
-    PressureLoad2D::PressureLoad2D(std::shared_ptr<const Coefficient> thick,
-                                   std::shared_ptr<const Coefficient> pressure)
-        : thick_(thick), pressure_(pressure)
+    int LinearElastic3D::n_strain() const
     {
+        return 6;
     }
     //=============================================================================
-    la::DenseMatrix PressureLoad2D::operator()(int facet_idx,
-                                               const fem::FEData &data,
-                                               const geo::Vec3 &normal)
+    void LinearElastic3D::tangent(int cell_idx,
+                                  mesh::CellType cell_type,
+                                  const std::array<real_t, 3> &pt,
+                                  la::DenseMatrix &D) const
     {
-        const real_t thick = (*thick_)(facet_idx, 0);
-        const real_t pressure_value = (*pressure_)(facet_idx, 0);
-        la::DenseMatrix F(data.N.n_rows() * 2, 1, 0.0);
-        for (int i = 0; i < data.N.n_rows(); i++)
-        {
-            F(i * 2 + 0, 0) += -pressure_value * thick * data.N(i, 0) * normal.x();
-            F(i * 2 + 1, 0) += -pressure_value * thick * data.N(i, 0) * normal.y();
-        }
-        return F;
-    }
-    //=============================================================================
-    la::DenseMatrix stress_strain3D(real_t E, real_t nu)
-    {
-        // Stress-strain matrix
-        la::DenseMatrix D(6, 6);
+        const real_t E = E_.value(cell_idx, cell_type, pt);
+        const real_t nu = nu_.value(cell_idx, cell_type, pt);
         const real_t c1 = E / ((1 + nu) * (1 - 2 * nu));
         const real_t c2 = (1 - 2 * nu) / 2;
         D(0, 0) = (1 - nu) * c1;
@@ -102,126 +131,139 @@ namespace sfem::fem::kernels
         D(3, 3) = c1 * c2;
         D(4, 4) = c1 * c2;
         D(5, 5) = c1 * c2;
-        return D;
     }
     //=============================================================================
-    la::DenseMatrix strain_displacement3D(const la::DenseMatrix &dNdX)
+    void LinearElastic3D::stress(int cell_idx,
+                                 mesh::CellType cell_type,
+                                 const std::array<real_t, 3> &pt,
+                                 const la::DenseMatrix &strain,
+                                 la::DenseMatrix &stress) const
     {
-        // Strain-displacement matrix
-        const int n_cols = dNdX.n_rows() * 3;
-        const int n_rows = 6;
-        la::DenseMatrix B(n_rows, n_cols);
-        for (int i = 0; i < dNdX.n_rows(); i++)
+        la::DenseMatrix D(6, 6);
+        tangent(cell_idx, cell_type, pt, D);
+        stress = D * strain;
+    }
+    //=============================================================================
+    LinearElasticity::LinearElasticity(FEField U,
+                                       LinearElasticIsotropic &constitutive,
+                                       const std::array<real_t, 3> &g)
+        : U_(U),
+          constitutive_(constitutive),
+          g_(g)
+    {
+        if (U_.n_comp() != U_.space()->mesh()->pdim() ||
+            U_.n_comp() != constitutive_.dim())
         {
-            B(0, i * 3 + 0) = dNdX(i, 0); ///< exx
-            B(1, i * 3 + 1) = dNdX(i, 1); ///< eyy
-            B(2, i * 3 + 2) = dNdX(i, 2); ///< ezz
-
-            B(3, i * 3 + 0) = dNdX(i, 1); ///< exy
-            B(3, i * 3 + 1) = dNdX(i, 0); ///< exy
-
-            B(4, i * 3 + 1) = dNdX(i, 2); ///< eyz
-            B(4, i * 3 + 2) = dNdX(i, 1); ///< eyz
-
-            B(5, i * 3 + 0) = dNdX(i, 2); ///< ezx
-            B(5, i * 3 + 2) = dNdX(i, 0); ///< ezx
+            SFEM_ERROR("Mismatch between displacement field, constitutive law and mesh dimensions\n");
         }
-        return B;
     }
     //=============================================================================
-    LinearElasticity3D::LinearElasticity3D(std::shared_ptr<const Coefficient> E,
-                                           std::shared_ptr<const Coefficient> nu)
-        : E_(E), nu_(nu)
+    void LinearElasticity::strain_displacement(const FEData &data, la::DenseMatrix &B) const
     {
-    }
-    //=============================================================================
-    la::DenseMatrix LinearElasticity3D::operator()(int cell_idx, const fem::FEData &data) const
-    {
-        // Cell coefficients
-        const real_t E = (*E_)(cell_idx, 0);
-        const real_t nu = (*nu_)(cell_idx, 0);
-
-        // Stress-strain and strain-displacement matrices
-        const auto D = stress_strain3D(E, nu);
-        const auto B = strain_displacement3D(data.dNdX);
-
-        // Stiffness matrix
-        return B.T() * D * B;
-    }
-    //=============================================================================
-    VonMises3D::VonMises3D(std::shared_ptr<const Coefficient> E,
-                           std::shared_ptr<const Coefficient> nu,
-                           std::shared_ptr<const FEField> U)
-        : E_(E), nu_(nu), U_(U)
-    {
-    }
-    //=============================================================================
-    la::DenseMatrix VonMises3D::operator()(int cell_idx, const fem::FEData &data) const
-    {
-        // Cell coefficients
-        const real_t E = (*E_)(cell_idx, 0);
-        const real_t nu = (*nu_)(cell_idx, 0);
-
-        // Stress-strain and strain-displacement matrices
-        const auto D = stress_strain3D(E, nu);
-        const auto B = strain_displacement3D(data.dNdX);
-
-        // Nodal displacements
-        const auto U = U_->cell_values(cell_idx);
-
-        // Stresses
-        const auto S = D * B * U;
-        const real_t s_xx = S(0, 0);
-        const real_t s_yy = S(1, 0);
-        const real_t s_zz = S(2, 0);
-        const real_t s_xy = S(3, 0);
-        const real_t s_yz = S(4, 0);
-        const real_t s_xz = S(5, 0);
-
-        // Von-Mises stress
-        real_t s_vm = std::pow(s_xx - s_yy, 2) + std::pow(s_yy - s_zz, 2) + std::pow(s_zz - s_xx, 2);
-        s_vm += 6 * (std::pow(s_xy, 2) + std::pow(s_yz, 2) + std::pow(s_xz, 2));
-        s_vm = std::sqrt(0.5 * s_vm);
-
-        return la::DenseMatrix(1, 1, s_vm);
-    }
-    //=============================================================================
-    InertialLoad3D::InertialLoad3D(std::shared_ptr<const Coefficient> rho,
-                                   const std::array<real_t, 3> &g)
-        : rho_(rho), g_(g)
-    {
-    }
-    //=============================================================================
-    la::DenseMatrix InertialLoad3D::operator()(int cell_idx, const fem::FEData &data)
-    {
-        const real_t rho = (*rho_)(cell_idx, 0);
-        la::DenseMatrix F(data.N.n_rows() * 3, 1);
         for (int i = 0; i < data.N.n_rows(); i++)
         {
-            F(i * 3 + 0, 0) = rho * g_[0] * data.N(i, 0);
-            F(i * 3 + 1, 0) = rho * g_[1] * data.N(i, 0);
-            F(i * 3 + 2, 0) = rho * g_[2] * data.N(i, 0);
+            if (constitutive_.dim() == 2)
+            {
+                B(0, i * 2 + 0) = data.dNdX(i, 0); ///< exx
+                B(1, i * 2 + 1) = data.dNdX(i, 1); ///< eyy
+                B(2, i * 2 + 0) = data.dNdX(i, 1); ///< exy
+                B(2, i * 2 + 1) = data.dNdX(i, 0); ///< exy
+            }
+            else
+            {
+                B(0, i * 3 + 0) = data.dNdX(i, 0); ///< exx
+                B(1, i * 3 + 1) = data.dNdX(i, 1); ///< eyy
+                B(2, i * 3 + 2) = data.dNdX(i, 2); ///< ezz
+
+                B(3, i * 3 + 0) = data.dNdX(i, 1); ///< exy
+                B(3, i * 3 + 1) = data.dNdX(i, 0); ///< exy
+
+                B(4, i * 3 + 1) = data.dNdX(i, 2); ///< eyz
+                B(4, i * 3 + 2) = data.dNdX(i, 1); ///< eyz
+
+                B(5, i * 3 + 0) = data.dNdX(i, 2); ///< ezx
+                B(5, i * 3 + 2) = data.dNdX(i, 0); ///< ezx
+            }
         }
-        return F;
     }
     //=============================================================================
-    PressureLoad3D::PressureLoad3D(std::shared_ptr<const Coefficient> pressure)
-        : pressure_(pressure)
+    void LinearElasticity::operator()(la::MatSet lhs, la::VecSet rhs)
     {
-    }
-    //=============================================================================
-    la::DenseMatrix PressureLoad3D::operator()(int facet_idx,
-                                               const fem::FEData &data,
-                                               const geo::Vec3 &normal)
-    {
-        const real_t pressure_value = (*pressure_)(facet_idx, 0);
-        la::DenseMatrix F(data.N.n_rows() * 3, 1);
-        for (int i = 0; i < data.N.n_rows(); i++)
+        // Quick access
+        const auto V = U_.space();
+        const auto &rho_ = constitutive_.rho();
+
+        /// @todo The element matrices could be defined
+        /// once here, and resized if nencessary, to
+        /// reduce memory allocations
+
+        auto work = [&](const mesh::Mesh &,
+                        const mesh::Region &,
+                        const mesh::Cell &cell,
+                        int cell_idx)
         {
-            F(i * 2 + 0, 0) += -pressure_value * data.N(i, 0) * normal.x();
-            F(i * 2 + 1, 0) += -pressure_value * data.N(i, 0) * normal.y();
-            F(i * 3 + 2, 0) += -pressure_value * data.N(i, 0) * normal.z();
-        }
-        return F;
+            const auto element = V->element(cell.type);
+            const auto int_rule = element->integration_rule();
+            const int n_nodes = element->n_nodes();
+            const int dim = element->dim();
+
+            const auto elem_dof = V->cell_dof(cell_idx);
+            const auto elem_pts = V->cell_dof_points(cell_idx);
+
+            const int n_dof = n_nodes * dim;
+            const int n_strain = constitutive_.n_strain();
+
+            // Element displacement vector
+            // la::DenseMatrix u(n_dof, 1);
+            // Strain vector
+            // la::DenseMatrix strain(n_strain, 1);
+            // Stress vector
+            // la::DenseMatrix stress(n_strain, 1);
+
+            // Element strain-displacement matrix
+            la::DenseMatrix B(n_strain, n_dof);
+
+            // Element stress-strain matrix
+            la::DenseMatrix D(n_strain, n_strain);
+
+            // Element stiffness matrix
+            la::DenseMatrix K(n_dof, n_dof);
+
+            // Element force vector
+            la::DenseMatrix F(n_dof, 1);
+
+            for (int qpt_idx = 0; qpt_idx < int_rule->n_points(); qpt_idx++)
+            {
+                const real_t qwt = int_rule->weight(qpt_idx);
+                const auto qpt = int_rule->point(qpt_idx);
+                const auto data = element->transform(dim, qpt, elem_pts);
+                const real_t Jwt = data.detJ * qwt;
+
+                strain_displacement(data, B);
+
+                constitutive_.tangent(cell_idx, cell.type, qpt, D);
+
+                K += B.T() * D * B * Jwt;
+
+                const real_t rho = rho_.value(cell_idx, cell.type, qpt);
+                for (int i = 0; i < n_nodes; i++)
+                {
+                    // Inertial force
+                    for (int dir = 0; dir < dim; dir++)
+                    {
+                        F(i * dim + dir, 0) += rho * g_[dir] * data.N(i, 0) * Jwt;
+                    }
+
+                    /// @todo Add user-defined force terms here
+                }
+            }
+
+            lhs(elem_dof, elem_dof, K.values());
+            if (rhs)
+            {
+                rhs(elem_dof, F.values());
+            }
+        };
+        mesh::utils::for_all_cells(*V->mesh(), work);
     }
 }

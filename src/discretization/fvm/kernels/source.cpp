@@ -1,16 +1,28 @@
 #include "source.hpp"
+#include "../../../la/native/setval_utils.hpp"
 #include "../../../mesh/utils/loop_utils.hpp"
 
 namespace sfem::fvm
 {
     //=============================================================================
-    void add_source_term(const fvm::FVField &phi, la::VecSet vecset)
+    Source::Source(FVField phi, SourceFunc func)
+        : phi_(phi),
+          func_(func)
     {
-        // Finite volume space
-        const auto V = phi.space();
+    }
+    //=============================================================================
+    FVField Source::field() const
+    {
+        return phi_;
+    }
+    //=============================================================================
+    void Source::operator()(la::MatSet lhs, la::VecSet rhs)
+    {
+        // Quick access
+        const auto V = phi_.space();
 
         // Store cell values
-        std::vector<real_t> values(phi.n_comp());
+        std::vector<real_t> values(phi_.n_comp());
 
         auto work = [&](const mesh::Mesh &,
                         const mesh::Region &,
@@ -18,11 +30,12 @@ namespace sfem::fvm
                         int cell_idx)
         {
             std::array<int, 1> idx = {cell_idx};
-            for (int i = 0; i < phi.n_comp(); i++)
+            func_(phi_, cell_idx, values);
+            for (auto &value : values)
             {
-                values[i] = phi(cell_idx, i) * V->cell_volume(cell_idx);
+                value *= V->cell_volume(cell_idx);
             }
-            vecset(idx, values);
+            rhs(idx, values);
         };
         mesh::utils::for_all_cells(*V->mesh(), work);
     }

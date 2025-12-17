@@ -1,101 +1,104 @@
 #pragma once
 
 #include "../elements/fe.hpp"
-#include "../../coefficient.hpp"
 #include "../fe_field.hpp"
 
-namespace sfem::fem::kernels
+namespace sfem::fem::kernels::elasticity
 {
-    class LinearElasticity2D
+    class LinearElasticIsotropic
     {
     public:
-        LinearElasticity2D(std::shared_ptr<const Coefficient> E,
-                           std::shared_ptr<const Coefficient> nu,
-                           std::shared_ptr<const Coefficient> thick);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
+        LinearElasticIsotropic(Field &E, Field &nu, Field &rho);
+        ~LinearElasticIsotropic() = default;
 
-    private:
-        std::shared_ptr<const Coefficient> E_;
-        std::shared_ptr<const Coefficient> nu_;
-        std::shared_ptr<const Coefficient> thick_;
+        Field &E();
+        const Field &E() const;
+
+        Field &nu();
+        const Field &nu() const;
+
+        Field &rho();
+        const Field &rho() const;
+
+        virtual int dim() const = 0;
+        virtual int n_strain() const = 0;
+
+        virtual void tangent(int cell_idx,
+                             mesh::CellType cell_type,
+                             const std::array<real_t, 3> &pt,
+                             la::DenseMatrix &D) const = 0;
+
+        virtual void stress(int cell_idx,
+                            mesh::CellType cell_type,
+                            const std::array<real_t, 3> &pt,
+                            const la::DenseMatrix &strain,
+                            la::DenseMatrix &stress) const = 0;
+
+    protected:
+        Field &E_;
+        Field &nu_;
+        Field &rho_;
     };
 
-    class InertialLoad2D
+    class LinearElasticPlaneStress : public LinearElasticIsotropic
     {
     public:
-        InertialLoad2D(std::shared_ptr<const Coefficient> thick,
-                       std::shared_ptr<const Coefficient> rho,
-                       const std::array<real_t, 2> &g);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
+        LinearElasticPlaneStress(Field &E, Field &nu, Field &rho, Field &thick);
+
+        Field &thick();
+        const Field &thick() const;
+
+        int dim() const override;
+        int n_strain() const override;
+
+        void tangent(int cell_idx,
+                     mesh::CellType cell_type,
+                     const std::array<real_t, 3> &pt,
+                     la::DenseMatrix &D) const override;
+
+        void stress(int cell_idx,
+                    mesh::CellType cell_type,
+                    const std::array<real_t, 3> &pt,
+                    const la::DenseMatrix &strain,
+                    la::DenseMatrix &stress) const override;
 
     private:
-        std::shared_ptr<const Coefficient> thick_;
-        std::shared_ptr<const Coefficient> rho_;
-        std::array<real_t, 2> g_;
+        Field &thick_;
     };
 
-    class PressureLoad2D
+    class LinearElastic3D : public LinearElasticIsotropic
     {
     public:
-        PressureLoad2D(std::shared_ptr<const Coefficient> thick,
-                       std::shared_ptr<const Coefficient> pressure);
+        LinearElastic3D(Field &E, Field &nu, Field &rho);
 
-        la::DenseMatrix operator()(int facet_idx,
-                                   const fem::FEData &data,
-                                   const geo::Vec3 &normal);
+        int dim() const override;
+        int n_strain() const override;
 
-    private:
-        std::shared_ptr<const Coefficient> thick_;
-        std::shared_ptr<const Coefficient> pressure_;
+        void tangent(int cell_idx,
+                     mesh::CellType cell_type,
+                     const std::array<real_t, 3> &pt,
+                     la::DenseMatrix &D) const override;
+
+        void stress(int cell_idx,
+                    mesh::CellType cell_type,
+                    const std::array<real_t, 3> &pt,
+                    const la::DenseMatrix &strain,
+                    la::DenseMatrix &stress) const override;
     };
 
-    class LinearElasticity3D
+    class LinearElasticity
     {
     public:
-        LinearElasticity3D(std::shared_ptr<const Coefficient> E,
-                           std::shared_ptr<const Coefficient> nu);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
+        LinearElasticity(FEField U, LinearElasticIsotropic &constitutive,
+                         const std::array<real_t, 3> &g = {});
+
+        void operator()(la::MatSet lhs, la::VecSet rhs);
+
+        void strain_displacement(const FEData &data, la::DenseMatrix &B) const;
 
     private:
-        std::shared_ptr<const Coefficient> E_;
-        std::shared_ptr<const Coefficient> nu_;
-    };
-
-    class VonMises3D
-    {
-    public:
-        VonMises3D(std::shared_ptr<const Coefficient> E,
-                   std::shared_ptr<const Coefficient> nu,
-                   std::shared_ptr<const FEField> U);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data) const;
-
-    private:
-        std::shared_ptr<const Coefficient> E_;
-        std::shared_ptr<const Coefficient> nu_;
-        std::shared_ptr<const FEField> U_;
-    };
-
-    class InertialLoad3D
-    {
-    public:
-        InertialLoad3D(std::shared_ptr<const Coefficient> rho, const std::array<real_t, 3> &g);
-        la::DenseMatrix operator()(int cell_idx, const fem::FEData &data);
-
-    private:
-        std::shared_ptr<const Coefficient> rho_;
+        FEField U_;
+        LinearElasticIsotropic &constitutive_;
         std::array<real_t, 3> g_;
-    };
-
-    class PressureLoad3D
-    {
-    public:
-        PressureLoad3D(std::shared_ptr<const Coefficient> pressure);
-
-        la::DenseMatrix operator()(int facet_idx,
-                                   const fem::FEData &data,
-                                   const geo::Vec3 &normal);
-
-    private:
-        std::shared_ptr<const Coefficient> pressure_;
     };
 }

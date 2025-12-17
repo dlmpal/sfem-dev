@@ -18,6 +18,38 @@ namespace sfem::fem
                                 fe_space->index_map(),
                                 phi.n_comp());
     }
+    //=============================================================================
+    std::shared_ptr<la::LinearSystem> create_axb(const FEField &phi,
+                                                 la::SolverType solver_type,
+                                                 la::SolverOptions solver_options,
+                                                 la::Backend backend)
+    {
+        const auto im = phi.space()->index_map();
+        const auto conn = phi.space()->connectivity().back();
+        const int n_comp = phi.n_comp();
+
+        switch (backend)
+        {
+        case la::Backend::native:
+            return std::make_shared<la::NativeLinearSystem>(im, conn,
+                                                            solver_type,
+                                                            solver_options,
+                                                            n_comp);
+        case la::Backend::petsc:
+#ifdef SFEM_HAS_PETSC
+            return std::make_shared<la::petsc::PetscLinearSystem>(*im, *conn,
+                                                                  solver_type,
+                                                                  solver_options,
+                                                                  n_comp);
+#else
+            log_msg("SFEM has not been compiled with PETSc.\n Falling back to native LA backend\n");
+            return create_axb(phi, solver_type, solver_options, la::Backend::native);
+#endif
+        default:
+            break;
+        }
+        return nullptr;
+    }
 }
 
 #ifdef SFEM_HAS_PETSC
@@ -38,17 +70,6 @@ namespace sfem::fem::petsc
                                      *fe_space->index_map(),
                                      *fe_space->index_map(),
                                      phi.n_comp());
-    }
-    //=============================================================================
-    void solve(la::petsc::PetscMat &A,
-               la::petsc::PetscVec &b,
-               la::petsc::PetscVec &x,
-               const DirichletBC &bc)
-    {
-        auto [vars, values] = bc.get_dofs_values();
-        la::petsc::eliminate_rows_cols(vars, values,
-                                       A, b, x);
-        la::petsc::solve(A, b, x);
     }
 }
 

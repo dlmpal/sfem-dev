@@ -14,8 +14,8 @@ namespace sfem::io::vtk::legacy
                    const std::vector<int> &cell_types,
                    const graph::Connectivity &cell_to_node,
                    const std::vector<std::array<real_t, 3>> &points,
-                   const std::vector<std::shared_ptr<const Field>> &cell_fields,
-                   const std::vector<std::shared_ptr<const Field>> &node_fields)
+                   const std::vector<IOField> &cell_fields,
+                   const std::vector<IOField> &node_fields)
     {
         std::ofstream file(filename);
         SFEM_CHECK_FILE_OPEN(file, filename);
@@ -60,32 +60,32 @@ namespace sfem::io::vtk::legacy
 
         // Cell data
         file << std::format("CELL_DATA {}\n", cell_to_node.n_primary());
-        for (const auto &func : cell_fields)
+        for (const auto &field : cell_fields)
         {
-            for (const auto &comp : func->components())
+            for (const auto &comp : field.components())
             {
                 file << std::format("SCALARS {} float\n", comp);
                 file << "LOOKUP_TABLE default\n";
-                const int comp_idx = func->comp_idx(comp);
-                for (int i = 0; i < func->n_local(); i++)
+                const int comp_idx = field.comp_idx(comp);
+                for (int i = 0; i < cell_to_node.n_primary(); i++)
                 {
-                    file << (*func)(i, comp_idx) << "\n";
+                    file << field(i, comp_idx) << "\n";
                 }
             }
         }
 
         // Point data
         file << std::format("POINT_DATA {}\n", cell_to_node.n_secondary());
-        for (const auto &func : node_fields)
+        for (const auto &field : node_fields)
         {
-            for (const auto &comp : func->components())
+            for (const auto &comp : field.components())
             {
                 file << std::format("SCALARS {} float\n", comp);
                 file << "LOOKUP_TABLE default\n";
-                const int comp_idx = func->comp_idx(comp);
-                for (int i = 0; i < func->n_local(); i++)
+                const int comp_idx = field.comp_idx(comp);
+                for (int i = 0; i < cell_to_node.n_secondary(); i++)
                 {
-                    file << (*func)(i, comp_idx) << "\n";
+                    file << field(i, comp_idx) << "\n";
                 }
             }
         }

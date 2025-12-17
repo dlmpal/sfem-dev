@@ -1,28 +1,58 @@
 #include "mass.hpp"
+#include "../../../mesh/utils/loop_utils.hpp"
 
 namespace sfem::fem::kernels
 {
     //=============================================================================
-    MassND::MassND(int n_comp, std::shared_ptr<const Coefficient> coeff)
-        : n_comp_(n_comp), coeff_(coeff)
+    MassND::MassND(FEField phi, Field &C)
+        : phi_(phi),
+          C_(C)
     {
     }
     //=============================================================================
-    la::DenseMatrix MassND::operator()(int cell_idx, const FEData &data)
+    void MassND::operator()(la::MatSet lhs, la::VecSet)
     {
-        const real_t coeff = (*coeff_)(cell_idx, 0);
-        la::DenseMatrix M(data.N.n_rows() * n_comp_, data.N.n_rows() * n_comp_);
-        for (int i = 0; i < data.N.n_rows(); i++)
+        // Quick access
+        const auto V = phi_.space();
+        const int n_comp = phi_.n_comp();
+
+        auto work = [&](const mesh::Mesh &,
+                        const mesh::Region &,
+                        const mesh::Cell &cell,
+                        int cell_idx)
         {
-            for (int j = 0; j < data.N.n_rows(); j++)
+            const auto element = V->element(cell.type);
+            const auto int_rule = element->integration_rule();
+            const int n_nodes = element->n_nodes();
+            const int dim = element->dim();
+
+            const auto elem_dof = V->cell_dof(cell_idx);
+            const auto elem_pts = V->cell_dof_points(cell_idx);
+
+            // Element mass matrix
+            la::DenseMatrix M(n_nodes * n_comp, n_nodes * n_comp);
+
+            for (int qpt_idx = 0; qpt_idx < int_rule->n_points(); qpt_idx++)
             {
-                const real_t val = coeff * data.N(i, 0) * data.N(j, 0);
-                for (int k = 0; k < n_comp_; k++)
+                const real_t qwt = int_rule->weight(qpt_idx);
+                const auto qpt = int_rule->point(qpt_idx);
+                const auto data = element->transform(dim, qpt, elem_pts);
+                const real_t Jwt = data.detJ * qwt;
+
+                const real_t C = C_.value(cell_idx, cell.type, qpt);
+                for (int i = 0; i < n_nodes; i++)
                 {
-                    M(i * n_comp_ + k, j * n_comp_ + k) = val;
+                    for (int j = 0; j < n_nodes; j++)
+                    {
+                        for (int k = 0; k < n_comp; k++)
+                        {
+                            M(i * n_comp + k, j * n_comp + k) += C * data.N(i, 0) * data.N(j, 0) * Jwt;
+                        }
+                    }
                 }
             }
-        }
-        return M;
+            lhs(elem_dof, elem_dof, M.values());
+        };
+        mesh::utils::for_all_cells(*V->mesh(), work);
     }
 }

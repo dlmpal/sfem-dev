@@ -1,19 +1,19 @@
 #pragma once
 
 #include "../elements/fe.hpp"
-#include "../../coefficient.hpp"
+#include "../fe_field.hpp"
 
 namespace sfem::fem::kernels
 {
     class MassND
     {
     public:
-        MassND(int n_comp, std::shared_ptr<const Coefficient> coeff);
+        MassND(FEField phi, Field &C);
 
-        la::DenseMatrix operator()(int cell_idx, const FEData &data);
+        void operator()(la::MatSet lhs, la::VecSet rhs);
 
     private:
-        int n_comp_;
-        std::shared_ptr<const Coefficient> coeff_;
+        FEField phi_;
+        Field &C_;
     };
 }

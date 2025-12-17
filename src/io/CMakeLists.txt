@@ -4,3 +4,6 @@ add_subdirectory(native)
 add_subdirectory(gmsh)
 #==============================================================================
 add_subdirectory(vtk)
+#==============================================================================
+target_sources(sfem PRIVATE
+${CMAKE_CURRENT_SOURCE_DIR}/io_field.cpp)

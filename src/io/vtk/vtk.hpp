@@ -1,7 +1,9 @@
 #pragma once
 
+#include "../io_field.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../discretization/fem/fe_field.hpp"
+#include "../../discretization/fvm/fv_field.hpp"
 #include <filesystem>
 
 namespace sfem::io::vtk
@@ -26,8 +28,8 @@ namespace sfem::io::vtk
                const std::vector<int> &cell_types,
                const graph::Connectivity &cell_to_node,
                const std::vector<std::array<real_t, 3>> &points,
-               const std::vector<std::shared_ptr<const Field>> &cell_fields,
-               const std::vector<std::shared_ptr<const Field>> &node_fields,
+               const std::vector<IOField> &cell_fields,
+               const std::vector<IOField> &node_fields,
                VTKFileType type = VTKFileType::xml);
 
     /// @brief Export a mesh to VTK
@@ -38,16 +40,25 @@ namespace sfem::io::vtk
     /// @param type VTK file type
     void write(std::filesystem::path filename,
                const mesh::Mesh &mesh,
-               const std::vector<std::shared_ptr<const Field>> &cell_fields = {},
-               const std::vector<std::shared_ptr<const Field>> &node_fields = {},
+               const std::vector<IOField> &cell_fields = {},
+               const std::vector<IOField> &node_fields = {},
                VTKFileType type = VTKFileType::xml);
 
-    /// @brief Export a finite element field to VTK
+    /// @brief Export a set of finite volume fields to VTK
     /// @param filename Output filename
-    /// @param fields Finite element field(s)
+    /// @param fields Finite volume fields
+    /// @param type VTK file type
+    void write(const std::filesystem::path &filename,
+               const std::vector<fvm::FVField> &fields,
+               VTKFileType type = VTKFileType::xml);
+
+    /// @brief Export a set of finite element field to VTK
+    /// @param filename Output filename
+    /// @param fields Finite element fields
     /// @param type VTK file type
     /// @note All fields should belong to the same FE space
     void write(const std::filesystem::path &filename,
-               const std::vector<std::shared_ptr<const fem::FEField>> &fields,
+               const std::vector<fem::FEField> &nodal_fields,
+               const std::vector<fem::FEField> &cell_fields = {},
                VTKFileType type = VTKFileType::xml);
 }
