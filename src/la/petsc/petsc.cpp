@@ -214,4 +214,4 @@ namespace sfem::la::petsc
     }
 }
 
-#endif // SFEM_USE_PETSC
+#endif // SFEM_HAS_PETSC
