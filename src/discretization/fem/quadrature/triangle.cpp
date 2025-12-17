@@ -81,9 +81,13 @@ namespace sfem::fem::quadrature
     {
     }
     //=============================================================================
-    IntegrationPoint Triangle::point(int i) const
+    real_t Triangle::weight(int qpt_idx) const
     {
-        return IntegrationPoint{.weight = triangle_qweights(n_points_, i),
-                                .point = triangle_qpoints(n_points_, i)};
+        return triangle_qweights(n_points_, qpt_idx);
+    }
+    //=============================================================================
+    std::array<real_t, 3> Triangle::point(int qpt_idx) const
+    {
+        return triangle_qpoints(n_points_, qpt_idx);
     }
 }

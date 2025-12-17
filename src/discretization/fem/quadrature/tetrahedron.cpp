@@ -91,9 +91,13 @@ namespace sfem::fem::quadrature
     {
     }
     //=============================================================================
-    IntegrationPoint Tetrahedron::point(int i) const
+    real_t Tetrahedron::weight(int qpt_idx) const
     {
-        return IntegrationPoint{.weight = tet_qweights(n_points(), i),
-                                .point = tet_qpoints(n_points(), i)};
+        return tet_qweights(n_points_, qpt_idx);
+    }
+    //=============================================================================
+    std::array<real_t, 3> Tetrahedron::point(int qpt_idx) const
+    {
+        return tet_qpoints(n_points_, qpt_idx);
     }
 }

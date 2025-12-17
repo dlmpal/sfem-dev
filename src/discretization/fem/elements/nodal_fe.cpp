@@ -14,14 +14,14 @@ namespace sfem::fem
         return dof::cell_num_dof(cell_type_, order_);
     }
     //=============================================================================
-    FEData NodalFiniteElement::transform(int pdim, const IntegrationPoint &qpoint,
-                                         std::span<const std::array<real_t, 3>> points) const
+    FEData NodalFiniteElement::transform(int pdim, const std::array<real_t, 3> &pt,
+                                         std::span<const std::array<real_t, 3>> elem_pts) const
     {
         FEData data(n_nodes(), pdim, dim());
 
         // Evaluate the shape function and its gradient w.r.t natural coordinates
-        eval_shape(qpoint.point, data.N);
-        eval_shape_grad(qpoint.point, data.dNdxi);
+        eval_shape(pt, data.N);
+        eval_shape_grad(pt, data.dNdxi);
 
         // Return early for point elements
         if (dim() == 0)
@@ -37,7 +37,7 @@ namespace sfem::fem
             {
                 for (int k = 0; k < n_nodes(); k++)
                 {
-                    data.dXdxi(i, j) += data.dNdxi(k, j) * points[k][i];
+                    data.dXdxi(i, j) += data.dNdxi(k, j) * elem_pts[k][i];
                 }
             }
         }
@@ -52,9 +52,6 @@ namespace sfem::fem
             /// @todo
             SFEM_ERROR(std::format("Negative Jacobian"));
         }
-
-        // Multiply the Jacobian by the quadrature weight
-        data.detJ *= qpoint.weight;
 
         // Evaluate the shape function gradient w.r.t physical coordinates
         data.dNdX = data.dNdxi * data.dxidX;

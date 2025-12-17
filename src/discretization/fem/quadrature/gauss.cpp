@@ -121,33 +121,50 @@ namespace sfem::fem::quadrature
     }
     //=============================================================================
     template <std::size_t dim>
-    IntegrationPoint Gauss<dim>::point(int i) const
+    real_t Gauss<dim>::weight(int i) const
     {
         const int p = order_ + 1;
-        IntegrationPoint point;
+        real_t w = 0.0;
         if constexpr (dim == 1)
         {
-            point.weight = gauss_1d_qweights(p, i),
-            point.point = {gauss_1d_qpoints(p, i), 0.0, 0.0};
+            w = gauss_1d_qweights(p, i);
         }
         else if constexpr (dim == 2)
         {
-            point.weight = gauss_1d_qweights(p, i % p) *
-                           gauss_1d_qweights(p, i / p);
-            point.point = {gauss_1d_qpoints(p, i % p),
-                           gauss_1d_qpoints(p, i / p),
-                           0.0};
+            w = gauss_1d_qweights(p, i % p) *
+                gauss_1d_qweights(p, i / p);
         }
         else if constexpr (dim == 3)
         {
-            point.weight = gauss_1d_qweights(p, i % p) *
-                           gauss_1d_qweights(p, (i % (p * p)) / p) *
-                           gauss_1d_qweights(p, i / (p * p)),
-            point.point = {gauss_1d_qpoints(p, i % p),
-                           gauss_1d_qpoints(p, (i % (p * p)) / p),
-                           gauss_1d_qpoints(p, i / (p * p))};
+            w = gauss_1d_qweights(p, i % p) *
+                gauss_1d_qweights(p, (i % (p * p)) / p) *
+                gauss_1d_qweights(p, i / (p * p));
         }
-        return point;
+        return w;
+    }
+    //=============================================================================
+    template <std::size_t dim>
+    std::array<real_t, 3> Gauss<dim>::point(int i) const
+    {
+        const int p = order_ + 1;
+        std::array<real_t, 3> pt;
+        if constexpr (dim == 1)
+        {
+            pt = {gauss_1d_qpoints(p, i), 0.0, 0.0};
+        }
+        else if constexpr (dim == 2)
+        {
+            pt = {gauss_1d_qpoints(p, i % p),
+                  gauss_1d_qpoints(p, i / p),
+                  0.0};
+        }
+        else if constexpr (dim == 3)
+        {
+            pt = {gauss_1d_qpoints(p, i % p),
+                  gauss_1d_qpoints(p, (i % (p * p)) / p),
+                  gauss_1d_qpoints(p, i / (p * p))};
+        }
+        return pt;
     }
     //=============================================================================
     // Explicit instantiations

@@ -13,7 +13,8 @@ namespace sfem::fem::quadrature
         /// @brief Set the number of integration points per direction
         void set_n_points(int n_points) override;
 
-        IntegrationPoint point(int i) const override;
+        real_t weight(int qpt_idx) const override;
+        std::array<real_t, 3> point(int qpt_idx) const override;
 
     private:
         int order_;

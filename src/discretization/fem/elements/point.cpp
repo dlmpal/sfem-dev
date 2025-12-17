@@ -11,9 +11,13 @@ namespace sfem::fem::fixed_order
         {
         }
 
-        IntegrationPoint point(int i) const override
+        real_t weight(int) const override
         {
-            (void)i;
+            return 1.0;
+        }
+
+        std::array<real_t, 3> point(int) const override
+        {
             return {};
         }
     };
@@ -24,17 +28,14 @@ namespace sfem::fem::fixed_order
     {
     }
     //=============================================================================
-    void Point::eval_shape(const std::array<real_t, 3> &pt,
+    void Point::eval_shape(const std::array<real_t, 3> &,
                            la::DenseMatrix &N) const
     {
-        (void)pt;
         N(0, 0) = 1.0;
     }
     //=============================================================================
-    void Point::eval_shape_grad(const std::array<real_t, 3> &pt,
-                                la::DenseMatrix &dNdxi) const
+    void Point::eval_shape_grad(const std::array<real_t, 3> &,
+                                la::DenseMatrix &) const
     {
-        (void)pt;
-        (void)dNdxi;
     }
 }

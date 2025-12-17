@@ -34,19 +34,18 @@ namespace sfem::fem
         /// @brief Get the topological dimension of the element's reference cell type
         int dim() const;
 
-        /// @brief Compute the coordinate transform for the element, for a given
-        /// physical dimension
+        /// @brief Evaluate the element coordinate transform for a given point
         /// @note The physical dimension must be greater than or equal to the element's reference
         /// dimension
-        virtual FEData transform(int pdim, const IntegrationPoint &qpoint,
-                                 std::span<const std::array<real_t, 3>> points) const = 0;
+        virtual FEData transform(int pdim, const std::array<real_t, 3> &pt,
+                                 std::span<const std::array<real_t, 3>> elem_pts) const = 0;
 
         /// @brief Evaluate the element's shape functions at a given point
-        virtual void eval_shape(const std::array<real_t, 3> &point,
+        virtual void eval_shape(const std::array<real_t, 3> &pt,
                                 la::DenseMatrix &N) const = 0;
 
         /// @brief Evaluate the gradients of the element's shape functions at a given point
-        virtual void eval_shape_grad(const std::array<real_t, 3> &point,
+        virtual void eval_shape_grad(const std::array<real_t, 3> &pt,
                                      la::DenseMatrix &dNdx) const = 0;
 
     protected:
@@ -66,7 +65,6 @@ namespace sfem::fem
         FEData(int n_nodes, int pdim, int gdim);
 
         /// @brief Natural-to-physical Jacobian determinant
-        /// @note Multiplied by the quadrature weight
         real_t detJ;
 
         /// @brief Natural-to-physical Jacobian (direct)

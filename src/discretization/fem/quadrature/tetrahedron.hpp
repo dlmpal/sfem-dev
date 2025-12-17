@@ -8,6 +8,7 @@ namespace sfem::fem::quadrature
     {
     public:
         Tetrahedron(int n_points);
-        IntegrationPoint point(int i) const override;
+        real_t weight(int qpt_idx) const override;
+        std::array<real_t, 3> point(int qpt_idx) const override;
     };
 }
