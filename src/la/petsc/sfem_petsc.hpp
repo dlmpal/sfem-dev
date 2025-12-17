@@ -9,3 +9,4 @@ namespace sfem::la::petsc
 #include "petsc_mat.hpp"
 #include "petsc_ksp.hpp"
 #include "petsc.hpp"
+#include "petsc_linear_system.hpp"
