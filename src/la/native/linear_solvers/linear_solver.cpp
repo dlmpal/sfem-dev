@@ -110,6 +110,7 @@ namespace sfem::la
             }
         }
 
+        residual_history_.resize(iter + 1);
         return converged;
     }
 }
