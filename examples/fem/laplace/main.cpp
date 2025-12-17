@@ -1,7 +1,7 @@
 #include "sfem.hpp"
-#include <iostream>
 
 using namespace sfem;
+using namespace sfem::fem;
 
 int main(int argc, char **argv)
 {
@@ -10,35 +10,30 @@ int main(int argc, char **argv)
 
     // Mesh, order and FE space
     auto mesh = io::read_mesh(argv[1]);
-    int order = 1;
-    auto V = std::make_shared<fem::CGSpace>(mesh, order);
+    const int order = 2;
+    const auto V = std::make_shared<fem::CGSpace>(mesh, order);
 
-    // Temperature function
-    auto T = std::make_shared<fem::FEFunction>(V, std::vector<std::string>{"T"});
-
-    // Diffusion coefficient
-    auto coeff = std::make_shared<ConstantCoefficient>(1.0);
-
-    // LHS matrix
-    auto A = fem::petsc::create_mat(*T);
-    fem::assemble_matrix_cells(*T, "Solid", fem::kernels::Diffusion3D(coeff), la::petsc::create_matset(A));
-    A.assemble();
-
-    // RHS vector
-    auto b = fem::petsc::create_vec(*T);
-    b.assemble();
+    // Temperature
+    FEField T(V, {"T"});
 
     // Dirichlet B.C.
-    fem::DirichletBC bc(T);
-    bc.set_value("Left", "T", 10);
-    bc.set_value("Right", "T", 100);
+    fem::DirichletBC bc(V);
+    bc.set_value("Left", 10);
+    bc.set_value("Right", 100);
 
-    // Solution vector
-    auto x = la::petsc::create_vec(*T);
+    // Diffusivity
+    ConstantField D("D", 1.0);
 
-    // Apply Dirichlet BC and solve
-    fem::petsc::solve(A, b, x, bc);
-    T->update_ghosts();
+    auto Axb = fem::create_axb(T, la::SolverType::cg,
+                               {}, la::Backend::petsc);
+    kernels::Diffusion diffusion(T, D);
+    diffusion(Axb->lhs(), Axb->rhs());
+    Axb->assemble();
+
+    const auto [dof_idxs, dof_values] = bc.get_dofs_values();
+    Axb->eliminate_dofs(dof_idxs, dof_values);
+    Axb->solve(T.dof_values());
+    T.dof_values().update_ghosts();
 
     // Write solution to file
     io::vtk::write("post/solution_000", {T});
