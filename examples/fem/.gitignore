@@ -8,4 +8,7 @@ elasticity_2d/post/
 elasticity_2d/test.py
 elasticity_2d/run.sh
 
-elasticity_3d/
+elasticity_3d/build/
+elasticity_3d/post/
+elasticity_3d/test.py
+elasticity_3d/run.sh
