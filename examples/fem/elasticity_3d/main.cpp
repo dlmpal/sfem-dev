@@ -1,6 +1,5 @@
 #include "sfem.hpp"
 #include "argparse.hpp"
-#include <iostream>
 
 using namespace sfem;
 using namespace sfem::fem;
@@ -8,7 +7,7 @@ using namespace sfem::fem::kernels;
 using namespace sfem::fem::kernels::elasticity;
 using namespace argparse;
 
-extern void solve_static(FEField &U, Strain &strain, LinearElasticIsotropic &constitutive);
+extern void solve_static(FEField &U, Stress &stress, Strain &strain, LinearElasticIsotropic &constitutive);
 extern void solve_modal(const FEField &U, Strain &strain, LinearElasticIsotropic &constitutive, int n_eigs);
 
 int main(int argc, char **argv)
@@ -42,6 +41,9 @@ int main(int argc, char **argv)
     // Strain
     Strain strain(U);
 
+    // Stress
+    Stress stress(U, strain, constitutive);
+
     // Get problem type and solve
     auto problem_type = parser.get_argument("problem-type")->value<std::string>();
     if (problem_type == "modal")
@@ -51,7 +53,7 @@ int main(int argc, char **argv)
     }
     else if (problem_type == "static")
     {
-        solve_static(U, strain, constitutive);
+        solve_static(U, stress, strain, constitutive);
     }
     else
     {
@@ -71,7 +73,7 @@ void set_bc(DirichletBC &bc)
     bc.set_value("Right", 0, 2);
 }
 
-void solve_static(FEField &U, Strain &strain, LinearElasticIsotropic &constitutive)
+void solve_static(FEField &U, Stress &stress, Strain &strain, LinearElasticIsotropic &constitutive)
 {
     // Quick access
     const auto V = U.space();
@@ -90,10 +92,11 @@ void solve_static(FEField &U, Strain &strain, LinearElasticIsotropic &constituti
     eqn.apply_dirichlet_bc();
     eqn.solve();
 
-    Stress stress(U, strain, constitutive);
-
+    // Compute cell strains
     FEField E(std::make_shared<CGSpace>(V->mesh(), 0), {"exx", "eyy", "ezz", "exy", "eyz", "exz"});
     cell_qpoint_average(*V, strain, E);
+
+    // Compute cell stresses
     FEField S(std::make_shared<CGSpace>(V->mesh(), 0), {"sxx", "syy", "szz", "sxy", "syz", "sxz"});
     cell_qpoint_average(*V, stress, S);
 
@@ -127,12 +130,9 @@ void solve_modal(const FEField &U, Strain &strain, LinearElasticIsotropic &const
     eps.solve(n_eigs);
 
     // Print the computed eigenfrequencies
-    if (mpi::rank() == 0)
+    for (int i = 0; i < std::min(n_eigs, eps.n_converged()); i++)
     {
-        for (int i = 0; i < std::min(n_eigs, eps.n_converged()); i++)
-        {
-            auto [eigval_real, eigval_imag] = eps.eigenvalue(i);
-            std::cout << std::format("Mode: {}, Frequency: {} [Hz]\n", i, std::sqrt(eigval_real) / 2 / M_PI);
-        }
+        auto [eigval_real, eigval_imag] = eps.eigenvalue(i);
+        log_msg(std::format("Mode: {}, Frequency: {} [Hz]\n", i, std::sqrt(eigval_real) / 2 / M_PI), true);
     }
 }
