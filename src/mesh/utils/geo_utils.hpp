@@ -16,4 +16,8 @@ namespace sfem::mesh
 
     /// @brief Compute the midpoint of a cell
     std::array<real_t, 3> cell_midpoint(std::span<const std::array<real_t, 3>> cell_points);
+
+    /// @brief Map a point from the facet to the cell reference coordinate system
+    std::array<real_t, 3> map_facet_to_cell_ref(CellType cell_type, int facet_idx,
+                                                const std::array<real_t, 3> &xi_facet);
 }

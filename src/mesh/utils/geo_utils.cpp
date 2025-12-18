@@ -55,4 +55,88 @@ namespace sfem::mesh
         }
         return midpoint;
     }
+    //=============================================================================
+    std::array<real_t, 3> map_facet_to_cell_ref(CellType cell_type, int facet_idx,
+                                                const std::array<real_t, 3> &xi_facet)
+    {
+        const real_t xi = xi_facet[0];
+        const real_t eta = xi_facet[1];
+
+        switch (cell_type)
+        {
+        case CellType::tetrahedron:
+        {
+            switch (facet_idx)
+            {
+            case 0:
+                return {xi, eta, 1.0 - xi - eta};
+            case 1:
+                return {0.0, xi, eta};
+            case 2:
+                return {xi, 0.0, eta};
+            case 3:
+                return {xi, eta, 0.0};
+            default:
+                SFEM_ERROR(std::format("Invalid facet index ({}) for tetrahedron\n", facet_idx));
+                return {};
+            }
+        }
+        case CellType::hexahedron:
+        {
+            switch (facet_idx)
+            {
+            case 0:
+                return {-1.0, xi, eta};
+            case 1:
+                return {1.0, xi, eta};
+            case 2:
+                return {xi, -1.0, eta};
+            case 3:
+                return {xi, 1.0, eta};
+            case 4:
+                return {xi, eta, -1.0};
+            case 5:
+                return {xi, eta, 1.0};
+            default:
+                SFEM_ERROR(std::format("Invalid facet index ({}) for hexahedron\n", facet_idx));
+                return {};
+            }
+        }
+        case CellType::triangle:
+        {
+            switch (facet_idx)
+            {
+            case 0:
+                return {xi, 0.0, 0.0};
+            case 1:
+                return {1.0 - xi, xi, 0.0};
+            case 2:
+                return {0.0, 1.0 - xi, 0.0};
+            default:
+                SFEM_ERROR(std::format("Invalid facet index ({}) for triangle\n", facet_idx));
+                return {};
+            }
+        }
+        case CellType::quadrilateral:
+        {
+            switch (facet_idx)
+            {
+            case 0:
+                return {xi, -1.0, 0.0};
+            case 1:
+                return {1.0, xi, 0.0};
+            case 2:
+                return {xi, 1.0, 0.0};
+            case 3:
+                return {-1.0, xi, 0.0};
+            default:
+                SFEM_ERROR(std::format("Invalid facet index ({}) for quadrilateral\n", facet_idx));
+                return {};
+            }
+        }
+        default:
+            SFEM_BAD_CELL_ERROR(cell_type);
+            return {};
+        }
+    }
 }
