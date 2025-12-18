@@ -42,7 +42,7 @@ namespace sfem::fvm
                 {
                     const BCType bc_type = bc.region_type(region.name());
 
-                    real_t phif;
+                    real_t phif = 0.0;
                     if (bc_type == BCType::dirichlet)
                     {
                         phif = bc.facet_value(facet_idx, i);
