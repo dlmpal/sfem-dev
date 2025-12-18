@@ -26,13 +26,19 @@ int main(int argc, char **argv)
     // Constitutive law
     LinearElasticPlaneStress constitutive(E, nu, rho);
 
+    // Strain
+    Strain strain(U);
+
+    // Stress
+    Stress stress(U, strain, constitutive);
+
     // PETSc linear system
     auto Axb = fem::create_axb(U, la::SolverType::cg,
                                {.n_iter_max = 1000},
                                la::Backend::petsc);
 
     // Linear elasticity kernel
-    LinearElasticity elasticity(U, constitutive);
+    LinearElasticity elasticity(U, strain, constitutive);
     PressureLoad pressure_load(U, P, mesh->get_region_by_name("Left"));
 
     // Create equation
@@ -49,8 +55,16 @@ int main(int argc, char **argv)
     eqn.apply_dirichlet_bc();
     eqn.solve();
 
+    // Compute cell strains
+    FEField Eps(std::make_shared<fem::CGSpace>(mesh, 0), {"exx", "eyy", "exy"});
+    cell_qpoint_average(*V, strain, Eps);
+
+    // Compute cell stresses
+    FEField S(std::make_shared<fem::CGSpace>(mesh, 0), {"sxx", "syy", "sxy"});
+    cell_qpoint_average(*V, stress, S);
+
     // Save solution to VTK file
-    io::vtk::write("post/solution_000", {U});
+    io::vtk::write("post/solution_000", {U}, {S, Eps});
 
     return 0;
 }
