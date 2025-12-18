@@ -7,6 +7,11 @@ namespace sfem::fem::dof
     //=============================================================================
     int cell_num_dof(mesh::CellType cell_type, int order)
     {
+        if (order == 0)
+        {
+            return 1;
+        }
+
         switch (cell_type)
         {
         case mesh::CellType::point:
@@ -31,6 +36,11 @@ namespace sfem::fem::dof
     //=============================================================================
     int cell_num_internal_dof(mesh::CellType cell_type, int order)
     {
+        if (order == 0)
+        {
+            return 1;
+        }
+
         switch (cell_type)
         {
         case mesh::CellType::point:
@@ -222,8 +232,8 @@ namespace sfem::fem::dof
     void compute_cell_dof_points(mesh::CellType cell_type, int order,
                                  std::vector<std::array<real_t, 3>> &points)
     {
-        // Return early for linear elements
-        if (order == 1)
+        // Return early for constant/linear elements
+        if (order <= 1)
         {
             return;
         }

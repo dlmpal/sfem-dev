@@ -126,15 +126,19 @@ namespace sfem::io::vtk
         std::vector<IOField> cell_fields_;
         for (const auto &field : cell_fields)
         {
-            if (field.space()->name() != fe_space->name())
-            {
-                SFEM_ERROR("All FEFunctions must belong to the same space\n");
-            }
             cell_fields_.emplace_back(field.components(), [field](int idx, int comp_idx)
                                       { return field.dof_values()(idx, comp_idx); });
         }
 
-        write(filename, cell_types, *fe_space->connectivity()[0],
-              fe_space->dof_points(), cell_fields_, node_fields_, type);
+        if (fe_space->order() == 0)
+        {
+            write(filename, cell_types, *topology->connectivity(dim, 0),
+                  mesh->points(), node_fields_, {}, type);
+        }
+        else
+        {
+            write(filename, cell_types, *fe_space->connectivity()[0],
+                  fe_space->dof_points(), cell_fields_, node_fields_, type);
+        }
     }
 }

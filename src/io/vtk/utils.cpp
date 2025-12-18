@@ -6,6 +6,11 @@ namespace sfem::io::vtk
     //=============================================================================
     int cell_type_to_vtk(mesh::CellType cell_type, int order)
     {
+        if (order == 0)
+        {
+            order = 1;
+        }
+
         static const std::map<std::pair<mesh::CellType, int>, int> to_vtk = {
             {{mesh::CellType::point, 1}, 1},
 

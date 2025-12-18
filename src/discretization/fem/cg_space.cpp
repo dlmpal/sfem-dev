@@ -42,17 +42,20 @@ namespace sfem::fem
             auto cell_nodes = topology->adjacent_entities(i, dim, 0);
 
             // Corner-node DoF
-            for (int node_idx : cell_nodes)
+            if (order_ > 0)
             {
-                if (subentity_dof[0][node_idx] < 0)
+                for (int node_idx : cell_nodes)
                 {
-                    subentity_dof[0][node_idx] = n_dof++;
+                    if (subentity_dof[0][node_idx] < 0)
+                    {
+                        subentity_dof[0][node_idx] = n_dof++;
+                    }
+                    cell_dof_array[offset++] = subentity_dof[0][node_idx];
                 }
-                cell_dof_array[offset++] = subentity_dof[0][node_idx];
             }
 
             // Edge DoF
-            if (topology->dim() > 1)
+            if (topology->dim() > 1 && order_ > 0)
             {
                 int n_dof_edge = dof::cell_num_internal_dof(mesh::CellType::line, order_);
                 auto cell_edges = topology->adjacent_entities(i, dim, 1);
@@ -79,7 +82,7 @@ namespace sfem::fem
             }
 
             // Face DoF
-            if (topology->dim() > 2)
+            if (topology->dim() > 2 && order_ > 0)
             {
                 /// @todo Correctly enumerate face DoF in 3D
                 /// Enforce same orientation by cell global idx

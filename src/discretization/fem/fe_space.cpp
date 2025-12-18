@@ -11,9 +11,9 @@ namespace sfem::fem
           order_(order),
           name_(name)
     {
-        if (order_ <= 0)
+        if (order_ < 0)
         {
-            SFEM_ERROR(std::format("Cannot create FESpace with order {} (<=0)\n", order_));
+            SFEM_ERROR(std::format("Cannot create FESpace with order {} (<0)\n", order_));
         }
     }
     //=============================================================================
