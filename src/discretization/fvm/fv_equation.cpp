@@ -17,7 +17,12 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    FVField Equation::field() const
+    FVField &Equation::field()
+    {
+        return phi_;
+    }
+    //=============================================================================
+    const FVField &Equation::field() const
     {
         return phi_;
     }

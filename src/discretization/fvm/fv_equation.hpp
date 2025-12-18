@@ -12,10 +12,10 @@ namespace sfem::fvm
     public:
         Equation(FVField phi, std::shared_ptr<la::LinearSystem> Axb = nullptr);
 
-        FVField field() const;
+        FVField &field();
+        const FVField &field() const;
 
         std::shared_ptr<la::LinearSystem> Axb();
-
         std::shared_ptr<const la::LinearSystem> Axb() const;
 
         const la::Vector &diag() const;
@@ -33,10 +33,10 @@ namespace sfem::fvm
     protected:
         FVField phi_;
 
-        std::vector<FVKernel> kernels_;
-
         std::shared_ptr<la::LinearSystem> Axb_;
 
         la::Vector diag_;
+
+        std::vector<FVKernel> kernels_;
     };
 }
