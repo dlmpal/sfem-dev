@@ -13,3 +13,4 @@ namespace sfem::fem
 #include "cg_space.hpp"
 #include "fe_field.hpp"
 #include "dirichlet_bc.hpp"
+#include "fe_equation.hpp"
