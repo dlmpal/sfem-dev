@@ -13,7 +13,6 @@ convection-diffusion/mesh/
 simple/build/
 simple/post/
 simple/mesh/
-simple/results/
 
 euler/build/
 euler/post/
