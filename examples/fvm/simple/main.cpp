@@ -2,11 +2,7 @@
 // Create the mesh with the cart-mesh application by:
 // ${SFEM_DEV_INSTALL_DIR}/bin/cart-mesh -d=2 -Nx=200 -Ny=20 -x-low=0 -x-high=1 -y-low=0 -y-high=0.1
 
-#include "sfem.hpp"
-#include "iostream"
-
-using namespace sfem;
-using namespace sfem::fvm;
+#include "simple.hpp"
 
 extern void set_bc(std::vector<FVField> U, FVField &P);
 
@@ -14,24 +10,25 @@ int main(int argc, char *argv[])
 {
     initialize(argc, argv, "SIMPLESolver");
 
+    // Read mesh
     auto mesh = io::read_mesh("mesh", mesh::PartitionCriterion::shared_facet);
 
+    // Finite volume space
     auto V = std::make_shared<FVSpace>(mesh);
 
-    const std::array<std::string, 3> U_names = {"u", "v", "w"};
-    std::vector<FVField> U;
-    for (int i = 0; i < mesh->pdim(); i++)
-    {
-        U.push_back(FVField(V, {U_names[i]}, GradientMethod::green_gauss));
-    }
-    FVField P(V, {"P"}, GradientMethod::green_gauss);
+    // Create fields and set BC
+    auto [U, P] = create_fields(V);
     set_bc(U, P);
 
+    // Density and dynamic viscosity
     const real_t rho = 1;
     const real_t mu = 1e3;
-    algo::SIMPLEOptions options = {.backend = la::Backend::petsc};
+
+    // SIMPLE solver options
+    algo::SIMPLEOptions options;
     options.pressure_solver_options.rtol = 1e-2;
 
+    // Create the solver
     algo::SIMPLESolver solver(U, P, rho, mu, options);
 
     for (int iter = 0; iter < options.max_iter_simple; iter++)
@@ -46,8 +43,6 @@ int main(int argc, char *argv[])
             fields_to_plot.push_back(P);
             io::vtk::write(std::format("post/solution_{}", iter), fields_to_plot);
         }
-
-        std::cout << "\n";
     }
 
     return 0;
