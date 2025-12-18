@@ -91,6 +91,13 @@ namespace sfem::la::petsc
     {
         Timer timer;
 
+        KSPType type;
+        KSPGetType(ksp_, &type);
+        if (strcmp(type, KSPPREONLY) != 0)
+        {
+            KSPSetInitialGuessNonzero(ksp_, PETSC_TRUE);
+        }
+
         KSPSolve(ksp_, b.vec(), x.vec());
 
         // Get the number of iterations the KSP performed
