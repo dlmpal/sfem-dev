@@ -37,9 +37,9 @@ namespace sfem::la::petsc
         /// @brief Get the underlying Mat
         Mat mat() const;
 
-        /// @brief Reset the matrix's memory
+        /// @brief Zero all matrix entries
         /// @note Call before re-assembling
-        void reset();
+        void zero_entries();
 
         /// @brief Set values into the matrix
         /// @param row_idxs Row indices

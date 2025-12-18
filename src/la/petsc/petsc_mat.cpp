@@ -68,9 +68,9 @@ namespace sfem::la::petsc
         return mat_;
     }
     //=============================================================================
-    void PetscMat::reset()
+    void PetscMat::zero_entries()
     {
-        MatResetPreallocation(mat_);
+        MatZeroEntries(mat_);
     }
     //=============================================================================
     void PetscMat::set_values(std::span<const int> row_idxs,
