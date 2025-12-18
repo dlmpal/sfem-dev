@@ -17,35 +17,37 @@ int main(int argc, char **argv)
     // Displacement field
     FEField U(V, {"Ux", "Uy"});
 
-    // Dirichlet B.C.
-    fem::DirichletBC bc(V, U.n_comp());
-    bc.set_value("Fixed", 0, 0);
-    bc.set_value("Fixed", 0, 1);
-    bc.set_value("Upper", 0.01, 1);
-
     // Elasticity coefficients and pressure
     ConstantField E("thick", 5e9);
     ConstantField nu("thick", 0.35);
     ConstantField rho("rho", 0.0);
-    ConstantField thick("thick", 0.5 * 1e-3);
-    // ConstantField P("P", 1e3);
+    ConstantField P("P", 1e3);
 
     // Constitutive law
-    LinearElasticPlaneStress constitutive(E, nu, rho, thick);
+    LinearElasticPlaneStress constitutive(E, nu, rho);
 
+    // PETSc linear system
     auto Axb = fem::create_axb(U, la::SolverType::cg,
-                               {.rtol = 1e-10, .n_iter_max = 1000},
+                               {.n_iter_max = 1000},
                                la::Backend::petsc);
 
+    // Linear elasticity kernel
     LinearElasticity elasticity(U, constitutive);
-    elasticity(Axb->lhs(), Axb->rhs());
-    Axb->assemble();
+    PressureLoad pressure_load(U, P, mesh->get_region_by_name("Left"));
 
-    const auto [dof_idxs, dof_values] = bc.get_dofs_values();
-    Axb->eliminate_dofs(dof_idxs, dof_values);
+    // Create equation
+    Equation eqn(U, Axb);
+    eqn.add_kernel(elasticity);
+    eqn.add_kernel(pressure_load);
 
-    Axb->solve(U.dof_values());
-    U.dof_values().update_ghosts();
+    // Set Dirichlet BC
+    eqn.bc().set_value("Fixed", 0, 0);
+    eqn.bc().set_value("Fixed", 0, 1);
+
+    // Assemble and solve
+    eqn.assemble();
+    eqn.apply_dirichlet_bc();
+    eqn.solve();
 
     // Save solution to VTK file
     io::vtk::write("post/solution_000", {U});

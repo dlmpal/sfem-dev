@@ -2,11 +2,11 @@
 
 using namespace sfem;
 using namespace sfem::fem;
+using namespace kernels;
 
 int main(int argc, char **argv)
 {
-    auto &app = initialize(argc, argv);
-    // app.set_log_level(LogLevel::debug);
+    initialize(argc, argv);
 
     // Mesh, order and FE space
     auto mesh = io::read_mesh(argv[1]);
@@ -16,24 +16,25 @@ int main(int argc, char **argv)
     // Temperature
     FEField T(V, {"T"});
 
-    // Dirichlet B.C.
-    fem::DirichletBC bc(V);
-    bc.set_value("Left", 10);
-    bc.set_value("Right", 100);
-
     // Diffusivity
     ConstantField D("D", 1.0);
 
+    // PETSc linear system
     auto Axb = fem::create_axb(T, la::SolverType::cg,
                                {}, la::Backend::petsc);
-    kernels::Diffusion diffusion(T, D);
-    diffusion(Axb->lhs(), Axb->rhs());
-    Axb->assemble();
 
-    const auto [dof_idxs, dof_values] = bc.get_dofs_values();
-    Axb->eliminate_dofs(dof_idxs, dof_values);
-    Axb->solve(T.dof_values());
-    T.dof_values().update_ghosts();
+    // Create equation
+    Equation eqn(T, Axb);
+    eqn.add_kernel(Diffusion(T, D));
+
+    // Set Dirichlet BC
+    eqn.bc().set_value("Left", 10);
+    eqn.bc().set_value("Right", 100);
+
+    // Assemble and solve
+    eqn.assemble();
+    eqn.apply_dirichlet_bc();
+    eqn.solve();
 
     // Write solution to file
     io::vtk::write("post/solution_000", {T});
