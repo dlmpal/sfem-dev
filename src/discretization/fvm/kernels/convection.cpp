@@ -32,10 +32,6 @@ namespace sfem::fvm
             const auto adjacent_cells = V->facet_adjacent_cells(facet_idx);
             const auto &[owner, neighbour] = adjacent_cells;
 
-            // Facet interpolation factor and normal vector
-            const real_t g = V->facet_interp_factor(facet_idx);
-            const geo::Vec3 nf = V->facet_normal(facet_idx);
-
             // Facet flux
             const real_t Ff = flux_[facet_idx];
 
