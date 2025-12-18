@@ -5,11 +5,27 @@
 
 namespace sfem::fem::kernels::elasticity
 {
-    class LinearElasticIsotropic
+    class ElasticityConstitutive
+    {
+    public:
+        virtual ~ElasticityConstitutive() = default;
+
+        virtual int dim() const = 0;
+        virtual int n_strain() const = 0;
+
+        virtual void stress(const FEData &data,
+                            const la::DenseMatrix &strain,
+                            la::DenseMatrix &stress) const = 0;
+
+        virtual void tangent(const FEData &data,
+                             const la::DenseMatrix &strain,
+                             la::DenseMatrix &D) const = 0;
+    };
+
+    class LinearElasticIsotropic : public ElasticityConstitutive
     {
     public:
         LinearElasticIsotropic(Field &E, Field &nu, Field &rho);
-        ~LinearElasticIsotropic() = default;
 
         Field &E();
         const Field &E() const;
@@ -19,18 +35,6 @@ namespace sfem::fem::kernels::elasticity
 
         Field &rho();
         const Field &rho() const;
-
-        virtual int dim() const = 0;
-        virtual int n_strain() const = 0;
-
-        virtual void tangent(int cell_idx,
-                             const std::array<real_t, 3> &pt,
-                             la::DenseMatrix &D) const = 0;
-
-        virtual void stress(int cell_idx,
-                            const std::array<real_t, 3> &pt,
-                            const la::DenseMatrix &strain,
-                            la::DenseMatrix &stress) const = 0;
 
     protected:
         Field &E_;
@@ -46,14 +50,13 @@ namespace sfem::fem::kernels::elasticity
         int dim() const override;
         int n_strain() const override;
 
-        void tangent(int cell_idx,
-                     const std::array<real_t, 3> &pt,
-                     la::DenseMatrix &D) const override;
-
-        void stress(int cell_idx,
-                    const std::array<real_t, 3> &pt,
+        void stress(const FEData &data,
                     const la::DenseMatrix &strain,
                     la::DenseMatrix &stress) const override;
+
+        void tangent(const FEData &data,
+                     const la::DenseMatrix &strain,
+                     la::DenseMatrix &D) const override;
     };
 
     class LinearElastic3D : public LinearElasticIsotropic
@@ -64,28 +67,54 @@ namespace sfem::fem::kernels::elasticity
         int dim() const override;
         int n_strain() const override;
 
-        void tangent(int cell_idx,
-                     const std::array<real_t, 3> &pt,
-                     la::DenseMatrix &D) const override;
-
-        void stress(int cell_idx,
-                    const std::array<real_t, 3> &pt,
+        void stress(const FEData &data,
                     const la::DenseMatrix &strain,
                     la::DenseMatrix &stress) const override;
+
+        void tangent(const FEData &data,
+                     const la::DenseMatrix &strain,
+                     la::DenseMatrix &D) const override;
+    };
+
+    /// @brief Todo make abstract
+    class Strain
+    {
+    public:
+        Strain(FEField U);
+        int n_strain(int dim) const;
+        void B_geo(const FEData &data, la::DenseMatrix &B) const;
+        void B_mat(const FEData &data, la::DenseMatrix &B) const;
+        void operator()(const FEData &data, la::DenseMatrix &e) const;
+
+    protected:
+        FEField U_;
+    };
+
+    class Stress
+    {
+    public:
+        Stress(FEField U, Strain &strain, ElasticityConstitutive &constitutive);
+        /// @todo add accessors
+        void operator()(const FEData &data, la::DenseMatrix &e) const;
+
+    private:
+        FEField U_;
+        Strain &strain_;
+        ElasticityConstitutive &constitutive_;
     };
 
     class LinearElasticity
     {
     public:
-        LinearElasticity(FEField U, LinearElasticIsotropic &constitutive,
+        LinearElasticity(FEField U, Strain &strain,
+                         LinearElasticIsotropic &constitutive,
                          const std::array<real_t, 3> &g = {});
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
 
-        void strain_displacement(const FEData &data, la::DenseMatrix &B) const;
-
     private:
         FEField U_;
+        Strain &strain_;
         LinearElasticIsotropic &constitutive_;
         std::array<real_t, 3> g_;
     };

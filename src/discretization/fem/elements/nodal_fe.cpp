@@ -14,10 +14,11 @@ namespace sfem::fem
         return dof::cell_num_dof(cell_type_, order_);
     }
     //=============================================================================
-    FEData NodalFiniteElement::transform(int pdim, const std::array<real_t, 3> &pt,
+    FEData NodalFiniteElement::transform(int elem_idx, int pdim, const std::array<real_t, 3> &pt,
                                          std::span<const std::array<real_t, 3>> elem_pts) const
     {
-        FEData data(n_nodes(), pdim, dim());
+        FEData data(elem_idx, n_nodes(), pdim, dim());
+        data.pt = pt;
 
         // Evaluate the shape function and its gradient w.r.t natural coordinates
         eval_shape(pt, data.N);

@@ -14,7 +14,7 @@ namespace sfem::fem
 
         int n_nodes() const override;
 
-        FEData transform(int pdim, const std::array<real_t, 3> &pt,
+        FEData transform(int elem_idx, int pdim, const std::array<real_t, 3> &pt,
                          std::span<const std::array<real_t, 3>> elem_pts) const override;
     };
 }

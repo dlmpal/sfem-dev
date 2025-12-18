@@ -57,12 +57,12 @@ namespace sfem::fem::kernels::elasticity
         return 3;
     }
     //=============================================================================
-    void LinearElasticPlaneStress::tangent(int cell_idx,
-                                           const std::array<real_t, 3> &pt,
+    void LinearElasticPlaneStress::tangent(const FEData &data,
+                                           const la::DenseMatrix &,
                                            la::DenseMatrix &D) const
     {
-        const real_t E = E_.cell_value(cell_idx, pt);
-        const real_t nu = nu_.cell_value(cell_idx, pt);
+        const real_t E = E_.cell_value(data.elem_idx, data.pt);
+        const real_t nu = nu_.cell_value(data.elem_idx, data.pt);
         const real_t c = E / (1 - nu * nu);
         D(0, 0) = c * 1.0;
         D(0, 1) = c * nu;
@@ -71,14 +71,13 @@ namespace sfem::fem::kernels::elasticity
         D(2, 2) = c * (1 - nu) * 0.5;
     }
     //=============================================================================
-    void LinearElasticPlaneStress::stress(int cell_idx,
-                                          const std::array<real_t, 3> &pt,
-                                          const la::DenseMatrix &strain,
-                                          la::DenseMatrix &stress) const
+    void LinearElasticPlaneStress::stress(const FEData &data,
+                                          const la::DenseMatrix &e,
+                                          la::DenseMatrix &s) const
     {
         la::DenseMatrix D(3, 3);
-        tangent(cell_idx, pt, D);
-        stress = D * strain;
+        tangent(data, e, D);
+        s = D * e;
     }
     //=============================================================================
     LinearElastic3D::LinearElastic3D(Field &E, Field &nu, Field &rho)
@@ -96,12 +95,12 @@ namespace sfem::fem::kernels::elasticity
         return 6;
     }
     //=============================================================================
-    void LinearElastic3D::tangent(int cell_idx,
-                                  const std::array<real_t, 3> &pt,
+    void LinearElastic3D::tangent(const FEData &data,
+                                  const la::DenseMatrix &,
                                   la::DenseMatrix &D) const
     {
-        const real_t E = E_.cell_value(cell_idx, pt);
-        const real_t nu = nu_.cell_value(cell_idx, pt);
+        const real_t E = E_.cell_value(data.elem_idx, data.pt);
+        const real_t nu = nu_.cell_value(data.elem_idx, data.pt);
         const real_t c1 = E / ((1 + nu) * (1 - 2 * nu));
         const real_t c2 = (1 - 2 * nu) / 2;
         D(0, 0) = (1 - nu) * c1;
@@ -118,35 +117,46 @@ namespace sfem::fem::kernels::elasticity
         D(5, 5) = c1 * c2;
     }
     //=============================================================================
-    void LinearElastic3D::stress(int cell_idx,
-                                 const std::array<real_t, 3> &pt,
-                                 const la::DenseMatrix &strain,
-                                 la::DenseMatrix &stress) const
+    void LinearElastic3D::stress(const FEData &data,
+                                 const la::DenseMatrix &e,
+                                 la::DenseMatrix &s) const
     {
         la::DenseMatrix D(6, 6);
-        tangent(cell_idx, pt, D);
-        stress = D * strain;
+        tangent(data, e, D);
+        s = D * e;
     }
     //=============================================================================
-    LinearElasticity::LinearElasticity(FEField U,
-                                       LinearElasticIsotropic &constitutive,
-                                       const std::array<real_t, 3> &g)
-        : U_(U),
-          constitutive_(constitutive),
-          g_(g)
+    Strain::Strain(FEField U)
+        : U_(U)
     {
-        if (U_.n_comp() != U_.space()->mesh()->pdim() ||
-            U_.n_comp() != constitutive_.dim())
+    }
+    //=============================================================================
+    int Strain::n_strain(int dim) const
+    {
+        if (dim == 2)
         {
-            SFEM_ERROR("Mismatch between displacement field, constitutive law and mesh dimensions\n");
+            return 3;
+        }
+        else if (dim == 3)
+        {
+            return 6;
+        }
+        else
+        {
+            SFEM_ERROR(std::format("Invalid dimension: {}\n", dim));
+            return 0;
         }
     }
     //=============================================================================
-    void LinearElasticity::strain_displacement(const FEData &data, la::DenseMatrix &B) const
+    void Strain::B_geo(const FEData &, la::DenseMatrix &) const
     {
-        for (int i = 0; i < data.N.n_rows(); i++)
+    }
+    //=============================================================================
+    void Strain::B_mat(const FEData &data, la::DenseMatrix &B) const
+    {
+        for (int i = 0; i < data.n_nodes; i++)
         {
-            if (constitutive_.dim() == 2)
+            if (data.pdim == 2)
             {
                 B(0, i * 2 + 0) = data.dNdX(i, 0); ///< exx
                 B(1, i * 2 + 1) = data.dNdX(i, 1); ///< eyy
@@ -168,6 +178,45 @@ namespace sfem::fem::kernels::elasticity
                 B(5, i * 3 + 0) = data.dNdX(i, 2); ///< ezx
                 B(5, i * 3 + 2) = data.dNdX(i, 0); ///< ezx
             }
+        }
+    }
+    //=============================================================================
+    void Strain::operator()(const FEData &data, la::DenseMatrix &e) const
+    {
+        const int n_dof = data.n_nodes * data.pdim;
+        la::DenseMatrix u(n_dof, 1);
+        U_.cell_values(data.elem_idx, u.values());
+        la::DenseMatrix B(n_strain(data.pdim), n_dof);
+        B_mat(data, B);
+        e = B * u;
+    }
+    //=============================================================================
+    Stress::Stress(FEField U, Strain &strain, ElasticityConstitutive &constitutive)
+        : U_(U),
+          strain_(strain),
+          constitutive_(constitutive)
+    {
+    }
+    //=============================================================================
+    void Stress::operator()(const FEData &data, la::DenseMatrix &s) const
+    {
+        la::DenseMatrix e(strain_.n_strain(data.pdim), 1);
+        strain_(data, e);
+        constitutive_.stress(data, e, s);
+    }
+    //=============================================================================
+    LinearElasticity::LinearElasticity(FEField U, Strain &strain,
+                                       LinearElasticIsotropic &constitutive,
+                                       const std::array<real_t, 3> &g)
+        : U_(U),
+          strain_(strain),
+          constitutive_(constitutive),
+          g_(g)
+    {
+        if (U_.n_comp() != U_.space()->mesh()->pdim() ||
+            U_.n_comp() != constitutive_.dim())
+        {
+            SFEM_ERROR("Mismatch between displacement field, constitutive law and mesh dimensions\n");
         }
     }
     //=============================================================================
@@ -198,10 +247,12 @@ namespace sfem::fem::kernels::elasticity
 
             // Element displacement vector
             // la::DenseMatrix u(n_dof, 1);
+
             // Strain vector
-            // la::DenseMatrix strain(n_strain, 1);
+            la::DenseMatrix e(n_strain, 1);
+
             // Stress vector
-            // la::DenseMatrix stress(n_strain, 1);
+            // la::DenseMatrix s(n_strain, 1);
 
             // Element strain-displacement matrix
             la::DenseMatrix B(n_strain, n_dof);
@@ -219,12 +270,12 @@ namespace sfem::fem::kernels::elasticity
             {
                 const real_t qwt = int_rule->weight(qpt_idx);
                 const auto qpt = int_rule->point(qpt_idx);
-                const auto data = element->transform(dim, qpt, elem_pts);
+                const auto data = element->transform(cell_idx, dim, qpt, elem_pts);
                 const real_t Jwt = data.detJ * qwt;
 
-                strain_displacement(data, B);
+                strain_.B_mat(data, B);
 
-                constitutive_.tangent(cell_idx, qpt, D);
+                constitutive_.tangent(data, e, D);
 
                 K += B.T() * D * B * Jwt;
 
@@ -292,7 +343,7 @@ namespace sfem::fem::kernels::elasticity
             {
                 const real_t qwt = int_rule->weight(qpt_idx);
                 const auto qpt = int_rule->point(qpt_idx);
-                const auto data = element->transform(dim, qpt, elem_pts);
+                const auto data = element->transform(facet_idx, dim, qpt, elem_pts);
                 const real_t Jwt = data.detJ * qwt;
 
                 const real_t pressure = P_.facet_value(facet_idx, qpt);

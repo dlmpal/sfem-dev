@@ -41,7 +41,7 @@ namespace sfem::fvm
             const auto element = cg_space.element(cell_type);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
-                cell_volumes_[i] += element->transform(dim,
+                cell_volumes_[i] += element->transform(i, dim,
                                                        element->integration_rule()->point(nqpt),
                                                        cell_points)
                                         .detJ;
@@ -61,7 +61,7 @@ namespace sfem::fvm
             const auto element = cg_space.element(facet_type);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
-                facet_areas_[i] += element->transform(dim,
+                facet_areas_[i] += element->transform(i, dim,
                                                       element->integration_rule()->point(nqpt),
                                                       facet_points)
                                        .detJ;

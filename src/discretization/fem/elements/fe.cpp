@@ -40,13 +40,18 @@ namespace sfem::fem
         return mesh::cell_dim(cell_type_);
     }
     //=============================================================================
-    FEData::FEData(int n_nodes, int pdim, int gdim)
-        : detJ(0.0),
-          dXdxi(pdim, gdim),
-          dxidX(gdim, pdim),
-          N(n_nodes, 1),
-          dNdxi(n_nodes, gdim),
-          dNdX(n_nodes, pdim)
+    FEData::FEData(int elem_idx_, int n_nodes_, int pdim_, int gdim_)
+        : elem_idx(elem_idx_),
+          n_nodes(n_nodes_),
+          pdim(pdim_),
+          gdim(gdim_),
+          pt({}),
+          detJ(0.0),
+          dXdxi(pdim_, gdim_),
+          dxidX(gdim_, pdim_),
+          N(n_nodes_, 1),
+          dNdxi(n_nodes_, gdim_),
+          dNdX(n_nodes_, pdim_)
     {
     }
 }

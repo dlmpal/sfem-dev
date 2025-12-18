@@ -137,7 +137,7 @@ namespace sfem::fem
         const auto elem_dof = V_->cell_dof(cell_idx);
         const auto elem_pts = V_->cell_dof_points(cell_idx);
 
-        const auto data = element->transform(element->dim(), pt, elem_pts);
+        const auto data = element->transform(cell_idx, element->dim(), pt, elem_pts);
 
         geo::Vec3 grad(0.0, 0.0, 0.0);
         for (int i = 0; i < element->n_nodes(); ++i)

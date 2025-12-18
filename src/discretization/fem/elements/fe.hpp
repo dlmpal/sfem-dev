@@ -4,6 +4,7 @@
 #include "../utils/dof_utils.hpp"
 #include "../../../la/native/dense_matrix.hpp"
 #include <memory>
+#include <functional>
 
 namespace sfem::fem
 {
@@ -37,7 +38,7 @@ namespace sfem::fem
         /// @brief Evaluate the element coordinate transform for a given point
         /// @note The physical dimension must be greater than or equal to the element's reference
         /// dimension
-        virtual FEData transform(int pdim, const std::array<real_t, 3> &pt,
+        virtual FEData transform(int elem_idx, int pdim, const std::array<real_t, 3> &pt,
                                  std::span<const std::array<real_t, 3>> elem_pts) const = 0;
 
         /// @brief Evaluate the element's shape functions at a given point
@@ -62,7 +63,22 @@ namespace sfem::fem
     /// @brief Finite element coordinate transform data
     struct FEData
     {
-        FEData(int n_nodes, int pdim, int gdim);
+        FEData(int elem_idx, int n_nodes, int pdim, int gdim);
+
+        /// @brief Current element index
+        int elem_idx;
+
+        /// @brief Number of nodes
+        int n_nodes;
+
+        /// @brief Physical dimension
+        int pdim;
+
+        /// @brief Geometric/topological dimension
+        int gdim;
+
+        /// @brief Transform evaluation point
+        std::array<real_t, 3> pt;
 
         /// @brief Natural-to-physical Jacobian determinant
         real_t detJ;
@@ -82,4 +98,6 @@ namespace sfem::fem
         /// @brief Shape function gradient (physical)
         la::DenseMatrix dNdX;
     };
+
+    using ElementOperator = std::function<void(const FEData &data, la::DenseMatrix &f)>;
 }

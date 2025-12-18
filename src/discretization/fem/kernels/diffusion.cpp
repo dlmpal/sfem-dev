@@ -49,7 +49,7 @@ namespace sfem::fem::kernels
             {
                 const real_t qwt = int_rule->weight(qpt_idx);
                 const auto qpt = int_rule->point(qpt_idx);
-                const auto data = element->transform(dim, qpt, elem_pts);
+                const auto data = element->transform(cell_idx, dim, qpt, elem_pts);
                 const real_t Jwt = data.detJ * qwt;
 
                 const real_t D = D_.cell_value(cell_idx, qpt);
