@@ -46,6 +46,7 @@ namespace sfem::fvm
         default:
             break;
         }
+        return nullptr;
     }
 }
 
