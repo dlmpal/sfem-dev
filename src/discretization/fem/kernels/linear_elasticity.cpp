@@ -1,5 +1,6 @@
 #include "linear_elasticity.hpp"
 #include "../../../mesh/utils/loop_utils.hpp"
+#include "../../../mesh/utils/geo_utils.hpp"
 
 namespace sfem::fem::kernels::elasticity
 {
@@ -41,21 +42,9 @@ namespace sfem::fem::kernels::elasticity
         return rho_;
     }
     //=============================================================================
-    LinearElasticPlaneStress::LinearElasticPlaneStress(Field &E, Field &nu,
-                                                       Field &rho, Field &thick)
-        : LinearElasticIsotropic(E, nu, rho),
-          thick_(thick)
+    LinearElasticPlaneStress::LinearElasticPlaneStress(Field &E, Field &nu, Field &rho)
+        : LinearElasticIsotropic(E, nu, rho)
     {
-    }
-    //=============================================================================
-    Field &LinearElasticPlaneStress::thick()
-    {
-        return thick_;
-    }
-    //=============================================================================
-    const Field &LinearElasticPlaneStress::thick() const
-    {
-        return thick_;
     }
     //=============================================================================
     int LinearElasticPlaneStress::dim() const
@@ -75,8 +64,7 @@ namespace sfem::fem::kernels::elasticity
     {
         const real_t E = E_.value(cell_idx, cell_type, pt);
         const real_t nu = nu_.value(cell_idx, cell_type, pt);
-        const real_t t = thick_.value(cell_idx, cell_type, pt);
-        const real_t c = t * E / (1 - nu * nu);
+        const real_t c = E / (1 - nu * nu);
         D(0, 0) = c * 1.0;
         D(0, 1) = c * nu;
         D(1, 0) = c * nu;
@@ -192,6 +180,8 @@ namespace sfem::fem::kernels::elasticity
         // Quick access
         const auto V = U_.space();
         const auto &rho_ = constitutive_.rho();
+        const int dim = constitutive_.dim();
+        const int n_strain = constitutive_.n_strain();
 
         /// @todo The element matrices could be defined
         /// once here, and resized if nencessary, to
@@ -205,13 +195,10 @@ namespace sfem::fem::kernels::elasticity
             const auto element = V->element(cell.type);
             const auto int_rule = element->integration_rule();
             const int n_nodes = element->n_nodes();
-            const int dim = element->dim();
+            const int n_dof = n_nodes * dim;
 
             const auto elem_dof = V->cell_dof(cell_idx);
             const auto elem_pts = V->cell_dof_points(cell_idx);
-
-            const int n_dof = n_nodes * dim;
-            const int n_strain = constitutive_.n_strain();
 
             // Element displacement vector
             // la::DenseMatrix u(n_dof, 1);
@@ -265,5 +252,63 @@ namespace sfem::fem::kernels::elasticity
             }
         };
         mesh::utils::for_all_cells(*V->mesh(), work);
+    }
+    //=============================================================================
+    PressureLoad::PressureLoad(FEField U, ConstantField &P, const mesh::Region &region)
+        : U_(U),
+          P_(P),
+          region_(region)
+    {
+    }
+    //=============================================================================
+    ConstantField &PressureLoad::P()
+    {
+        return P_;
+    }
+    //=============================================================================
+    const ConstantField &PressureLoad::P() const
+    {
+        return P_;
+    }
+    //=============================================================================
+    void PressureLoad::operator()(la::MatSet, la::VecSet rhs)
+    {
+        // Quick access
+        const auto V = U_.space();
+        const int dim = V->mesh()->pdim();
+
+        auto work = [&](const mesh::Mesh &,
+                        const mesh::Region &,
+                        const mesh::Cell &facet,
+                        int facet_idx)
+        {
+            const auto element = V->element(facet.type);
+            const auto int_rule = element->integration_rule();
+            const int n_nodes = element->n_nodes();
+            const int n_dof = n_nodes * dim;
+
+            const auto elem_dof = V->facet_dof(facet_idx);
+            const auto elem_pts = V->facet_dof_points(facet_idx);
+            const auto elem_normal = mesh::facet_normal(facet.type, elem_pts).normalize();
+
+            la::DenseMatrix F(n_dof, 1);
+            for (int qpt_idx = 0; qpt_idx < int_rule->n_points(); qpt_idx++)
+            {
+                const real_t qwt = int_rule->weight(qpt_idx);
+                const auto qpt = int_rule->point(qpt_idx);
+                const auto data = element->transform(dim, qpt, elem_pts);
+                const real_t Jwt = data.detJ * qwt;
+                const real_t pressure = P_.value(facet_idx, facet.type, qpt);
+                for (int i = 0; i < n_nodes; i++)
+                {
+                    for (int dir = 0; dir < dim; dir++)
+                    {
+                        F(i * dim + dir, 0) += -pressure * data.N(i, 0) * elem_normal(dir) * Jwt;
+                    }
+                }
+            }
+            rhs(elem_dof, F.values());
+        };
+        mesh::utils::for_all_facets_region(*V->mesh(), work, region_);
     }
 }
