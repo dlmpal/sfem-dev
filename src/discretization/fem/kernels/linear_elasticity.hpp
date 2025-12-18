@@ -24,12 +24,10 @@ namespace sfem::fem::kernels::elasticity
         virtual int n_strain() const = 0;
 
         virtual void tangent(int cell_idx,
-                             mesh::CellType cell_type,
                              const std::array<real_t, 3> &pt,
                              la::DenseMatrix &D) const = 0;
 
         virtual void stress(int cell_idx,
-                            mesh::CellType cell_type,
                             const std::array<real_t, 3> &pt,
                             const la::DenseMatrix &strain,
                             la::DenseMatrix &stress) const = 0;
@@ -49,12 +47,10 @@ namespace sfem::fem::kernels::elasticity
         int n_strain() const override;
 
         void tangent(int cell_idx,
-                     mesh::CellType cell_type,
                      const std::array<real_t, 3> &pt,
                      la::DenseMatrix &D) const override;
 
         void stress(int cell_idx,
-                    mesh::CellType cell_type,
                     const std::array<real_t, 3> &pt,
                     const la::DenseMatrix &strain,
                     la::DenseMatrix &stress) const override;
@@ -69,12 +65,10 @@ namespace sfem::fem::kernels::elasticity
         int n_strain() const override;
 
         void tangent(int cell_idx,
-                     mesh::CellType cell_type,
                      const std::array<real_t, 3> &pt,
                      la::DenseMatrix &D) const override;
 
         void stress(int cell_idx,
-                    mesh::CellType cell_type,
                     const std::array<real_t, 3> &pt,
                     const la::DenseMatrix &strain,
                     la::DenseMatrix &stress) const override;
@@ -99,16 +93,16 @@ namespace sfem::fem::kernels::elasticity
     class PressureLoad
     {
     public:
-        PressureLoad(FEField U, ConstantField &P, const mesh::Region &region);
+        PressureLoad(FEField U, Field &P, const mesh::Region &region);
 
-        ConstantField &P();
-        const ConstantField &P() const;
+        Field &P();
+        const Field &P() const;
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
 
     private:
         FEField U_;
-        ConstantField &P_;
+        Field &P_;
         mesh::Region region_;
     };
 }

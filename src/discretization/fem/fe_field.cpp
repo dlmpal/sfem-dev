@@ -1,4 +1,5 @@
 #include "fe_field.hpp"
+#include "../../mesh/utils/geo_utils.hpp"
 
 namespace sfem::fem
 {
@@ -31,14 +32,22 @@ namespace sfem::fem
     {
     }
     //=============================================================================
-    real_t ConstantField::value(int, mesh::CellType,
-                                const std::array<real_t, 3> &, int comp_idx) const
+    real_t ConstantField::cell_value(int, const std::array<real_t, 3> &, int comp_idx) const
     {
         return value_[comp_idx];
     }
     //=============================================================================
-    geo::Vec3 ConstantField::grad(int, mesh::CellType,
-                                  const std::array<real_t, 3> &, int) const
+    real_t ConstantField::facet_value(int, const std::array<real_t, 3> &, int comp_idx) const
+    {
+        return value_[comp_idx];
+    }
+    //=============================================================================
+    geo::Vec3 ConstantField::cell_grad(int, const std::array<real_t, 3> &, int) const
+    {
+        return geo::Vec3{0, 0, 0};
+    }
+    //=============================================================================
+    geo::Vec3 ConstantField::facet_grad(int, const std::array<real_t, 3> &, int) const
     {
         return geo::Vec3{0, 0, 0};
     }
@@ -47,6 +56,7 @@ namespace sfem::fem
                      const std::vector<std::string> &components)
         : Field(components),
           V_(V),
+          topo_(V_->mesh()->topology()),
           dof_values_(std::make_shared<la::Vector>(V->index_map(), n_comp()))
     {
     }
@@ -91,9 +101,9 @@ namespace sfem::fem
         }
     }
     //=============================================================================
-    real_t FEField::value(int cell_idx, mesh::CellType cell_type,
-                          const std::array<real_t, 3> &pt, int comp_idx) const
+    real_t FEField::cell_value(int cell_idx, const std::array<real_t, 3> &pt, int comp_idx) const
     {
+        const auto cell_type = topo_->cells().at(cell_idx).type;
         const auto element = V_->element(cell_type);
         const auto elem_dof = V_->cell_dof(cell_idx);
 
@@ -108,12 +118,25 @@ namespace sfem::fem
         return value;
     }
     //=============================================================================
-    geo::Vec3 FEField::grad(int cell_idx, mesh::CellType cell_type,
-                            const std::array<real_t, 3> &pt, int comp_idx) const
+    real_t FEField::facet_value(int facet_idx, const std::array<real_t, 3> &pt, int comp_idx) const
     {
+        const int dim = topo_->dim();
+        const int cell_idx = topo_->entity_owner(facet_idx, dim - 1);
+        const int rel_idx = topo_->entity_rel_idx(cell_idx, dim, facet_idx, dim - 1);
+        const auto cell_type = topo_->cells().at(cell_idx).type;
+
+        const auto pt_cell = mesh::map_facet_to_cell_ref(cell_type, rel_idx, pt);
+
+        return cell_value(cell_idx, pt_cell, comp_idx);
+    }
+    //=============================================================================
+    geo::Vec3 FEField::cell_grad(int cell_idx, const std::array<real_t, 3> &pt, int comp_idx) const
+    {
+        const auto cell_type = topo_->cells()[cell_idx].type;
         const auto element = V_->element(cell_type);
         const auto elem_dof = V_->cell_dof(cell_idx);
         const auto elem_pts = V_->cell_dof_points(cell_idx);
+
         const auto data = element->transform(element->dim(), pt, elem_pts);
 
         geo::Vec3 grad(0.0, 0.0, 0.0);
@@ -126,5 +149,17 @@ namespace sfem::fem
             }
         }
         return grad;
+    }
+    //=============================================================================
+    geo::Vec3 FEField::facet_grad(int facet_idx, const std::array<real_t, 3> &pt, int comp_idx) const
+    {
+        const int dim = topo_->dim();
+        const int cell_idx = topo_->entity_owner(facet_idx, dim - 1);
+        const mesh::CellType cell_type = topo_->cells()[cell_idx].type;
+        const int rel_idx = topo_->entity_rel_idx(cell_idx, dim, facet_idx, dim - 1);
+
+        const auto pt_cell = mesh::map_facet_to_cell_ref(cell_type, rel_idx, pt);
+
+        return cell_grad(cell_idx, pt_cell, comp_idx);
     }
 }

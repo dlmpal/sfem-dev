@@ -39,7 +39,7 @@ namespace sfem::fem::kernels
                 const auto data = element->transform(dim, qpt, elem_pts);
                 const real_t Jwt = data.detJ * qwt;
 
-                const real_t C = C_.value(cell_idx, cell.type, qpt);
+                const real_t C = C_.cell_value(cell_idx, qpt);
                 for (int i = 0; i < n_nodes; i++)
                 {
                     for (int j = 0; j < n_nodes; j++)

@@ -58,12 +58,11 @@ namespace sfem::fem::kernels::elasticity
     }
     //=============================================================================
     void LinearElasticPlaneStress::tangent(int cell_idx,
-                                           mesh::CellType cell_type,
                                            const std::array<real_t, 3> &pt,
                                            la::DenseMatrix &D) const
     {
-        const real_t E = E_.value(cell_idx, cell_type, pt);
-        const real_t nu = nu_.value(cell_idx, cell_type, pt);
+        const real_t E = E_.cell_value(cell_idx, pt);
+        const real_t nu = nu_.cell_value(cell_idx, pt);
         const real_t c = E / (1 - nu * nu);
         D(0, 0) = c * 1.0;
         D(0, 1) = c * nu;
@@ -73,13 +72,12 @@ namespace sfem::fem::kernels::elasticity
     }
     //=============================================================================
     void LinearElasticPlaneStress::stress(int cell_idx,
-                                          mesh::CellType cell_type,
                                           const std::array<real_t, 3> &pt,
                                           const la::DenseMatrix &strain,
                                           la::DenseMatrix &stress) const
     {
         la::DenseMatrix D(3, 3);
-        tangent(cell_idx, cell_type, pt, D);
+        tangent(cell_idx, pt, D);
         stress = D * strain;
     }
     //=============================================================================
@@ -99,12 +97,11 @@ namespace sfem::fem::kernels::elasticity
     }
     //=============================================================================
     void LinearElastic3D::tangent(int cell_idx,
-                                  mesh::CellType cell_type,
                                   const std::array<real_t, 3> &pt,
                                   la::DenseMatrix &D) const
     {
-        const real_t E = E_.value(cell_idx, cell_type, pt);
-        const real_t nu = nu_.value(cell_idx, cell_type, pt);
+        const real_t E = E_.cell_value(cell_idx, pt);
+        const real_t nu = nu_.cell_value(cell_idx, pt);
         const real_t c1 = E / ((1 + nu) * (1 - 2 * nu));
         const real_t c2 = (1 - 2 * nu) / 2;
         D(0, 0) = (1 - nu) * c1;
@@ -122,13 +119,12 @@ namespace sfem::fem::kernels::elasticity
     }
     //=============================================================================
     void LinearElastic3D::stress(int cell_idx,
-                                 mesh::CellType cell_type,
                                  const std::array<real_t, 3> &pt,
                                  const la::DenseMatrix &strain,
                                  la::DenseMatrix &stress) const
     {
         la::DenseMatrix D(6, 6);
-        tangent(cell_idx, cell_type, pt, D);
+        tangent(cell_idx, pt, D);
         stress = D * strain;
     }
     //=============================================================================
@@ -228,11 +224,11 @@ namespace sfem::fem::kernels::elasticity
 
                 strain_displacement(data, B);
 
-                constitutive_.tangent(cell_idx, cell.type, qpt, D);
+                constitutive_.tangent(cell_idx, qpt, D);
 
                 K += B.T() * D * B * Jwt;
 
-                const real_t rho = rho_.value(cell_idx, cell.type, qpt);
+                const real_t rho = rho_.cell_value(cell_idx, qpt);
                 for (int i = 0; i < n_nodes; i++)
                 {
                     // Inertial force
@@ -254,19 +250,19 @@ namespace sfem::fem::kernels::elasticity
         mesh::utils::for_all_cells(*V->mesh(), work);
     }
     //=============================================================================
-    PressureLoad::PressureLoad(FEField U, ConstantField &P, const mesh::Region &region)
+    PressureLoad::PressureLoad(FEField U, Field &P, const mesh::Region &region)
         : U_(U),
           P_(P),
           region_(region)
     {
     }
     //=============================================================================
-    ConstantField &PressureLoad::P()
+    Field &PressureLoad::P()
     {
         return P_;
     }
     //=============================================================================
-    const ConstantField &PressureLoad::P() const
+    const Field &PressureLoad::P() const
     {
         return P_;
     }
@@ -298,7 +294,8 @@ namespace sfem::fem::kernels::elasticity
                 const auto qpt = int_rule->point(qpt_idx);
                 const auto data = element->transform(dim, qpt, elem_pts);
                 const real_t Jwt = data.detJ * qwt;
-                const real_t pressure = P_.value(facet_idx, facet.type, qpt);
+
+                const real_t pressure = P_.facet_value(facet_idx, qpt);
                 for (int i = 0; i < n_nodes; i++)
                 {
                     for (int dir = 0; dir < dim; dir++)

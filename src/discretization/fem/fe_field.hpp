@@ -15,28 +15,46 @@ namespace sfem::fem
         std::vector<std::string> components() const;
 
         /// @brief Evaluate the value of the field for a given
-        /// reference point inside a cell
+        /// reference point in a cell
         /// @param cell_idx Cell index
         /// @param cell_type Cell type
-        /// @param pt Reference point
+        /// @param pt Cell reference point
         /// @param comp_idx Component index
-        /// @return Evaluated field value
-        virtual real_t value(int cell_idx,
-                             mesh::CellType cell_type,
-                             const std::array<real_t, 3> &pt,
-                             int comp_idx = 0) const = 0;
+        /// @return Field value
+        virtual real_t cell_value(int cell_idx,
+                                  const std::array<real_t, 3> &pt,
+                                  int comp_idx = 0) const = 0;
+
+        /// @brief Evaluate the value of the field for a given
+        /// reference point on a facet
+        /// @param facet_idx Facet index
+        /// @param pt Facet reference point
+        /// @param comp_idx Component index
+        /// @return Field value
+        virtual real_t facet_value(int facet_idx,
+                                   const std::array<real_t, 3> &pt,
+                                   int comp_idx = 0) const = 0;
 
         /// @brief Evaluate the gradient of the field for a given
-        /// reference point inside a cell
+        /// reference point in a cell
         /// @param cell_idx Cell index
         /// @param cell_type Cell type
-        /// @param pt Reference point
+        /// @param pt Cell reference point
         /// @param comp_idx Component index
         /// @return Evaluated field gradient
-        virtual geo::Vec3 grad(int cell_idx,
-                               mesh::CellType cell_type,
-                               const std::array<real_t, 3> &pt,
-                               int comp_idx = 0) const = 0;
+        virtual geo::Vec3 cell_grad(int cell_idx,
+                                    const std::array<real_t, 3> &pt,
+                                    int comp_idx = 0) const = 0;
+
+        /// @brief Evaluate the gradient of the field for a given
+        /// reference point on a facet
+        /// @param facet_idx Facet index
+        /// @param pt Facet reference point
+        /// @param comp_idx Component index
+        /// @return Evaluated field gradient
+        virtual geo::Vec3 facet_grad(int facet_idx,
+                                     const std::array<real_t, 3> &pt,
+                                     int comp_idx = 0) const = 0;
 
     protected:
         std::vector<std::string> components_;
@@ -50,15 +68,21 @@ namespace sfem::fem
 
         ConstantField(const std::string &name, real_t value);
 
-        real_t value(int cell_idx,
-                     mesh::CellType cell_type,
-                     const std::array<real_t, 3> &pt,
-                     int comp_idx = 0) const override;
+        real_t cell_value(int cell_idx,
+                          const std::array<real_t, 3> &pt,
+                          int comp_idx = 0) const override;
 
-        geo::Vec3 grad(int cell_idx,
-                       mesh::CellType cell_type,
-                       const std::array<real_t, 3> &pt,
-                       int comp_idx = 0) const override;
+        real_t facet_value(int facet_idx,
+                           const std::array<real_t, 3> &pt,
+                           int comp_idx = 0) const override;
+
+        geo::Vec3 cell_grad(int cell_idx,
+                            const std::array<real_t, 3> &pt,
+                            int comp_idx = 0) const override;
+
+        geo::Vec3 facet_grad(int facet_idx,
+                             const std::array<real_t, 3> &pt,
+                             int comp_idx = 0) const override;
 
     private:
         std::vector<real_t> value_;
@@ -81,19 +105,31 @@ namespace sfem::fem
         void cell_values(int cell_idx, int comp_idx,
                          std::span<real_t> values) const;
 
-        real_t value(int cell_idx,
-                     mesh::CellType cell_type,
-                     const std::array<real_t, 3> &pt,
-                     int comp_idx = 0) const override;
+        real_t cell_value(int cell_idx,
+                          const std::array<real_t, 3> &pt,
+                          int comp_idx = 0) const override;
 
-        geo::Vec3 grad(int cell_idx,
-                       mesh::CellType cell_type,
-                       const std::array<real_t, 3> &pt,
-                       int comp_idx = 0) const override;
+        real_t facet_value(int facet_idx,
+                           const std::array<real_t, 3> &pt,
+                           int comp_idx = 0) const override;
+
+        geo::Vec3 cell_grad(int cell_idx,
+                            const std::array<real_t, 3> &pt,
+                            int comp_idx = 0) const override;
+
+        geo::Vec3 facet_grad(int facet_idx,
+                             const std::array<real_t, 3> &pt,
+                             int comp_idx = 0) const override;
 
     private:
+        /// @brief Finite element space
         std::shared_ptr<const FESpace> V_;
 
+        /// @brief Mesh topology, obtained from the FE space's
+        /// mesh. Stored here to reduce pointer dereferences
+        std::shared_ptr<const mesh::Topology> topo_;
+
+        /// @brief DoF values
         std::shared_ptr<la::Vector> dof_values_;
     };
 }
