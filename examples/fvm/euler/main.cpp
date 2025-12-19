@@ -146,6 +146,7 @@ namespace sfem::fvm::ode
                     {
                         denom += (*grad)(upwind_idx, i * flux->dim() + j) * d(j);
                     }
+                    //  const real_t denom = geo::inner(gr)
                     const real_t r = 1.0 - 0.5 * (S(downwind_idx, i) - S(upwind_idx, i)) / (denom + eps);
 
                     for (int j = 0; j < flux->dim(); j++)

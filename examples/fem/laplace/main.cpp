@@ -1,8 +1,7 @@
-#include "sfem.hpp"
+#include <sfem/sfem.hpp>
 
 using namespace sfem;
 using namespace sfem::fem;
-using namespace kernels;
 
 int main(int argc, char **argv)
 {

@@ -1,7 +1,7 @@
 // Create a uniform 2D or 3D Cartesian mesh
 
-#include "sfem.hpp"
-#include "argparse.hpp"
+#include <sfem/sfem.hpp>
+#include <argparse.hpp>
 #include <numeric>
 
 using namespace sfem;

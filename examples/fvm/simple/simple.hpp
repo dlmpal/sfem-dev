@@ -1,4 +1,4 @@
-#include "sfem.hpp"
+#include <sfem/sfem.hpp>
 
 using namespace sfem;
 using namespace sfem::fvm;

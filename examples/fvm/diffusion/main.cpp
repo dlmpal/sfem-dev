@@ -1,6 +1,7 @@
-#include "sfem.hpp"
+#include <sfem/sfem.hpp>
 
 using namespace sfem;
+using namespace sfem::fvm;
 
 extern real_t conductivity(const std::array<real_t, 3> pt, real_t T);
 extern real_t specific_heat_density(const std::array<real_t, 3> pt, real_t T);
@@ -14,16 +15,16 @@ int main(int argc, char **argv)
     auto mesh = io::read_mesh(argv[1], mesh::PartitionCriterion::shared_facet);
 
     // Finite volume space
-    auto V = std::make_shared<fvm::FVSpace>(mesh);
+    auto V = std::make_shared<FVSpace>(mesh);
 
     // Temperature field
-    fvm::FVField T(V, {"T"});
+    FVField T(V, {"T"});
 
     // Thermal conductivity
-    fvm::FVField kappa(V, {"k"});
+    FVField kappa(V, {"k"});
 
     // Density * heat capacity
-    fvm::FVField rhocp(V, {"rhocp"});
+    FVField rhocp(V, {"rhocp"});
 
     // Initial condition
     const real_t T_init = 25;
@@ -32,8 +33,8 @@ int main(int argc, char **argv)
     // Boundary conditions
     const real_t h_inf = 30;
     const real_t T_inf = 25;
-    const fvm::BCType bc_type = fvm::BCType::robin;
-    const fvm::BCData bc_data{.a = 1, .b = h_inf, .c = T_inf};
+    const BCType bc_type = BCType::robin;
+    const BCData bc_data{.a = 1, .b = h_inf, .c = T_inf};
     T.boundary_condition().set_region_bc("Left", bc_type, bc_data);
     T.boundary_condition().set_region_bc("Right", bc_type, bc_data);
     T.boundary_condition().set_region_bc("Front", bc_type, bc_data);
@@ -50,11 +51,11 @@ int main(int argc, char **argv)
     bool after_weld_end = false;
 
     // Equation
-    fvm::Equation eqn(T, fvm::create_axb(T, la::SolverType::cg));
-    eqn.add_kernel(fvm::Laplacian(T, kappa))
-        .add_kernel(fvm::ImplicitEuler(T, rhocp, dt))
-        .add_kernel(fvm::Source(T, [&time](const fvm::FVField &T, int cell_idx, std::span<real_t> Q)
-                                { heat_source(T.space()->cell_midpoint(cell_idx), Q, time); }));
+    Equation eqn(T, create_axb(T, la::SolverType::cg));
+    eqn.add_kernel(Laplacian(T, kappa))
+        .add_kernel(ImplicitEuler(T, rhocp, dt))
+        .add_kernel(Source(T, [&time](const FVField &T, int cell_idx, std::span<real_t> Q)
+                           { heat_source(T.space()->cell_midpoint(cell_idx), Q, time); }));
 
     while (time <= t_final)
     {

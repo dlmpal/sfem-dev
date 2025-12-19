@@ -22,7 +22,7 @@ endif()
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #==============================================================================
 # Create the core library
-add_subdirectory(src)
+add_subdirectory(src/sfem)
 
 # Append the library installation location to the RPATH
 # This is useful for the installation of downstream targets that link to SFEM 
@@ -33,13 +33,7 @@ option(WITH_APPS ON)
 if(${WITH_APPS})
         add_subdirectory(apps)
 endif()
-# #==============================================================================
-# Create the Python bindings (pysfem)
-option(WITH_PYSFEM ON)
-if(${WITH_PYSFEM})
-        add_subdirectory(pysfem)
-endif()
-# #==============================================================================
+#==============================================================================
 # Installation
 install(EXPORT sfemTargets
         FILE sfemTargets.cmake

@@ -3,7 +3,7 @@
 // The program is executed as follows:
 //   gmshToSfem $gmsh_filename $mesh_directory
 
-#include "sfem.hpp"
+#include <sfem/sfem.hpp>
 
 using namespace sfem;
 

@@ -1,9 +1,8 @@
-#include "sfem.hpp"
+#include <sfem/sfem.hpp>
 
 using namespace sfem;
 using namespace sfem::fem;
-using namespace sfem::fem::kernels;
-using namespace sfem::fem::kernels::elasticity;
+using namespace sfem::fem::solid_mechanics;
 
 int main(int argc, char **argv)
 {
@@ -27,7 +26,7 @@ int main(int argc, char **argv)
     LinearElasticPlaneStress constitutive(E, nu, rho);
 
     // Strain
-    Strain strain(U);
+    SmallStrain strain(U);
 
     // Stress
     Stress stress(U, strain, constitutive);

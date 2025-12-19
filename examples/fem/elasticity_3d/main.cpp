@@ -1,13 +1,12 @@
-#include "sfem.hpp"
-#include "argparse.hpp"
+#include <sfem/sfem.hpp>
+#include <argparse.hpp>
 
 using namespace sfem;
 using namespace sfem::fem;
-using namespace sfem::fem::kernels;
-using namespace sfem::fem::kernels::elasticity;
+using namespace sfem::fem::solid_mechanics;
 using namespace argparse;
 
-extern void solve_static(FEField &U, Stress &stress, Strain &strain, LinearElasticIsotropic &constitutive);
+extern void solve_static(FEField &U, Stress &stress, SmallStrain &strain, LinearElasticIsotropic &constitutive);
 extern void solve_modal(const FEField &U, Strain &strain, LinearElasticIsotropic &constitutive, int n_eigs);
 
 int main(int argc, char **argv)
@@ -39,7 +38,7 @@ int main(int argc, char **argv)
     LinearElastic3D constitutive(E, nu, rho);
 
     // Strain
-    Strain strain(U);
+    SmallStrain strain(U);
 
     // Stress
     Stress stress(U, strain, constitutive);
@@ -73,7 +72,7 @@ void set_bc(DirichletBC &bc)
     bc.set_value("Right", 0, 2);
 }
 
-void solve_static(FEField &U, Stress &stress, Strain &strain, LinearElasticIsotropic &constitutive)
+void solve_static(FEField &U, Stress &stress, SmallStrain &strain, LinearElasticIsotropic &constitutive)
 {
     // Quick access
     const auto V = U.space();
