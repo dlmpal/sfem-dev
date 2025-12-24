@@ -10,7 +10,11 @@ namespace sfem::fvm
     public:
         Laplacian(FVField phi, IField &D);
 
-        FVField field() const;
+        FVField &field();
+        const FVField &field() const;
+
+        IField &D();
+        const IField &D() const;
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
 

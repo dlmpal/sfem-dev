@@ -12,7 +12,8 @@ namespace sfem::fvm
 
         Source(FVField phi, SourceFunc func);
 
-        FVField field() const;
+        FVField &field();
+        const FVField &field() const;
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
 

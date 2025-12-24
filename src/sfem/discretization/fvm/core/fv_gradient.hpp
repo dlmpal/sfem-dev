@@ -13,7 +13,7 @@ namespace sfem::fvm
     // Forward declaration;
     class FVField;
 
-    void green_gauss_gradient(FVField phi);
+    void green_gauss_gradient(FVField &phi);
 
-    void least_squares_gradient(FVField phi);
+    void least_squares_gradient(FVField &phi);
 }

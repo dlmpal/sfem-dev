@@ -158,26 +158,20 @@ namespace sfem::fvm::algo
                         int facet_idx)
         {
             const auto [owner, neighbour] = V->facet_adjacent_cells(facet_idx);
+            const real_t g = V->facet_interp_factor(facet_idx);
+            const geo::Vec3 Sf = V->facet_area_vec(facet_idx);
 
-            const real_t Af = V->facet_area(facet_idx);
-            const geo::Vec3 nf = V->facet_normal(facet_idx);
-            const real_t d12 = V->intercell_distance(facet_idx).mag();
-
-            real_t Uf = 0.0;
-            real_t rhof = 0.0;
-            real_t Df = 0.0;
-            real_t gradPf = 0.0;
+            flux_[facet_idx] = 0.0;
             if (owner != neighbour)
             {
+                const real_t rhof = rho_.facet_value(facet_idx);
                 for (int dir = 0; dir < mesh->pdim(); dir++)
                 {
-                    Uf += U_[dir].facet_value(facet_idx) * nf(dir);
+                    flux_[facet_idx] += rhof * U_[dir].facet_value(facet_idx) * Sf(dir);
                 }
-                rhof = rho_.facet_value(facet_idx);
-                Df = D_.facet_value(facet_idx);
-                /// @todo Implement Rhie-Chow correctly
-                gradPf = (P_.cell_value(neighbour) - P_.cell_value(owner)) / d12 - geo::inner(P_.facet_grad(facet_idx), nf);
-                flux_[facet_idx] = rhof * (Uf - Df * gradPf) * Af;
+                const real_t Df = D_.facet_value(facet_idx);
+                const geo::Vec3 gradP_avg = g * P_.cell_grad(owner) + (1 - g) * P_.cell_grad(neighbour);
+                flux_[facet_idx] += -rhof * Df * geo::inner(P_.facet_grad(facet_idx) - gradP_avg, Sf);
             }
             else
             {
@@ -185,14 +179,13 @@ namespace sfem::fvm::algo
                 {
                     const FVBC &ubc = U_[dir].boundary_condition();
                     real_t uf = U_[dir].cell_value(owner);
+                    const real_t rhof = rho_.cell_value(owner);
                     if (ubc.region_type(region.name()) == fvm::BCType::dirichlet)
                     {
                         uf = ubc.facet_value(facet_idx);
                     }
-                    Uf += uf * nf(dir);
+                    flux_[facet_idx] += rhof * uf * Sf(dir);
                 }
-                rhof = rho_.cell_value(owner);
-                flux_[facet_idx] = rhof * Uf * Af;
             }
         };
         mesh::utils::for_all_facets(*mesh, work);
@@ -230,14 +223,11 @@ namespace sfem::fvm::algo
                             const mesh::Cell &,
                             int facet_idx)
             {
-                const real_t Af = V->facet_area(facet_idx);
-                const geo::Vec3 nf = V->facet_normal(facet_idx);
-
+                const geo::Vec3 Sf = V->facet_area_vec(facet_idx);
                 const real_t rhof = rho_.facet_value(facet_idx);
                 const real_t Df = D_.facet_value(facet_idx);
                 const geo::Vec3 gradPf = Pcorr_.facet_grad(facet_idx);
-
-                flux_[facet_idx] -= rhof * Df * Af * geo::inner(gradPf, nf);
+                flux_[facet_idx] -= rhof * Df * geo::inner(gradPf, Sf);
             };
             mesh::utils::for_all_facets(*mesh, work);
         }

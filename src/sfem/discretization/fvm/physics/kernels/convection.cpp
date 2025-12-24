@@ -6,15 +6,30 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    Convection::Convection(FVField phi, const std::vector<real_t> &flux)
+    Convection::Convection(FVField phi, std::vector<real_t> &flux)
         : phi_(phi),
           flux_(flux)
     {
     }
     //=============================================================================
-    FVField Convection::field() const
+    FVField &Convection::field()
     {
         return phi_;
+    }
+    //=============================================================================
+    const FVField &Convection::field() const
+    {
+        return phi_;
+    }
+    //=============================================================================
+    std::vector<real_t> &Convection::flux()
+    {
+        return flux_;
+    }
+    //=============================================================================
+    const std::vector<real_t> &Convection::flux() const
+    {
+        return flux_;
     }
     //=============================================================================
     void Convection::operator()(la::MatSet lhs, la::VecSet rhs)
@@ -63,9 +78,9 @@ namespace sfem::fvm
                     else
                     {
                         const real_t grad_facet = bc.facet_value(facet_idx);
-                        const real_t d = V->facet_cell_distances(facet_idx)[0];
+                        const real_t dfP = V->facet_cell_distances(facet_idx)[0];
                         lhs_value[0] = Ff;
-                        rhs_value[0] = -Ff * d * grad_facet;
+                        rhs_value[0] = -Ff * dfP * grad_facet;
                     }
                 }
                 else if (bc.region_type(region.name()) == BCType::robin)
@@ -85,10 +100,9 @@ namespace sfem::fvm
             {
                 // Upwind differencing
                 const real_t w = Ff > 0 ? 1.0 : 0.0;
-                const std::array<int, 2> idxs = {owner, neighbour};
                 const std::array<real_t, 4> lhs_values = {w * Ff, (1 - w) * Ff,
                                                           -w * Ff, -(1 - w) * Ff};
-                lhs(idxs, idxs, lhs_values);
+                lhs(adjacent_cells, adjacent_cells, lhs_values);
             }
         };
         mesh::utils::for_all_facets(*V->mesh(), work);

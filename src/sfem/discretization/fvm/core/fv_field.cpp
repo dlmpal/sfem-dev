@@ -136,7 +136,9 @@ namespace sfem::fvm
         else
         {
             const real_t g = V_->facet_interp_factor(facet_idx);
-            return g * cell_value(owner, comp_idx) + (1 - g) * cell_value(neighbour, comp_idx);
+            const real_t phiP = cell_value(owner, comp_idx);
+            const real_t phiN = cell_value(neighbour, comp_idx);
+            return g * phiP + (1 - g) * phiN;
         }
     }
     //=============================================================================
@@ -165,18 +167,23 @@ namespace sfem::fvm
             return geo::Vec3();
         }
 
-        /// @todo There exists a specific formula for this,
-        /// not plain geometric interpolation
         const auto [owner, neighbour] = V_->facet_adjacent_cells(facet_idx);
         if (owner == neighbour)
         {
-            /// @todo
+            /// @todo Use BC info
             return cell_grad(owner, comp_idx);
         }
         else
         {
+            const geo::Vec3 dPN = V_->facet_intercell_distance(facet_idx);
+            const geo::Vec3 ePN = dPN.normalize();
             const real_t g = V_->facet_interp_factor(facet_idx);
-            return g * cell_grad(owner, comp_idx) + (1 - g) * cell_grad(neighbour, comp_idx);
+            const real_t phiP = cell_value(owner, comp_idx);
+            const real_t phiN = cell_value(neighbour, comp_idx);
+            const geo::Vec3 gradP = cell_grad(owner, comp_idx);
+            const geo::Vec3 gradN = cell_grad(neighbour, comp_idx);
+            const geo::Vec3 grad_avg = g * gradP + (1 - g) * gradN;
+            return grad_avg + ePN * ((phiN - phiP) / dPN.mag() - geo::inner(grad_avg, ePN));
         }
     }
     //=============================================================================
@@ -190,9 +197,9 @@ namespace sfem::fvm
         {
             green_gauss_gradient(*this);
         }
-        // else if (gradient_method_ == GradientMethod::least_squares)
-        // {
-        //     least_squares_gradient(*this);
-        // }
+        else if (gradient_method_ == GradientMethod::least_squares)
+        {
+            least_squares_gradient(*this);
+        }
     }
 }

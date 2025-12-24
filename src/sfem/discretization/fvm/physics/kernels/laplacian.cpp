@@ -16,9 +16,24 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    FVField Laplacian::field() const
+    FVField &Laplacian::field()
     {
         return phi_;
+    }
+    //=============================================================================
+    const FVField &Laplacian::field() const
+    {
+        return phi_;
+    }
+    //=============================================================================
+    IField &Laplacian::D()
+    {
+        return D_;
+    }
+    //=============================================================================
+    const IField &Laplacian::D() const
+    {
+        return D_;
     }
     //=============================================================================
     void Laplacian::operator()(la::MatSet lhs, la::VecSet rhs)
@@ -36,10 +51,9 @@ namespace sfem::fvm
             const auto adjacent_cells = V->facet_adjacent_cells(facet_idx);
             const auto &[owner, neighbour] = adjacent_cells;
 
-            // Facet area, normal vector and intercell distance
-            const real_t Af = V->facet_area(facet_idx);
-            const auto nf = V->facet_normal(facet_idx);
-            const auto d12 = V->intercell_distance(facet_idx);
+            // Facet area vector and intercell distance
+            const geo::Vec3 Sf = V->facet_area_vec(facet_idx);
+            const geo::Vec3 dPN = V->facet_intercell_distance(facet_idx);
 
             // Boundary facets
             if (owner == neighbour)
@@ -53,22 +67,22 @@ namespace sfem::fvm
 
                 if (bc.region_type(region.name()) == BCType::dirichlet)
                 {
-                    lhs_value[0] = 2.0 * Df * Af / d12.mag();
+                    lhs_value[0] = 2.0 * Df * Sf.mag() / dPN.mag();
                     rhs_value[0] = lhs_value[0] * bc.facet_value(facet_idx);
                 }
                 else if (bc.region_type(region.name()) == BCType::neumann)
                 {
                     lhs_value[0] = 0.0;
-                    rhs_value[0] = Df * Af * bc.facet_value(facet_idx);
+                    rhs_value[0] = Df * Sf.mag() * bc.facet_value(facet_idx);
                 }
                 else if (bc.region_type(region.name()) == BCType::robin)
                 {
                     const auto [a, b, c] = bc.facet_data(facet_idx);
                     const real_t h_inf = b / a;
                     const real_t phi_inf = c / a;
-                    const real_t d = d12.mag();
+                    const real_t d = dPN.mag();
                     lhs_value[0] = (h_inf * Df / d) /
-                                   (h_inf + Df / d) * Af;
+                                   (h_inf + Df / d) * Sf.mag();
                     rhs_value[0] = lhs_value[0] * phi_inf;
                 }
 
@@ -78,16 +92,15 @@ namespace sfem::fvm
             // Internal facets
             else
             {
-                // Facet normal decomposition vectors
-                const geo::Vec3 delta = (d12 / geo::inner(nf, d12));
-                const geo::Vec3 kappa = (nf - delta);
+                // Decompose the area vector
+                const auto [delta, kappa] = V->decompose_area_vec(facet_idx);
 
                 // Facet diffusivity coefficient
                 const real_t Df = D_.facet_value(facet_idx);
 
                 // LHS - orthogonal contribution
                 {
-                    const real_t value = Df * Af / d12.mag();
+                    const real_t value = Df * delta.mag() / dPN.mag();
                     std::array<real_t, 4> lhs_values = {value, -value,
                                                         -value, value};
                     lhs(adjacent_cells, adjacent_cells, lhs_values);
@@ -95,7 +108,7 @@ namespace sfem::fvm
 
                 // RHS - non-orthogonal correction
                 {
-                    const real_t value = Df * Af * geo::inner(phi_.facet_grad(facet_idx), kappa);
+                    const real_t value = Df * geo::inner(phi_.facet_grad(facet_idx), kappa);
                     std::array<real_t, 2> rhs_values{value, -value};
                     rhs(adjacent_cells, rhs_values);
                 }

@@ -12,7 +12,12 @@ namespace sfem::fvm
     {
     }
     //=============================================================================
-    FVField ImplicitEuler::field() const
+    FVField &ImplicitEuler::field()
+    {
+        return phi_;
+    }
+    //=============================================================================
+    const FVField &ImplicitEuler::field() const
     {
         return phi_;
     }

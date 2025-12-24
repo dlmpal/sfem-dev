@@ -8,10 +8,12 @@ namespace sfem::fvm
     class Convection
     {
     public:
-        Convection(FVField phi, const std::vector<real_t> &flux);
+        Convection(FVField phi, std::vector<real_t> &flux);
 
-        FVField field() const;
+        FVField &field();
+        const FVField &field() const;
 
+        std::vector<real_t> &flux();
         const std::vector<real_t> &flux() const;
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
@@ -19,7 +21,7 @@ namespace sfem::fvm
     private:
         FVField phi_;
 
-        /// @todo Handle this
-        const std::vector<real_t> &flux_;
+        /// @todo
+        std::vector<real_t> &flux_;
     };
 }

@@ -20,8 +20,8 @@ namespace sfem::fvm::ode
             const auto flux = nflux->flux_function();
 
             // Left and right state fluxes and normal flux
-            std::vector<real_t> state1(flux->n_comp());
-            std::vector<real_t> state2(flux->n_comp());
+            std::vector<real_t> uP(flux->n_comp());
+            std::vector<real_t> uN(flux->n_comp());
             std::vector<real_t> normal_flux(flux->n_comp());
 
             // Add flux contribution
@@ -31,35 +31,35 @@ namespace sfem::fvm::ode
                                   int facet_idx)
             {
                 // Get the facet's adjacent cells
-                const auto [cell_idx1, cell_idx2] = V->facet_adjacent_cells(facet_idx);
+                const auto [owner, neighbour] = V->facet_adjacent_cells(facet_idx);
 
                 // Get the adjacent cell states
                 for (int i = 0; i < flux->n_comp(); i++)
                 {
-                    state1[i] = S(cell_idx1, i);
-                    state2[i] = S(cell_idx2, i);
+                    uP[i] = S(owner, i);
+                    uN[i] = S(neighbour, i);
                 }
 
-                // Facet area and normal vector
-                const real_t area = V->facet_area(facet_idx);
-                const auto normal = V->facet_normal(facet_idx);
+                // Facet area vector and area
+                const geo::Vec3 Sf = V->facet_area_vec(facet_idx);
+                const real_t Af = Sf.mag();
 
                 // Compute the (numerical) normal flux at the face
-                nflux->compute_normal_flux(state1, state2, normal, normal_flux);
+                nflux->compute_normal_flux(uP, uN, Sf.normalize(), normal_flux);
 
                 // Inverse left and right cell volumes
-                const real_t vol_inv1 = 1 / V->cell_volume(cell_idx1);
-                const real_t vol_inv2 = 1 / V->cell_volume(cell_idx2);
+                const real_t vol_inv1 = 1 / V->cell_volume(owner);
+                const real_t vol_inv2 = 1 / V->cell_volume(neighbour);
 
                 // Add the flux contributions to the RHS vector
                 for (int i = 0; i < flux->n_comp(); i++)
                 {
-                    rhs(cell_idx1, i) -= normal_flux[i] * area * vol_inv1;
+                    rhs(owner, i) -= normal_flux[i] * Af * vol_inv1;
 
                     /// @todo cleanup
-                    if (cell_idx1 != cell_idx2)
+                    if (owner != neighbour)
                     {
-                        rhs(cell_idx2, i) -= -normal_flux[i] * area * vol_inv2;
+                        rhs(neighbour, i) -= -normal_flux[i] * Af * vol_inv2;
                     }
                 }
             };

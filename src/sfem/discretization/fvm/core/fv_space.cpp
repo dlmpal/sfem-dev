@@ -31,14 +31,15 @@ namespace sfem::fvm
         // CG space for integration
         const fem::CGSpace cg_space(mesh_, 1);
 
-        // Cell volumes and midpoints
-        cell_volumes_.resize(n_cells, 0.0);
+        // Cells
         cell_midpoints_.resize(n_cells);
+        cell_volumes_.resize(n_cells, 0.0);
         for (int i = 0; i < n_cells; i++)
         {
             const auto cell_type = topology->entity(i, dim).type;
             const auto cell_points = mesh_->entity_points(i, dim);
             const auto element = cg_space.element(cell_type);
+            cell_midpoints_[i] = mesh::cell_midpoint(cell_points);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
                 cell_volumes_[i] += element->transform(i, dim,
@@ -46,37 +47,24 @@ namespace sfem::fvm
                                                        cell_points)
                                         .detJ;
             }
-            cell_midpoints_[i] = mesh::cell_midpoint(cell_points);
         }
 
-        // Facet areas, midpoints, normal vectors and adjacent cells
-        facet_areas_.resize(n_facets, 0.0);
+        // Facets
         facet_midpoints_.resize(n_facets);
-        facet_normals_.reserve(n_facets);
+        facet_area_vecs_.reserve(n_facets);
         facet_adjacent_cells_.resize(n_facets);
+        facet_cell_distances_.resize(n_facets);
+        facet_intercell_distances_.resize(n_facets);
+        facet_interp_factor_.resize(n_facets);
         for (int i = 0; i < n_facets; i++)
         {
             const auto facet_type = topology->entity(i, dim - 1).type;
             const auto facet_points = mesh_->entity_points(i, dim - 1);
             const auto element = cg_space.element(facet_type);
-            for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
-            {
-                facet_areas_[i] += element->transform(i, dim,
-                                                      element->integration_rule()->point(nqpt),
-                                                      facet_points)
-                                       .detJ;
-            }
             facet_midpoints_[i] = mesh::cell_midpoint(facet_points);
-            facet_normals_[i] = mesh::facet_normal(facet_type, facet_points).normalize();
+            facet_area_vecs_[i] = mesh::facet_normal(facet_type, facet_points);
             facet_adjacent_cells_[i] = topology->facet_adjacent_cells(i);
-        }
 
-        // Distances
-        facet_cell_distances_.resize(n_facets);
-        intercell_distances_.resize(n_facets);
-        facet_interp_factor_.resize(n_facets);
-        for (int i = 0; i < n_facets; i++)
-        {
             for (int j = 0; j < 2; j++)
             {
                 facet_cell_distances_[i][j] = geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][j]],
@@ -85,16 +73,16 @@ namespace sfem::fvm
 
             if (facet_adjacent_cells_[i][0] == facet_adjacent_cells_[i][1])
             {
-                intercell_distances_[i] = 2 * geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][0]],
-                                                                    facet_midpoints_[i]);
+                facet_intercell_distances_[i] = 2 * geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][0]],
+                                                                          facet_midpoints_[i]);
             }
             else
             {
-                intercell_distances_[i] = geo::Vec3(cell_midpoints_[facet_adjacent_cells_[i][0]],
-                                                    cell_midpoints_[facet_adjacent_cells_[i][1]]);
+                facet_intercell_distances_[i] = geo::Vec3(cell_midpoints_[facet_adjacent_cells_[i][0]],
+                                                          cell_midpoints_[facet_adjacent_cells_[i][1]]);
             }
 
-            facet_interp_factor_[i] = facet_cell_distances_[i][1] / intercell_distances_[i].mag();
+            facet_interp_factor_[i] = facet_cell_distances_[i][1] / facet_intercell_distances_[i].mag();
         }
     }
     //=============================================================================
@@ -113,19 +101,14 @@ namespace sfem::fvm
         return index_map_;
     }
     //=============================================================================
-    real_t FVSpace::cell_volume(int cell_idx) const
-    {
-        return cell_volumes_[cell_idx];
-    }
-    //=============================================================================
-    real_t FVSpace::facet_area(int facet_idx) const
-    {
-        return facet_areas_[facet_idx];
-    }
-    //=============================================================================
     std::array<real_t, 3> FVSpace::cell_midpoint(int cell_idx) const
     {
         return cell_midpoints_[cell_idx];
+    }
+    //=============================================================================
+    real_t FVSpace::cell_volume(int cell_idx) const
+    {
+        return cell_volumes_[cell_idx];
     }
     //=============================================================================
     std::array<real_t, 3> FVSpace::facet_midpoint(int facet_idx) const
@@ -133,14 +116,14 @@ namespace sfem::fvm
         return facet_midpoints_[facet_idx];
     }
     //=============================================================================
-    geo::Vec3 FVSpace::facet_normal(int facet_idx) const
+    geo::Vec3 FVSpace::facet_area_vec(int facet_idx) const
     {
-        return facet_normals_[facet_idx];
+        return facet_area_vecs_[facet_idx];
     }
     //=============================================================================
-    geo::Vec3 FVSpace::intercell_distance(int facet_idx) const
+    std::array<int, 2> FVSpace::facet_adjacent_cells(int facet_idx) const
     {
-        return intercell_distances_[facet_idx];
+        return facet_adjacent_cells_[facet_idx];
     }
     //=============================================================================
     std::array<real_t, 2> FVSpace::facet_cell_distances(int facet_idx) const
@@ -148,9 +131,14 @@ namespace sfem::fvm
         return facet_cell_distances_[facet_idx];
     }
     //=============================================================================
-    std::array<int, 2> FVSpace::facet_adjacent_cells(int facet_idx) const
+    geo::Vec3 FVSpace::facet_intercell_distance(int facet_idx) const
     {
-        return facet_adjacent_cells_[facet_idx];
+        return facet_intercell_distances_[facet_idx];
+    }
+    //=============================================================================
+    real_t FVSpace::facet_interp_factor(int facet_idx) const
+    {
+        return facet_interp_factor_[facet_idx];
     }
     //=============================================================================
     bool FVSpace::is_boundary(int facet_idx) const
@@ -166,8 +154,15 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    real_t FVSpace::facet_interp_factor(int facet_idx) const
+    std::array<geo::Vec3, 2> FVSpace::decompose_area_vec(int facet_idx) const
     {
-        return facet_interp_factor_[facet_idx];
+        const geo::Vec3 Sf = facet_area_vec(facet_idx);
+        const geo::Vec3 d12 = facet_intercell_distance(facet_idx);
+
+        const geo::Vec3 delta = d12 * geo::inner(Sf, d12) / geo::inner(d12, d12);
+        const geo::Vec3 kappa = Sf - delta;
+
+        return {delta, kappa};
     }
+
 }

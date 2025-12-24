@@ -11,7 +11,12 @@ namespace sfem::fvm
     {
     }
     //=============================================================================
-    FVField Source::field() const
+    FVField &Source::field()
+    {
+        return phi_;
+    }
+    //=============================================================================
+    const FVField &Source::field() const
     {
         return phi_;
     }
