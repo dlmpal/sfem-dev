@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     const real_t h_inf = 30;
     const real_t T_inf = 25;
     const BCType bc_type = BCType::robin;
-    const BCData bc_data{.a = 1, .b = h_inf, .c = T_inf};
+    const BCData bc_data{.a = h_inf, .b = 1.0, .c = T_inf};
     T.boundary_condition().set_region_bc("Left", bc_type, bc_data);
     T.boundary_condition().set_region_bc("Right", bc_type, bc_data);
     T.boundary_condition().set_region_bc("Front", bc_type, bc_data);
