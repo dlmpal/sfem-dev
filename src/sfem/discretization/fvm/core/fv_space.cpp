@@ -73,8 +73,8 @@ namespace sfem::fvm
 
             if (facet_adjacent_cells_[i][0] == facet_adjacent_cells_[i][1])
             {
-                facet_intercell_distances_[i] = 2 * geo::compute_distance(cell_midpoints_[facet_adjacent_cells_[i][0]],
-                                                                          facet_midpoints_[i]);
+                facet_intercell_distances_[i] = 2 * geo::Vec3(cell_midpoints_[facet_adjacent_cells_[i][0]],
+                                                              facet_midpoints_[i]);
             }
             else
             {
