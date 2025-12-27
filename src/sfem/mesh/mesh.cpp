@@ -80,16 +80,29 @@ namespace sfem::mesh
     //=============================================================================
     Region Mesh::get_region_by_name(const std::string &region_name) const
     {
-        auto it = std::find_if(regions_.cbegin(),
-                               regions_.cend(),
-                               [&region_name](const Region &region)
-                               { return region.name() == region_name; });
-
+        const auto it = std::find_if(regions_.cbegin(),
+                                     regions_.cend(),
+                                     [&region_name](const Region &region)
+                                     { return region.name() == region_name; });
         if (it == regions_.end())
         {
             SFEM_ERROR(std::format("Invalid region name: {} \n", region_name));
         }
-
+        return *it;
+    }
+    //=============================================================================
+    Region Mesh::get_region_by_tag(int region_tag) const
+    {
+        const auto it = std::find_if(regions_.cbegin(),
+                                     regions_.cend(),
+                                     [region_tag](const Region &region)
+                                     {
+                                         return region.tag() == region_tag;
+                                     });
+        if (it == regions_.end())
+        {
+            SFEM_ERROR(std::format("Invalid region tag: {} \n", region_tag));
+        }
         return *it;
     }
     //=============================================================================

@@ -61,6 +61,9 @@ namespace sfem::mesh
         /// @brief Get a region by its name
         Region get_region_by_name(const std::string &region_name) const;
 
+        /// @brief Get a region by its integer tag
+        Region get_region_by_tag(int region_tag) const;
+
         /// @brief Get all cells belonging to a region
         std::vector<std::pair<Cell, int>>
         region_cells(const std::string &region_name) const;
