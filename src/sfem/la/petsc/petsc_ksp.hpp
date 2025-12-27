@@ -9,6 +9,7 @@
 // Forward declaration
 namespace sfem::la
 {
+    enum class SolverType;
     struct SolverOptions;
 }
 
@@ -40,9 +41,13 @@ namespace sfem::la::petsc
         /// @brief Get the underlying KSP
         KSP ksp() const;
 
+        /// @brief Set the KSP tolerances using native solver types
+        /// @note See SolverType for currently available native types
+        void set_type(SolverType type) const;
+
         /// @brief Set the KSP tolerances using native solver options
         /// @note Not all entries in options are utilized
-        void set_options(SolverOptions options) const;
+        void set_tolerances(SolverOptions options) const;
 
         /// @brief Set the KSP options from the options database
         void set_from_options() const;
@@ -54,7 +59,9 @@ namespace sfem::la::petsc
         void set_operator(const PetscMat &A) const;
 
         /// @brief Solve the linear system Ax=b using the KSP
-        int solve(const PetscVec &b, PetscVec &x) const;
+        bool solve(const PetscVec &b, PetscVec &x) const;
+
+        std::vector<real_t> residual_history() const;
 
     private:
         /// @brief Underlying PETSc KSP

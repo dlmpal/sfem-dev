@@ -91,4 +91,9 @@ namespace sfem::la
     {
         return solver_->run(A_, b_, x);
     }
+    //=============================================================================
+    std::vector<real_t> NativeLinearSystem::residual_history() const
+    {
+        return solver_->residual_history();
+    }
 }

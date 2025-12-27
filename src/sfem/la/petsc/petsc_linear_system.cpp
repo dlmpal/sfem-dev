@@ -16,21 +16,8 @@ namespace sfem::la::petsc
           solver_(),
           diag_(create_vec(index_map, block_size))
     {
-        KSPType ksp_type;
-        switch (solver_type)
-        {
-        case SolverType::gmres:
-            ksp_type = KSPGMRES;
-            break;
-        case SolverType::cg:
-            ksp_type = KSPCG;
-            break;
-        default:
-            ksp_type = KSPGMRES;
-            break;
-        }
-        KSPSetType(solver_.ksp(), ksp_type);
-        solver_.set_options(solver_options);
+        solver_.set_type(solver_type);
+        solver_.set_tolerances(solver_options);
         solver_.set_from_options();
     }
     //=============================================================================
@@ -117,6 +104,11 @@ namespace sfem::la::petsc
         auto x_ = create_vec(x);
         solver_.set_operator(A_);
         return solver_.solve(b_, x_);
+    }
+    //=============================================================================
+    std::vector<real_t> PetscLinearSystem::residual_history() const
+    {
+        return solver_.residual_history();
     }
 }
 

@@ -44,6 +44,8 @@ namespace sfem::la::petsc
 
         bool solve(Vector &x) override;
 
+        std::vector<real_t> residual_history() const override;
+
     private:
         PetscMat A_;
         PetscVec b_;

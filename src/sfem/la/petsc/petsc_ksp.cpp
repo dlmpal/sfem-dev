@@ -3,7 +3,7 @@
 #include <sfem/la/petsc/petsc_ksp.hpp>
 #include <sfem/la/petsc/petsc_mat.hpp>
 #include <sfem/la/petsc/petsc_vec.hpp>
-#include <sfem/la/native/linear_solvers/linear_solver.hpp>
+#include <sfem/la/native/linear_solvers/linear_solver_factory.hpp>
 #include <sfem/base/timer.hpp>
 #include <sfem/base/error.hpp>
 
@@ -63,7 +63,25 @@ namespace sfem::la::petsc
         return ksp_;
     }
     //=============================================================================
-    void PetscKSP::set_options(SolverOptions options) const
+    void PetscKSP::set_type(SolverType type) const
+    {
+        KSPType ksp_type;
+        switch (type)
+        {
+        case SolverType::gmres:
+            ksp_type = KSPGMRES;
+            break;
+        case SolverType::cg:
+            ksp_type = KSPCG;
+            break;
+        default:
+            ksp_type = KSPGMRES;
+            break;
+        }
+        KSPSetType(ksp_, ksp_type);
+    }
+    //=============================================================================
+    void PetscKSP::set_tolerances(SolverOptions options) const
     {
         KSPSetTolerances(ksp_,
                          options.rtol,
@@ -87,7 +105,7 @@ namespace sfem::la::petsc
         KSPSetOperators(ksp_, A.mat(), A.mat());
     }
     //=============================================================================
-    int PetscKSP::solve(const PetscVec &b, PetscVec &x) const
+    bool PetscKSP::solve(const PetscVec &b, PetscVec &x) const
     {
         Timer timer;
 
@@ -97,6 +115,8 @@ namespace sfem::la::petsc
         {
             KSPSetInitialGuessNonzero(ksp_, PETSC_TRUE);
         }
+
+        KSPSetResidualHistory(ksp_, nullptr, PETSC_DECIDE, PETSC_TRUE);
 
         KSPSolve(ksp_, b.vec(), x.vec());
 
@@ -112,9 +132,27 @@ namespace sfem::la::petsc
             std::string msg = std::format("PetscKSP did not converge in {} iterations (reason {})\n",
                                           n_iter, static_cast<int>(reason));
             log_msg(msg, true, LogLevel::warning);
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    //=============================================================================
+    std::vector<real_t> PetscKSP::residual_history() const
+    {
+        int n_iter;
+        const real_t *hist;
+        KSPGetResidualHistory(ksp_, &hist, &n_iter);
+
+        std::vector<real_t> residual_history(n_iter);
+        for (int i = 0; i < n_iter; i++)
+        {
+            residual_history[i] = hist[i];
         }
 
-        return static_cast<int>(n_iter);
+        return residual_history;
     }
 }
 

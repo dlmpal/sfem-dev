@@ -28,6 +28,8 @@ namespace sfem::la
                                     std::span<const real_t> values) = 0;
 
         virtual bool solve(Vector &x) = 0;
+
+        virtual std::vector<real_t> residual_history() const = 0;
     };
 
     class NativeLinearSystem : public LinearSystem
@@ -64,6 +66,8 @@ namespace sfem::la
                             std::span<const real_t> values) override;
 
         bool solve(Vector &x) override;
+
+        std::vector<real_t> residual_history() const override;
 
     private:
         SparseMatrix A_;
