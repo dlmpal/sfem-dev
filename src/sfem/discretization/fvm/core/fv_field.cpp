@@ -64,6 +64,7 @@ namespace sfem::fvm
                      GradientMethod gradient_method)
         : IField(components),
           V_(V),
+          topo_(V_->mesh()->topology()),
           bc_(std::make_shared<FVBC>(*V, n_comp())),
           values_(std::make_shared<la::Vector>(V->index_map(), n_comp())),
           gradient_method_(gradient_method)
@@ -130,8 +131,28 @@ namespace sfem::fvm
         const auto [owner, neighbour] = V_->facet_adjacent_cells(facet_idx);
         if (owner == neighbour)
         {
-            /// @todo Use BC information to produce value?
-            return cell_value(owner, comp_idx);
+            const int tag = topo_->facets()[facet_idx].tag;
+            const auto region = V_->mesh()->get_region_by_tag(tag);
+            const auto bc_type = bc_->region_type(region.name());
+
+            const real_t phiP = cell_value(owner);
+            const real_t dPf = V_->facet_cell_distances(facet_idx)[0];
+
+            if (bc_type == BCType::dirichlet)
+            {
+                return bc_->value(facet_idx, comp_idx);
+            }
+            else if (bc_type == BCType::neumann)
+            {
+                return phiP - dPf * bc_->value(facet_idx, comp_idx);
+            }
+            else if (bc_type == BCType::robin)
+            {
+            }
+            else // Zero Neumann
+            {
+                return phiP;
+            }
         }
         else
         {

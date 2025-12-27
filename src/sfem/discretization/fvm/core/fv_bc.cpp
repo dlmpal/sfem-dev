@@ -51,23 +51,33 @@ namespace sfem::fvm
         }
     }
     //=============================================================================
-    real_t &FVBC::facet_value(int facet_idx, int comp_idx)
+    real_t &FVBC::coeff(int facet_idx, int comp_idx)
+    {
+        return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).a;
+    }
+    //=============================================================================
+    real_t FVBC::coeff(int facet_idx, int comp_idx) const
+    {
+        return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).a;
+    }
+    //=============================================================================
+    real_t &FVBC::grad_coeff(int facet_idx, int comp_idx)
+    {
+        return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).b;
+    }
+    //=============================================================================
+    real_t FVBC::grad_coeff(int facet_idx, int comp_idx) const
+    {
+        return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).b;
+    }
+    //=============================================================================
+    real_t &FVBC::value(int facet_idx, int comp_idx)
     {
         return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).c;
     }
     //=============================================================================
-    real_t FVBC::facet_value(int facet_idx, int comp_idx) const
+    real_t FVBC::value(int facet_idx, int comp_idx) const
     {
         return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx).c;
-    }
-    //=============================================================================
-    BCData &FVBC::facet_data(int facet_idx, int comp_idx)
-    {
-        return bc_data_.at(bc_idx_[facet_idx] * n_comp_ + comp_idx);
-    }
-    //=============================================================================
-    BCData FVBC::facet_data(int facet_idx, int comp_idx) const
-    {
-        return bc_data_.at(bc_idx_.at(facet_idx) * n_comp_ + comp_idx);
     }
 }

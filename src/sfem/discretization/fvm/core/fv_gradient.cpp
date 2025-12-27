@@ -16,7 +16,6 @@ namespace sfem::fvm
         const auto V = phi.space();
         const int dim = V->mesh()->pdim();
         const int n_comp = phi.n_comp();
-        const auto &bc = phi.boundary_condition();
         auto &grad = phi.grad();
 
         // Zero the gradient
@@ -24,61 +23,21 @@ namespace sfem::fvm
 
         // Construct gradient
         auto facet_work = [&](const mesh::Mesh &,
-                              const mesh::Region &region,
+                              const mesh::Region &,
                               const mesh::Cell &,
                               int facet_idx)
         {
-            // Cells adjacent to the facet
             const auto [owner, neighbour] = V->facet_adjacent_cells(facet_idx);
-
-            // Facet area vector
             const geo::Vec3 Sf = V->facet_area_vec(facet_idx);
 
-            // Boundary facets
-            if (owner == neighbour)
+            for (int i = 0; i < n_comp; i++)
             {
-                for (int i = 0; i < n_comp; i++)
+                const real_t phif = phi.facet_value(facet_idx, i);
+                for (int j = 0; j < dim; j++)
                 {
-                    const BCType bc_type = bc.region_type(region.name());
-
-                    real_t phif = 0.0;
-                    if (bc_type == BCType::dirichlet)
+                    grad(owner, i * dim + j) += phif * Sf(j);
+                    if (owner != neighbour)
                     {
-                        phif = bc.facet_value(facet_idx, i);
-                    }
-                    else if (bc_type == BCType::neumann)
-                    {
-                        const real_t dfP = V->facet_cell_distances(facet_idx)[0];
-                        phif = phi.cell_value(owner) + bc.facet_value(facet_idx, i) * dfP;
-                    }
-                    else if (bc_type == BCType::robin)
-                    {
-                        /// @todo
-                    }
-                    else // Zero-Neumann
-                    {
-                        phif = phi.cell_value(owner, i);
-                    }
-
-                    // Add gradient contributions for the adjacent cell
-                    for (int j = 0; j < dim; j++)
-                    {
-                        grad(owner, i * dim + j) += phif * Sf(j);
-                    }
-                }
-            }
-            // Internal facets
-            else
-            {
-                // Compute gradient componentwise
-                for (int i = 0; i < n_comp; i++)
-                {
-                    const real_t phif = phi.facet_value(facet_idx, i);
-
-                    // Add gradient contributions for the adjacent cells
-                    for (int j = 0; j < dim; j++)
-                    {
-                        grad(owner, i * dim + j) += phif * Sf(j);
                         grad(neighbour, i * dim + j) -= phif * Sf(j);
                     }
                 }
@@ -128,22 +87,31 @@ namespace sfem::fvm
         auto work = [&](const mesh::Mesh &,
                         const mesh::Region &,
                         const mesh::Cell &,
-                        int cell_idx)
+                        int owner)
         {
             // Reset least-squares LHS and RHS
             A.set_all(0.0);
             b.set_all(0.0);
 
             // Cell midpoint
-            const auto xP = V->cell_midpoint(cell_idx);
+            const auto xP = V->cell_midpoint(owner);
 
-            for (const auto neighour : topo->adjacent_entities(cell_idx, dim, dim))
+            for (const auto facet : topo->adjacent_entities(owner, dim, dim - 1))
             {
-                // Neighbour cell midpoint
-                const auto xN = V->cell_midpoint(neighour);
+                const auto adjacent_cells = V->facet_adjacent_cells(facet);
+                const auto neighbour = owner == adjacent_cells[0] ? adjacent_cells[1]
+                                                                  : adjacent_cells[0];
 
-                // Intercell distance vector
-                const geo::Vec3 dPN(xP, xN);
+                // Owner-to-neighbour distance vector
+                geo::Vec3 dPN;
+                if (owner == neighbour)
+                {
+                    dPN = 2.0 * geo::Vec3(xP, V->facet_midpoint(facet));
+                }
+                else
+                {
+                    dPN = geo::Vec3(xP, V->cell_midpoint(neighbour));
+                }
 
                 // Weighting factor
                 const real_t w = 1.0 / dPN.mag();
@@ -156,9 +124,19 @@ namespace sfem::fvm
                         A(i, j) += w * dPN(i) * dPN(j);
                     }
 
-                    for (int k = 0; k < n_comp; k++)
+                    if (owner == neighbour)
                     {
-                        b(i, k) += w * dPN(i) * (phi.cell_value(neighour, k) - phi.cell_value(cell_idx, k));
+                        for (int k = 0; k < n_comp; k++)
+                        {
+                            b(i, k) += 2.0 * w * dPN(i) * (phi.facet_value(facet, k) - phi.cell_value(owner, k));
+                        }
+                    }
+                    else
+                    {
+                        for (int k = 0; k < n_comp; k++)
+                        {
+                            b(i, k) += w * dPN(i) * (phi.cell_value(neighbour, k) - phi.cell_value(owner, k));
+                        }
                     }
                 }
             }
@@ -169,7 +147,7 @@ namespace sfem::fvm
             {
                 for (int k = 0; k < n_comp; k++)
                 {
-                    grad(cell_idx, k * dim + i) = grad_cell(i, k);
+                    grad(owner, k * dim + i) = grad_cell(i, k);
                 }
             }
         };

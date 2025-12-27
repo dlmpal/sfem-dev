@@ -65,8 +65,7 @@ namespace sfem::fvm
                     }
                     else
                     {
-                        const real_t phi_facet = bc.facet_value(facet_idx);
-                        rhs_value[0] = -Ff * phi_facet;
+                        rhs_value[0] = -Ff * bc.value(facet_idx);
                     }
                 }
                 else if (bc.region_type(region.name()) == BCType::neumann)
@@ -77,10 +76,9 @@ namespace sfem::fvm
                     }
                     else
                     {
-                        const real_t grad_facet = bc.facet_value(facet_idx);
                         const real_t dfP = V->facet_cell_distances(facet_idx)[0];
                         lhs_value[0] = Ff;
-                        rhs_value[0] = -Ff * dfP * grad_facet;
+                        rhs_value[0] = -Ff * dfP * bc.value(facet_idx);
                     }
                 }
                 else if (bc.region_type(region.name()) == BCType::robin)

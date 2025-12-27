@@ -68,21 +68,19 @@ namespace sfem::fvm
                 if (bc.region_type(region.name()) == BCType::dirichlet)
                 {
                     lhs_value[0] = 2.0 * Df * Sf.mag() / dPN.mag();
-                    rhs_value[0] = lhs_value[0] * bc.facet_value(facet_idx);
+                    rhs_value[0] = lhs_value[0] * bc.value(facet_idx);
                 }
                 else if (bc.region_type(region.name()) == BCType::neumann)
                 {
                     lhs_value[0] = 0.0;
-                    rhs_value[0] = Df * Sf.mag() * bc.facet_value(facet_idx);
+                    rhs_value[0] = Df * Sf.mag() * bc.value(facet_idx);
                 }
                 else if (bc.region_type(region.name()) == BCType::robin)
                 {
-                    const auto [a, b, c] = bc.facet_data(facet_idx);
-                    const real_t h_inf = b / a;
-                    const real_t phi_inf = c / a;
-                    const real_t d = dPN.mag();
-                    lhs_value[0] = (h_inf * Df / d) /
-                                   (h_inf + Df / d) * Sf.mag();
+                    const real_t h_inf = bc.coeff(facet_idx) / bc.grad_coeff(facet_idx);
+                    const real_t phi_inf = bc.value(facet_idx) / bc.grad_coeff(facet_idx);
+                    lhs_value[0] = (h_inf * 2.0 * Df / dPN.mag()) /
+                                   (h_inf + 2.0 * Df / dPN.mag()) * Sf.mag();
                     rhs_value[0] = lhs_value[0] * phi_inf;
                 }
 

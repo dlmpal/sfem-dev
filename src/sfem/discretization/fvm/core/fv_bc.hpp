@@ -12,15 +12,13 @@ namespace sfem::fvm
         robin
     };
 
-    /// @brief This struct represents different B.C. types
-    /// as follows:
-    /// 1) Dirichlet: u = c
-    /// 2) Neumann: du/dn = c
-    /// 3) Robin: a * du/dn + b * u = c
+    /// @brief This struct represents the generic B.C.:
+    /// a * u + b * du/dn = c
+    /// @note Defaults to zero Neumann (du/dn=0)
     struct BCData
     {
         real_t a = 0.0;
-        real_t b = 0.0;
+        real_t b = 1.0;
         real_t c = 0.0;
     };
 
@@ -36,11 +34,14 @@ namespace sfem::fvm
         void set_region_bc(const std::string &region_name, BCType type, real_t value, int comp_idx = 0);
         void set_region_bc(const std::string &region_name, BCType type, BCData value, int comp_idx = 0);
 
-        real_t &facet_value(int facet_idx, int comp_idx = 0);
-        real_t facet_value(int facet_idx, int comp_idx = 0) const;
+        real_t &coeff(int facet_idx, int comp_idx = 0);
+        real_t coeff(int facet_idx, int comp_idx = 0) const;
 
-        BCData &facet_data(int facet_idx, int comp_idx = 0);
-        BCData facet_data(int facet_idx, int comp_idx = 0) const;
+        real_t &grad_coeff(int facet_idx, int comp_idx = 0);
+        real_t grad_coeff(int facet_idx, int comp_idx = 0) const;
+
+        real_t &value(int facet_idx, int comp_idx = 0);
+        real_t value(int facet_idx, int comp_idx = 0) const;
 
     private:
         int n_comp_;

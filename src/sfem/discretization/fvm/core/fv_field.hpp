@@ -86,6 +86,10 @@ namespace sfem::fvm
     private:
         std::shared_ptr<const FVSpace> V_;
 
+        /// @brief Mesh topology, obtained from the FV space's
+        /// mesh. Stored here to reduce pointer dereferences
+        std::shared_ptr<const mesh::Topology> topo_;
+
         std::shared_ptr<FVBC> bc_;
 
         std::shared_ptr<la::Vector> values_;
