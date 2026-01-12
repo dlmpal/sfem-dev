@@ -4,6 +4,7 @@
 #include <sfem/parallel/mpi.hpp>
 #include <sfem/base/error.hpp>
 #include <functional>
+#include <memory>
 
 namespace sfem
 {
