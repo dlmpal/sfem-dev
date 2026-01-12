@@ -1,6 +1,5 @@
 #include "vector.hpp"
 #include <sfem/parallel/mpi.hpp>
-#include <sfem/parallel/scatterer.hpp>
 #include <sfem/base/error.hpp>
 #include <algorithm>
 #include <cmath>
@@ -13,6 +12,7 @@ namespace sfem::la
                    int block_size,
                    std::vector<real_t> &&values)
         : im_(im),
+          scatterer_(std::make_shared<Scatterer<real_t>>(im_)),
           bs_(block_size),
           values_(std::move(values))
     {
@@ -111,22 +111,18 @@ namespace sfem::la
     //=============================================================================
     void Vector::assemble()
     {
-        /// @todo Construct this only once
-        Scatterer<real_t> scatter(im_);
-        scatter.reverse(values_, bs_,
-                        [](real_t &dest, real_t src)
-                        { dest += src; });
+        scatterer_->reverse(values_, bs_,
+                            [](real_t &dest, real_t src)
+                            { dest += src; });
         // Set ghost values to zero
         std::fill(values_.begin() + n_owned() * bs_, values_.end(), 0.0);
     }
     //=============================================================================
     void Vector::update_ghosts()
     {
-        /// @todo Construct this only once
-        Scatterer<real_t> scatter(im_);
-        scatter.forward(values_, bs_,
-                        [](real_t &dest, real_t src)
-                        { dest = src; });
+        scatterer_->forward(values_, bs_,
+                            [](real_t &dest, real_t src)
+                            { dest = src; });
     }
     //=============================================================================
     void copy(const Vector &src, Vector &dest)

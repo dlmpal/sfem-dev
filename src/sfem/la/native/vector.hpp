@@ -1,8 +1,7 @@
 #pragma once
 
 #include <sfem/la/native/setval_utils.hpp>
-#include <sfem/parallel/index_map.hpp>
-#include <memory>
+#include <sfem/parallel/scatterer.hpp>
 
 namespace sfem::la
 {
@@ -97,6 +96,9 @@ namespace sfem::la
     protected:
         /// @brief Index map
         std::shared_ptr<const IndexMap> im_;
+
+        /// @brief Scatterer
+        std::shared_ptr<const Scatterer<real_t>> scatterer_;
 
         /// @brief Block size
         int bs_;
