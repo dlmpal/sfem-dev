@@ -20,14 +20,11 @@ namespace sfem
 
         /// @brief Get the application instance
         static Application &instance(int argc = 0, char *argv[] = nullptr,
-                                     const std::string &name = {},
-                                     const std::filesystem::path &log_filename = {});
+                                     const std::string &name = "sfem", bool write_log_file = false);
 
     private:
         // Constructor
-        Application(int argc, char *argv[],
-                    const std::string &name,
-                    const std::filesystem::path &log_filename);
+        Application(int argc, char *argv[], const std::string &name, bool write_log_file);
 
         // Destructor
         ~Application();
@@ -42,7 +39,7 @@ namespace sfem
         /// @brief Log level
         LogLevel log_level_;
 
-        /// @brief Log output file
+        /// @brief Log file
         mutable std::ofstream log_file_;
 
         /// @brief Options dictionary

@@ -4,9 +4,9 @@ namespace sfem
 {
     //=============================================================================
     Application &initialize(int argc, char *argv[],
-                            const std::string &name,
-                            const std::filesystem::path &log_filename)
+                            bool write_log_file,
+                            const std::string &name)
     {
-        return Application::instance(argc, argv, name, log_filename);
+        return Application::instance(argc, argv, name, write_log_file);
     }
 }

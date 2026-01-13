@@ -9,18 +9,10 @@ namespace sfem
 {
     //=============================================================================
     Application::Application(int argc, char *argv[],
-                             const std::string &name,
-                             const std::filesystem::path &log_filename)
+                             const std::string &name, bool write_log_file)
         : name_(name),
-          log_level_(LogLevel::info),
-          log_file_(log_filename)
+          log_level_(LogLevel::info)
     {
-        if (log_file_.is_open() == false and log_filename.empty() == false)
-        {
-            log_message(std::format("Could not create log file at {}, falling back to standard streams\n", log_filename.string()),
-                        LogLevel::warning);
-        }
-
         // MPI
         mpi::initialize(argc, argv);
 
@@ -33,6 +25,18 @@ namespace sfem
 #ifdef SFEM_HAS_SLEPC
         la::slepc::initialize(argc, argv);
 #endif
+
+        if (write_log_file)
+        {
+            const std::string filename = name_ + std::format("_{}.log", mpi::rank());
+            log_file_.open(filename);
+            if (log_file_.is_open() == false)
+            {
+                log_message(std::format("Could not create log file at {}, falling back to standard streams\n",
+                                        filename),
+                            LogLevel::warning);
+            }
+        }
     }
     //=============================================================================
     Application::~Application()
@@ -93,10 +97,9 @@ namespace sfem
     }
     //=============================================================================
     Application &Application::instance(int argc, char *argv[],
-                                       const std::string &name,
-                                       const std::filesystem::path &log_filename)
+                                       const std::string &name, bool write_log_file)
     {
-        static Application app(argc, argv, name, log_filename);
+        static Application app(argc, argv, name, write_log_file);
         return app;
     }
 }
