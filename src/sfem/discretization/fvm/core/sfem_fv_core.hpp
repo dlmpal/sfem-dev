@@ -6,3 +6,4 @@
 #include <sfem/discretization/fvm/core/fv_bc.hpp>
 #include <sfem/discretization/fvm/core/fv_gradient.hpp>
 #include <sfem/discretization/fvm/core/fv_equation.hpp>
+#include <sfem/discretization/fvm/core/fv_solver.hpp>

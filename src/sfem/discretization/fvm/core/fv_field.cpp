@@ -6,24 +6,24 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    IField::IField(const std::vector<std::string> &components)
+    Field::Field(const std::vector<std::string> &components)
         : components_(components)
     {
     }
     //=============================================================================
-    std::vector<std::string> IField::components() const
+    std::vector<std::string> Field::components() const
     {
         return components_;
     }
     //=============================================================================
-    int IField::n_comp() const
+    int Field::n_comp() const
     {
         return static_cast<int>(components_.size());
     }
     //=============================================================================
     ConstantField::ConstantField(const std::vector<std::string> &components,
                                  const std::vector<real_t> &value)
-        : IField(components),
+        : Field(components),
           value_(value)
     {
     }
@@ -62,7 +62,7 @@ namespace sfem::fvm
     FVField::FVField(std::shared_ptr<const FVSpace> V,
                      const std::vector<std::string> &components,
                      GradientMethod gradient_method)
-        : IField(components),
+        : Field(components),
           V_(V),
           topo_(V_->mesh()->topology()),
           bc_(std::make_shared<FVBC>(*V, n_comp())),

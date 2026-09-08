@@ -128,7 +128,6 @@ namespace sfem::la
         // Solve the least squares problem
         auto Hk = submatrix(H_, 0, k + 2, 0, k + 1);
         auto e1k = submatrix(e1_, 0, k + 2, 0, 1);
-        // auto yk = lstsq(Hk, e1k);
         auto yk = Hk.invert().first * e1k;
 
         // Update solution vector

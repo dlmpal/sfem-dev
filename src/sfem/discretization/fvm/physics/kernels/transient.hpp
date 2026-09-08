@@ -8,13 +8,13 @@ namespace sfem::fvm
     class ImplicitEuler
     {
     public:
-        ImplicitEuler(FVField phi, IField &C, real_t &dt);
+        ImplicitEuler(FVField phi, Field &C, real_t &dt);
 
         FVField &field();
         const FVField &field() const;
 
-        IField &coeff();
-        const IField &coeff() const;
+        Field &coeff();
+        const Field &coeff() const;
 
         real_t &dt();
         real_t dt() const;
@@ -24,7 +24,7 @@ namespace sfem::fvm
     private:
         FVField phi_;
 
-        IField &C_;
+        Field &C_;
 
         real_t &dt_;
     };

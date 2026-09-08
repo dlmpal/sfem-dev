@@ -6,3 +6,5 @@ tests/
 run.sh
 summary.log
 todo.md
+CLAUDE.md
+docs/

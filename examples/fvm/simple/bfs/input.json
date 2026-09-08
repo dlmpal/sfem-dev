@@ -1,0 +1,100 @@
+{
+    "mesh": "bfs/mesh",
+    "simple": {
+        "momentum": {
+            "relaxation_factor": 0.7,
+            "linear_solver": {
+                "type": "gmres",
+                "options": {
+                    "rtol": 1e-3,
+                    "print_conv": false,
+                    "print_iter": false
+                }
+            }
+        },
+        "pressure": {
+            "relaxation_factor": 0.3,
+            "linear_solver": {
+                "type": "cg",
+                "options": {
+                    "rtol": 1e-3,
+                    "print_conv": false,
+                    "print_iter": false
+                }
+            }
+        },
+        "backend": "petsc",
+        "n_orthogonal_correctors": 1,
+        "transient": false,
+        "atol": 1e-10,
+        "rtol": 1e-6,
+        "max_iter": 1000,
+        "plot_file": "bfs/output/solution",
+        "plot_int": 10
+    },
+    "physical_properties": {
+        "density": 1.0,
+        "dynamic_viscosity": 0.01
+    },
+    "fv_fields": {
+        "u": {
+            "initial_condition": {
+                "type": "uniform",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Inlet": {
+                    "type": "dirichlet",
+                    "value": 1.0
+                },
+                "Outlet": {
+                    "type": "zero_neumann"
+                },
+                "Walls": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                }
+            },
+            "gradient_method": "green_gauss"
+        },
+        "v": {
+            "initial_condition": {
+                "type": "fixed",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Inlet": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Outlet": {
+                    "type": "zero_neumann"
+                },
+                "Walls": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                }
+            },
+            "gradient_method": "green_gauss"
+        },
+        "p": {
+            "initial_condition": {
+                "type": "fixed",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Inlet": {
+                    "type": "zero_neumann"
+                },
+                "Outlet": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Walls": {
+                    "type": "zero_neumann"
+                }
+            },
+            "gradient_method": "green_gauss"
+        }
+    }
+}

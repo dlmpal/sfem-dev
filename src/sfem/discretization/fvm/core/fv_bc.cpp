@@ -43,6 +43,11 @@ namespace sfem::fvm
     //=============================================================================
     void FVBC::set_region_bc(const std::string &region_name, BCType type, BCData value, int comp_idx)
     {
+        if (not region_data_.contains(region_name))
+        {
+            SFEM_ERROR(std::format("No boundary region named {} in the mesh\n", region_name));
+        }
+
         region_data_.at(region_name).first = type;
         for (const auto &facet_idx : region_data_.at(region_name).second)
         {

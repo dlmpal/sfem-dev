@@ -8,18 +8,18 @@ namespace sfem::fvm
     class Laplacian
     {
     public:
-        Laplacian(FVField phi, IField &D);
+        Laplacian(FVField phi, Field &D);
 
         FVField &field();
         const FVField &field() const;
 
-        IField &D();
-        const IField &D() const;
+        Field &D();
+        const Field &D() const;
 
         void operator()(la::MatSet lhs, la::VecSet rhs);
 
     private:
         FVField phi_;
-        IField &D_;
+        Field &D_;
     };
 }

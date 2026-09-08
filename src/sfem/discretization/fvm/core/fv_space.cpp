@@ -39,19 +39,18 @@ namespace sfem::fvm
             const auto cell_type = topology->entity(i, dim).type;
             const auto cell_points = mesh_->entity_points(i, dim);
             const auto element = cg_space.element(cell_type);
+            const auto int_rule = element->integration_rule();
             cell_midpoints_[i] = mesh::cell_midpoint(cell_points);
             for (int nqpt = 0; nqpt < element->integration_rule()->n_points(); nqpt++)
             {
-                cell_volumes_[i] += element->transform(i, dim,
-                                                       element->integration_rule()->point(nqpt),
-                                                       cell_points)
-                                        .detJ;
+                const auto data = element->transform(i, dim, int_rule->point(nqpt), cell_points);
+                cell_volumes_[i] += data.detJ * int_rule->weight(nqpt); 
             }
         }
 
         // Facets
         facet_midpoints_.resize(n_facets);
-        facet_area_vecs_.reserve(n_facets);
+        facet_area_vecs_.resize(n_facets);
         facet_adjacent_cells_.resize(n_facets);
         facet_cell_distances_.resize(n_facets);
         facet_intercell_distances_.resize(n_facets);
@@ -164,5 +163,4 @@ namespace sfem::fvm
 
         return {delta, kappa};
     }
-
 }

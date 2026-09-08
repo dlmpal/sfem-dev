@@ -1,11 +1,12 @@
 #pragma once
 
+#include <sfem/discretization/fvm/core/fv_solver.hpp>
 #include <sfem/discretization/fvm/core/fv_equation.hpp>
 #include <sfem/la/backend.hpp>
 
-namespace sfem::fvm::algo
+namespace sfem::fvm::simple
 {
-    struct SIMPLEOptions
+    struct SimpleOptions
     {
         /// @brief Momentum under-relaxation factor
         real_t momentum_alpha = 0.7;
@@ -31,35 +32,47 @@ namespace sfem::fvm::algo
         /// @brief Number of orthogonal-correction iterations
         int n_orthogonal_correctors = 0;
 
-        /// @brief Whether the flow is transient
+        /// @brief Whether to include the transient term in the momentum equation
         bool transient = false;
 
-        /// @brief Maximum number of SIMPLE iterations
-        int max_iter_simple = 50;
+        /// @brief SIMPLE absolute tolerance
+        real_t atol_simple = 1e-10;
 
         /// @brief SIMPLE relative tolerance
-        real_t rtol_simple = 1e-4;
+        real_t rtol_simple = 1e-6;
+
+        /// @brief Maximum number of SIMPLE iterations
+        int max_iter_simple = 1000;
+
+        /// @brief Root plot file
+        std::filesystem::path plot_file = "solution";
 
         /// @brief Plot interval
         int plot_int = 10;
     };
 
-    class SIMPLESolver
+    class SimpleSolver : public FVSolver
     {
     public:
-        SIMPLESolver(std::vector<FVField> U, FVField P,
-                     real_t rho, real_t mu, SIMPLEOptions options);
+        SimpleSolver(const std::vector<FVField> &U, const FVField &P,
+                     real_t rho, real_t mu, SimpleOptions options);
 
-        void step(real_t time, real_t dt);
+        void pre_timestep() override;
 
-    private:
-        void assemble_pressure_diffusivity();
-        void assemble_mass_flux();
-        void correct_fields();
+        void step(real_t time, real_t dt) override;
 
     protected:
+        void solve_momentum();
+
+        void solve_pressure();
+
+        void correct_fields();
+
         /// @brief Velocity field (per direction)
         std::vector<FVField> U_;
+
+        /// @brief Old velocity field (per direction)
+        std::vector<FVField> U_old_;
 
         /// @brief Pressure field
         FVField P_;
@@ -77,8 +90,7 @@ namespace sfem::fvm::algo
         ConstantField mu_;
 
         /// @brief Mass flux
-        /// @todo
-        std::vector<real_t> flux_;
+        std::vector<real_t> mdot_;
 
         /// @brief Momentum equation (per direction)
         std::vector<Equation> momentum_;
@@ -87,9 +99,13 @@ namespace sfem::fvm::algo
         Equation pressure_;
 
         /// @brief Solver options
-        SIMPLEOptions options_;
+        SimpleOptions options_;
 
-        /// @brief Current timestep
-        real_t dt_;
+        /// @brief Mass imbalance of the last SIMPLE iteration
+        real_t mass_residual_;
+
+        /// @brief Residual norm history for the momentum and pressure
+        /// equations, followed by the mass imbalance
+        std::vector<real_t> residual_history_;
     };
 }

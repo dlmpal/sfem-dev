@@ -6,7 +6,7 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    Laplacian::Laplacian(FVField phi, IField &D)
+    Laplacian::Laplacian(FVField phi, Field &D)
         : phi_(phi),
           D_(D)
     {
@@ -26,12 +26,12 @@ namespace sfem::fvm
         return phi_;
     }
     //=============================================================================
-    IField &Laplacian::D()
+    Field &Laplacian::D()
     {
         return D_;
     }
     //=============================================================================
-    const IField &Laplacian::D() const
+    const Field &Laplacian::D() const
     {
         return D_;
     }
@@ -40,7 +40,7 @@ namespace sfem::fvm
     {
         // Quick access
         const auto V = phi_.space();
-        const auto bc = phi_.boundary_condition();
+        const auto &bc = phi_.boundary_condition();
 
         auto work = [&](const mesh::Mesh &,
                         const mesh::Region &region,

@@ -12,11 +12,11 @@ namespace sfem::la
 
 namespace sfem::fvm
 {
-    class IField
+    class Field
     {
     public:
-        IField(const std::vector<std::string> &components);
-        virtual ~IField() = default;
+        Field(const std::vector<std::string> &components);
+        virtual ~Field() = default;
 
         std::vector<std::string> components() const;
         int n_comp() const;
@@ -33,7 +33,7 @@ namespace sfem::fvm
         std::vector<std::string> components_;
     };
 
-    class ConstantField : public IField
+    class ConstantField : public Field
     {
     public:
         ConstantField(const std::vector<std::string> &components,
@@ -53,7 +53,7 @@ namespace sfem::fvm
         std::vector<real_t> value_;
     };
 
-    class FVField : public IField
+    class FVField : public Field
     {
     public:
         FVField(std::shared_ptr<const FVSpace> V,

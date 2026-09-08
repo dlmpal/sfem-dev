@@ -62,7 +62,7 @@ namespace sfem::fem
                         {
                             aij += data.dNdX(i, dir) * data.dNdX(j, dir);
                         }
-                        K(i, j) += D * aij * data.detJ * Jwt;
+                        K(i, j) += D * aij * Jwt;
                     }
                 }
             }

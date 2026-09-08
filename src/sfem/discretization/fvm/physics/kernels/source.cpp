@@ -26,20 +26,18 @@ namespace sfem::fvm
         // Quick access
         const auto V = phi_.space();
 
-        // Store cell values
-        std::vector<real_t> values(phi_.n_comp());
-
         auto work = [&](const mesh::Mesh &,
                         const mesh::Region &,
                         const mesh::Cell &,
                         int cell_idx)
         {
-            std::array<int, 1> idx = {cell_idx};
+            std::vector<real_t> values(phi_.n_comp());
             func_(phi_, cell_idx, values);
             for (auto &value : values)
             {
                 value *= V->cell_volume(cell_idx);
             }
+            std::array<int, 1> idx = {cell_idx};
             rhs(idx, values);
         };
         mesh::utils::for_all_cells(*V->mesh(), work);

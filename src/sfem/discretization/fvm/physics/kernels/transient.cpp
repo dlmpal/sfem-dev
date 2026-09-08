@@ -5,7 +5,7 @@
 namespace sfem::fvm
 {
     //=============================================================================
-    ImplicitEuler::ImplicitEuler(FVField phi, IField &C, real_t &dt)
+    ImplicitEuler::ImplicitEuler(FVField phi, Field &C, real_t &dt)
         : phi_(phi),
           C_(C),
           dt_(dt)
@@ -22,12 +22,12 @@ namespace sfem::fvm
         return phi_;
     }
     //=============================================================================
-    IField &ImplicitEuler::coeff()
+    Field &ImplicitEuler::coeff()
     {
         return C_;
     }
     //=============================================================================
-    const IField &ImplicitEuler::coeff() const
+    const Field &ImplicitEuler::coeff() const
     {
         return C_;
     }

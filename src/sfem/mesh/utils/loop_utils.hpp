@@ -81,18 +81,6 @@ namespace sfem::mesh::utils
             }
 
             for_all_facets_region(mesh, func, region, skip_ghost);
-            // // Loop over all facets in region
-            // for (const auto &[facet, facet_idx] : mesh.region_facets(region.name()))
-            // {
-            //     // Skip ghost facets if required
-            //     if (skip_ghost and mesh.topology()->entity_index_map(facet_dim)->is_ghost(facet_idx))
-            //     {
-            //         continue;
-            //     }
-
-            //     // Do work
-            //     func(mesh, region, facet, facet_idx);
-            // }
         }
     }
 }

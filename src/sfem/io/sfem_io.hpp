@@ -9,3 +9,4 @@ namespace sfem::io
 #include <sfem/io/native/sfem_io_native.hpp>
 #include <sfem/io/gmsh/sfem_gmsh.hpp>
 #include <sfem/io/vtk/sfem_vtk.hpp>
+#include <sfem/io/json/sfem_json.hpp>

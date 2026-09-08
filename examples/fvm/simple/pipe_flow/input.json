@@ -1,0 +1,110 @@
+{
+    "mesh": "pipe_flow/mesh_tri",
+    "simple": {
+        "momentum": {
+            "relaxation_factor": 0.7,
+            "linear_solver": {
+                "type": "gmres",
+                "options": {
+                    "rtol": 1e-3,
+                    "print_conv": false,
+                    "print_iter": false
+                }
+            }
+        },
+        "pressure": {
+            "relaxation_factor": 0.3,
+            "linear_solver": {
+                "type": "cg",
+                "options": {
+                    "rtol": 1e-3,
+                    "print_conv": false,
+                    "print_iter": false
+                }
+            }
+        },
+        "n_orthogonal_correctors": 0,
+        "transient": false,
+        "atol": 1e-10,
+        "rtol": 1e-6,
+        "max_iter": 1000,
+        "plot_file": "pipe_flow/output/solution",
+        "plot_int": 10
+    },
+    "physical_properties": {
+        "density": 1.0,
+        "dynamic_viscosity": 0.01
+    },
+    "fv_fields": {
+        "u": {
+            "initial_condition": {
+                "type": "uniform",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Bottom": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Right": {
+                    "type": "zero_neumann"
+                },
+                "Top": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Left": {
+                    "type": "dirichlet",
+                    "value": 1.0
+                }
+            },
+            "gradient_method": "green_gauss"
+        },
+        "v": {
+            "initial_condition": {
+                "type": "fixed",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Bottom": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Right": {
+                    "type": "zero_neumann"
+                },
+                "Top": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Left": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                }
+            },
+            "gradient_method": "green_gauss"
+        },
+        "p": {
+            "initial_condition": {
+                "type": "fixed",
+                "value": 0.0
+            },
+            "boundary_conditions": {
+                "Bottom": {
+                    "type": "zero_neumann"
+                },
+                "Right": {
+                    "type": "dirichlet",
+                    "value": 0.0
+                },
+                "Top": {
+                    "type": "zero_neumann"
+                },
+                "Left": {
+                    "type": "zero_neumann"
+                }
+            },
+            "gradient_method": "green_gauss"
+        }
+    }
+}

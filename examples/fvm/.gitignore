@@ -10,10 +10,6 @@ convection-diffusion/build/
 convection-diffusion/post/
 convection-diffusion/mesh/
 
-simple/build/
-simple/post/
-simple/mesh/
-
 euler/build/
 euler/post/
 euler/mesh/
